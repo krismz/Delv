@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/1999/xhtml"
+   xml:lang="en"   
+   lang="en">
+<head>
+<title>Delv d3 Demo</title>
+<script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
+<!-- Add jquery-json to allow JSON stringify -->
+<script type="text/ecmascript" id="jquery-json.script" src="./delvjs/jquery.json-2.3.js"></script>
+<script type="text/ecmascript" id="d3.script" src="./delvjs/d3.v3.js"></script>
+<script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script>
+<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
+<script type="text/ecmascript" id="demo_data.script" src="./d3_demo_data.js"></script>
+<script type="text/ecmascript" id="demo.script" src="./d3_demo.js"></script>
+</head>
+<body onload="init()" onresize="resizeAll()">
+<div
+  id="d3ExampleApp"
+  style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:100%;position:absolute">
+  <div
+    id = "d3_views"
+    style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:90%;position:absolute">
+ <div
+    id ="partition_sunburst_zoomContainer"
+    style="overflow:hidden;zindex:3;top:3%;left:3%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="partition_sunburst_zoom"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+   </svg:svg>
+  </div>
+  <div
+    id ="bar_hierarchyContainer"
+    style="overflow:hidden;zindex:3;top:3%;left:50%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="bar_hierarchy"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+    </svg:svg>
+  </div>
+  <div
+    id ="force_collapsibleContainer"
+    style="overflow:hidden;zindex:3;top:50%;left:3%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="force_collapsible"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+  </svg:svg>
+  </div>
+  <div
+    id ="tree_interactiveContainer"
+    style="overflow:hidden;zindex:3;top:50%;left:50%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="tree_interactive"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+   </svg:svg>
+  </div>
+  </div>
+    <div
+    id = "processing_views"
+    style="overflow:hidden;zindex:1;top:90%;left:0;width:100%;height:10%;position:absolute">
+    <div
+      id="RegionContainer"
+      style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:95%;position:absolute">
+      <canvas
+      id="Region"/>
+    </div>
+
+      </div>
+</div>
+</body>
+</html>

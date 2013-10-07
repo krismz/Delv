@@ -1,0 +1,30 @@
+#NAME: dsec
+#START: 0
+#LENGTH: 1594
+##class,start,length,motif_type, strength
+binding_site,323,10,kni,9.85
+binding_site,22,8,hb,9.92
+binding_site,414,8,hb,9.95
+binding_site,490,8,hb,11.28
+binding_site,530,8,hb,10.81
+binding_site,706,8,hb,11.28
+binding_site,1112,8,hb,11.28
+binding_site,100,10,cad,8.44
+binding_site,200,10,cad,8.28
+binding_site,410,10,cad,8.91
+binding_site,473,10,cad,8.72
+binding_site,492,10,cad,9.98
+binding_site,683,10,cad,8.58
+binding_site,708,10,cad,8.06
+binding_site,1045,10,cad,8.49
+binding_site,621,14,hkb,9.85
+binding_site,1308,14,hkb,10.66
+binding_site,546,10,Kr,11.51
+binding_site,554,10,Kr,8.96
+binding_site,763,10,Kr,11.51
+binding_site,800,10,Kr,13.09
+binding_site,875,10,Kr,13.40
+binding_site,924,10,Kr,9.85
+binding_site,942,10,Kr,10.71
+binding_site,1225,8,bcd,9.60
+binding_site,1542,8,bcd,9.39
