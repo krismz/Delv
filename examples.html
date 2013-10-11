@@ -48,7 +48,10 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Delv Examples</a><ul>
+<li><a class="reference internal" href="#simple-views">simple views</a></li>
 <li><a class="reference internal" href="#insite">inSite</a></li>
+<li><a class="reference internal" href="#d3-demo">d3_demo</a></li>
+<li><a class="reference internal" href="#tangelo">tangelo</a></li>
 </ul>
 </li>
 </ul>
@@ -87,9 +90,34 @@
             
   <div class="section" id="delv-examples">
 <h1>Delv Examples<a class="headerlink" href="#delv-examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="simple-views">
+<span id="simple-views-example"></span><h2>simple views<a class="headerlink" href="#simple-views" title="Permalink to this headline">¶</a></h2>
+<p>This is a demonstration of a simple 1-D view (a sparkline) interacting with a 2-D view (Template200).  Point a web browser at <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/simple_views/simple_views.xhtml</span></tt> to start the example.  Note that mousing over points in the bar chart will highlight the points in the sparkline.</p>
+</div>
 <div class="section" id="insite">
 <span id="insite-example"></span><h2>inSite<a class="headerlink" href="#insite" title="Permalink to this headline">¶</a></h2>
-<p>To run the inSite example in Processing, open <tt class="docutils literal"><span class="pre">/your/path/to/delv/examples/inSite/inSite.pde</span></tt> from your Processing environment and press play.  To see the same example in Javascript, point a web browser at <tt class="docutils literal"><span class="pre">file:///your/path/to/delv/examples/inSite/inSite.xhtml</span></tt>.  This is an example of several interactions including category filtering, an interactive color choosing legend, rollover / hovering, etc.</p>
+<p>To run the inSite example in Processing, open <tt class="docutils literal"><span class="pre">/path/to/delv/examples/inSite/inSite.pde</span></tt> from your Processing environment and press play.  To see the same example in Javascript, point a web browser at <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/inSite/inSite.xhtml</span></tt>.  This is an example of several interactions including category filtering, an interactive color choosing legend, rollover / hovering, etc.</p>
+</div>
+<div class="section" id="d3-demo">
+<span id="d3-demo-example"></span><h2>d3_demo<a class="headerlink" href="#d3-demo" title="Permalink to this headline">¶</a></h2>
+<p>The D3 demo is an example of 4 different D3 examples taken from <a class="reference external" href="https://github.com/mbostock/d3/wiki/Gallery">d3js.org</a> and combined with the RegionView that is the center bar chart visualization in the <a class="reference internal" href="#insite-example">insite-example</a>.  To run this example, point a web browser at <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/d3_demo/d3_demo.xhtml</span></tt></p>
+</div>
+<div class="section" id="tangelo">
+<span id="tangelo-example"></span><h2>tangelo<a class="headerlink" href="#tangelo" title="Permalink to this headline">¶</a></h2>
+<p>This example modifies <a class="reference external" href="https://github.com/Kitware/tangelo">tangelo&#8217;s</a> ner example.</p>
+<p>To run this example, do the following:</p>
+<div class="highlight-python"><pre>&gt; cd /path/to/tangelo/examples/ner
+&gt; mv ner.js ner.orig.js
+&gt; ln -s /path/to/delv/examples/tangelo/ner/ner.js
+&gt; mv index.html index.orig.html
+&gt; ln -s /path/to/delv/examples/tangelo/ner/index.html
+&gt; ln -s /path/to/delv/delvjs
+&gt; ln -s /path/to/delv/examples/tangelo/views
+&gt; cd data
+&gt; ln -s ../views/data/pf_tempesta_seven.ttf
+&gt; ln -s ../views/data/pf_tempesta_seven_bold.ttf</pre>
+</div>
+<p>And then start the ner example as you normally would.</p>
 </div>
 </div>
 
