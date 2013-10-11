@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/1999/xhtml"
+   xml:lang="en"   
+   lang="en">
+<head>
+
+<!-- Change the title to something appropriate for your website / -->
+<!-- application -->
+<title>Example App</title>
+
+<!-- delv uses jquery -->
+<script type="text/ecmascript" id="jquery.script" src="./javascript/jquery-1.7.2.js"></script>
+
+<!-- include d3 if using d3.js -->
+<script type="text/ecmascript" id="d3.script" src="./javascript/d3.v2.js"></script>
+
+<!-- include processing if using processing.js -->
+<script type="text/ecmascript" id="processing.script" src="./javascript/processing-1.4.0.js"></script>
+
+<!-- include delv -->
+<script type="text/ecmascript" id="delv.script" src="./javascript/delv.js"></script>
+
+<!-- script containing the application-specific logic for connecting -->
+<!-- to delv and configuring mediators. -->
+<script type="text/ecmascript" id="app.script" src="./javascript/example_app.js"></script>
+</head>
+
+<!-- Note that onload calls init() which should be defined in your app -->
+<!-- script.  Also, the body onresize should call delv.resizeAll() -->
+<!-- (or a custom function that also calls delv.resizeAll()) so that -->
+<!-- each mediator/view can resize and redraw itself appropriately.-->
+<body onload="init()" onresize="delv.resizeAll()">
+
+<!-- Note that sizes are expressed as percentages in most places.  It -->
+<!-- is possible to use pixels for sizing, at least for individual -->
+<!-- divs within the layout. -->
+<div
+  id="YourApp"
+  style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:100%;position:absolute">
+
+  <!-- create a layout with 4 d3.js views and 1 processing view -->
+  <!-- ________________________________________________________ -->
+  <!-- |                            |                         | -->
+  <!-- |       d3 view 1            |        d3 view 2        | -->
+  <!-- |                            |                         | -->
+  <!-- ________________________________________________________ -->
+  <!-- |                            |                         | -->
+  <!-- |       d3 view 3            |        d3 view 4        | -->
+  <!-- |                            |                         | -->
+  <!-- ________________________________________________________ -->
+  <!-- |                     processing view                  | -->
+  <!-- ________________________________________________________ -->
+  <!-- use style on the div to create the desired layout, then tell -->
+  <!-- the svg elements to use 100% of the space they've been -->
+  <!-- allocated -->
+  
+  <div
+    id = "d3_views"
+    style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:90%;position:absolute">
+    <!-- Note that the d3 views are svg elements -->
+ <div
+    id ="d3_view1_container"
+    style="overflow:hidden;zindex:3;top:3%;left:3%;width:47%;height:47%;position:absolute">
+    <!-- if id matches the name of the mediator for this element, then -->
+    <!-- the example_app.js can use this assumption to automatically -->
+    <!-- construct the mediator based on element id.  Otherwise, will -->
+    <!-- need to pass in the name of the desired mediator to a -->
+    <!-- javascript construction function of some sort. -->
+    <!-- In this case, construct a partition_sunburst_zoom_mediator -->
+    <svg:svg
+       id="partition_sunburst_zoom"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+   </svg:svg>
+  </div>
+  <div
+    id ="d3_view2_container"
+    style="overflow:hidden;zindex:3;top:3%;left:50%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="bar_hierarchy"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+    </svg:svg>
+  </div>
+  <div
+    id ="d3_view3_container"
+    style="overflow:hidden;zindex:3;top:50%;left:3%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="force_collapsible"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+  </svg:svg>
+  </div>
+  <div
+    id ="d3_view4_container"
+    style="overflow:hidden;zindex:3;top:50%;left:50%;width:47%;height:47%;position:absolute">
+    <svg:svg
+       id="tree_interactive"
+       class="d3"
+       x="0%"
+       y="0%"
+       width="100%"
+       height="100%"
+       version="1.1"
+       style="overflow:hidden;zindex:3;position:absolute">
+   </svg:svg>
+  </div>
+  </div>
+    <!-- Note that the processing views are canvas elements -->
+    <div
+    id = "processing_views"
+    style="overflow:hidden;zindex:1;top:90%;left:0;width:100%;height:10%;position:absolute">
+    <!-- if id matches the name of the mediator for this element, then -->
+    <!-- the example_app.js can use this assumption to automatically -->
+    <!-- construct the mediator based on element id.  Otherwise, will -->
+    <!-- need to pass in the name of the desired mediator to a -->
+    <!-- javascript construction function of some sort. -->
+    <!-- In this case, construct a RegionMediator -->
+    <div
+      id="processing_view_container"
+      style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:95%;position:absolute">
+      <canvas
+      id="Region"/>
+    </div>
+
+      </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Reference &mdash; Delv 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Delv 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Using Delv with Processing" href="processing_tutorial.html" />
+    <link rel="prev" title="Delv Examples" href="examples.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="processing_tutorial.html" title="Using Delv with Processing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Delv Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Delv 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">API Reference</a><ul>
+<li><a class="reference internal" href="#dataif-api">DataIF API</a></li>
+<li><a class="reference internal" href="#delv-api">Delv API</a></li>
+<li><a class="reference internal" href="#delv-js-api">delv.js API</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Delv Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="processing_tutorial.html"
+                        title="next chapter">Using Delv with Processing</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/API.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dataif-api">
+<h2>DataIF API<a class="headerlink" href="#dataif-api" title="Permalink to this headline">¶</a></h2>
+<p>Delv defines a common abstract data interface that views can use to access datasets.  This interface allows the view to access data without needing to know or understand where or how the data is stored.</p>
+<p id="dataif-signals">DataIF signals:</p>
+<ul class="simple">
+<li>categoryVisibilityChanged</li>
+<li>categoryColorsChanged</li>
+<li>hoveredCategoryChanged</li>
+<li>highlightedCategoryChanged</li>
+<li>selectedIdsChanged</li>
+<li>highlightedIdChanged</li>
+<li>hoveredIdChanged</li>
+</ul>
+<dl class="class">
+<dt id="dataIF">
+<em class="property">class </em><tt class="descname">dataIF</tt><a class="headerlink" href="#dataIF" title="Permalink to this definition">¶</a></dt>
+<dd><p>the abstract data interface</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.updateCategoryVisibility">
+<tt class="descclassname">dataIF.</tt><tt class="descname">updateCategoryVisibility</tt><big>(</big><em>invoker</em>, <em>dataset</em>, <em>attribute</em>, <em>selection</em><big>)</big><a class="headerlink" href="#dataIF.updateCategoryVisibility" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>invoker</strong> (<em>string</em>) &#8211; The name of the object that is toggling the visibility</li>
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset whose attribute&#8217;s category&#8217;s visibility is toggling</li>
+<li><strong>attribute</strong> (<em>string</em>) &#8211; The name of the attribute whose category&#8217;s visibility is being toggled</li>
+<li><strong>selection</strong> (<em>string</em>) &#8211; The name of the category whose visibility is toggling</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>toggle the visibility of the category specified by selection.  Any item whose attribute&#8217;s value
+matches category will have it&#8217;s visibility toggled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.updateHighlightedId">
+<tt class="descclassname">dataIF.</tt><tt class="descname">updateHighlightedId</tt><big>(</big><em>invoker</em>, <em>dataset</em>, <em>id</em><big>)</big><a class="headerlink" href="#dataIF.updateHighlightedId" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>invoker</strong> (<em>string</em>) &#8211; The name of the object that is updating the highlighted id</li>
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset whose identifier is being highlighted</li>
+<li><strong>id</strong> (<em>string</em>) &#8211; The id of the item that is being highlighted</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>updateHighlightedId sets which item specified by id is highlighted.  To have no item highlighted,
+use &#8220;&#8221; for the id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.updateHoveredId">
+<tt class="descclassname">dataIF.</tt><tt class="descname">updateHoveredId</tt><big>(</big><em>invoker</em>, <em>dataset</em>, <em>id</em><big>)</big><a class="headerlink" href="#dataIF.updateHoveredId" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>invoker</strong> (<em>string</em>) &#8211; The name of the object that is updating the hovered id</li>
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset whose identifier is being hovered</li>
+<li><strong>id</strong> (<em>string</em>) &#8211; The id of the item that is being hovered</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>updateHoveredId sets which item specified by id is hovered.  To have no item hovered,
+use &#8220;&#8221; for the id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.getAllItems">
+<tt class="descclassname">dataIF.</tt><tt class="descname">getAllItems</tt><big>(</big><em>dataset</em>, <em>attribute</em><big>)</big><a class="headerlink" href="#dataIF.getAllItems" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset that has the attribute</li>
+<li><strong>attribute</strong> (<em>string</em>) &#8211; The name of the attribute whose items should be returned</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Returns a String[] list of all the items for that attribute</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Get all the items (as Strings) for attribute from dataset.    Returns an empty String[] on error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.getAllIds">
+<tt class="descclassname">dataIF.</tt><tt class="descname">getAllIds</tt><big>(</big><em>dataset</em>, <em>attribute</em><big>)</big><a class="headerlink" href="#dataIF.getAllIds" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset that has the attribute</li>
+<li><strong>attribute</strong> (<em>string</em>) &#8211; The name of the attribute whose iss should be returned</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Returns a String[] list of all the ids of the items for that attribute</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Get all the ids of the items (as Strings) for attribute from dataset.    Returns an empty String[] on error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.getItem">
+<tt class="descclassname">dataIF.</tt><tt class="descname">getItem</tt><big>(</big><em>dataset</em>, <em>attribute</em>, <em>identifier</em><big>)</big><a class="headerlink" href="#dataIF.getItem" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset that has the attribute</li>
+<li><strong>attribute</strong> (<em>string</em>) &#8211; The name of the attribute whose item should be returned</li>
+<li><strong>identifier</strong> (<em>string</em>) &#8211; The id of the item to return</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Returns a String representation of the item with this id for that attribute</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Get the item (as a String) for attribute from dataset.  Returns an empty String on error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.getHighlightedId">
+<tt class="descclassname">dataIF.</tt><tt class="descname">getHighlightedId</tt><big>(</big><em>dataset</em><big>)</big><a class="headerlink" href="#dataIF.getHighlightedId" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Returns the id of the item in the dataset that is currently highlighted</td>
+</tr>
+</tbody>
+</table>
+<p>Get the id of the currently highlighted item in the dataset.  If none is highlighted, returns an
+empty string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataIF.getHoveredId">
+<tt class="descclassname">dataIF.</tt><tt class="descname">getHoveredId</tt><big>(</big><em>dataset</em><big>)</big><a class="headerlink" href="#dataIF.getHoveredId" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Returns the id of the item in the dataset that is currently hovered</td>
+</tr>
+</tbody>
+</table>
+<p>Get the id of the currently hovered item in the dataset.  If none is hovered, returns an
+empty string.</p>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="delv-api">
+<h2>Delv API<a class="headerlink" href="#delv-api" title="Permalink to this headline">¶</a></h2>
+<p id="delv-signals">Delv signals:</p>
+<ul class="simple">
+<li>categoryVisibilityChanged</li>
+<li>hoveredIdChanged</li>
+</ul>
+<dl class="data">
+<dt id="delv">
+<tt class="descname">delv</tt><a class="headerlink" href="#delv" title="Permalink to this definition">¶</a></dt>
+<dd><p>The delv interface provides signal handling capabilities for the delv signals and other custom signals that are registered with it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.log">
+<tt class="descclassname">delv.</tt><tt class="descname">log</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#delv.log" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>log</strong> (<em>string</em>) &#8211; a message to log</td>
+</tr>
+</tbody>
+</table>
+<p>In javascript, this will print the msg to the console.  In Processing, this is a call to
+println().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.getDataIF">
+<tt class="descclassname">delv.</tt><tt class="descname">getDataIF</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#delv.getDataIF" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> (<em>string</em>) &#8211; name of the requested dataIF instance</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a reference to a <a class="reference internal" href="#dataIF" title="dataIF"><tt class="xref py py-class docutils literal"><span class="pre">dataIF</span></tt></a> instance</td>
+</tr>
+</tbody>
+</table>
+<p>returns the reference to the requested dataIF instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.emitSignal">
+<tt class="descclassname">delv.</tt><tt class="descname">emitSignal</tt><big>(</big><em>signal</em>, <em>invoker</em>, <em>dataset</em>, <em>attribute</em><big>)</big><a class="headerlink" href="#delv.emitSignal" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>signal</strong> (<em>string</em>) &#8211; The name of the signal to emit</li>
+<li><strong>invoker</strong> (<em>string</em>) &#8211; The name of the object emitting the signal</li>
+<li><strong>dataset</strong> (<em>string</em>) &#8211; The name of the dataset pertaining to the reason the signal is emitted</li>
+<li><strong>attribute</strong> (<em>string</em>) &#8211; The name of the attribute pertaining to the reason the signal is emitted</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>emitSignal is a way for either the data interface to send signals to delv or for views to
+send custom, unrecognized signals through delv to the other views.  This is a good mechanism
+for sending signals that relate to changing features of the visualization unrelated to the data.
+For instance, to change paragraph alignment, an alignment selector view might send an
+<tt class="docutils literal"><span class="pre">alignmentChanged</span></tt> signal as follows:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="nx">delv</span><span class="p">.</span><span class="nx">emitSignal</span><span class="p">(</span><span class="s2">&quot;alignmentChanged&quot;</span><span class="p">,</span> <span class="s2">&quot;alignmentView&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where the dataset is left blank since it is not associated with a particular data set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.connectToSignal">
+<tt class="descclassname">delv.</tt><tt class="descname">connectToSignal</tt><big>(</big><em>signal</em>, <em>name</em>, <em>method</em><big>)</big><a class="headerlink" href="#delv.connectToSignal" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>signal</strong> (<em>string</em>) &#8211; The name of the signal, can be one of the delv <a class="reference internal" href="#delv-signals"><em>signals</em></a>, or a custom signal</li>
+<li><strong>name</strong> (<em>string</em>) &#8211; The name of the view whose method should be invoked when the signal has been emitted</li>
+<li><strong>method</strong> (<em>string</em>) &#8211; The name of the method which should be called when the signal has been emitted</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>connectToSignal registers the view&#8217;s name and method with delv&#8217;s signal handler.  Whenever the signal has been emitted, delv will invoke the registered methods as <tt class="samp docutils literal"><span class="pre">name.method(</span><em><span class="pre">invoker</span></em><span class="pre">,</span> <em><span class="pre">dataset</span></em><span class="pre">,</span> <em><span class="pre">attribute</span></em><span class="pre">);</span></tt> where invoker is the name of the object that emitted the signal, dataset is the name of the data set associated with the signal, and attribute is the name of the data attribute associated with the signal.</p>
+<blockquote>
+<div>To unregister a method from delv&#8217;s signal handler, use <a class="reference internal" href="#delv.disconnectFromSignal" title="delv.disconnectFromSignal"><tt class="xref py py-func docutils literal"><span class="pre">delv.disconnectFromSignal()</span></tt></a></div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.disconnectFromSignal">
+<tt class="descclassname">delv.</tt><tt class="descname">disconnectFromSignal</tt><big>(</big><em>signal</em>, <em>name</em><big>)</big><a class="headerlink" href="#delv.disconnectFromSignal" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>signal</strong> (<em>string</em>) &#8211; The name of the signal to disconnect from</li>
+<li><strong>name</strong> (<em>string</em>) &#8211; The name of the view whose method should no longer be invoked when the signal is emitted.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>disconnectFromSignal unregisters a view&#8217;s method from the delv&#8217;s signal handler for the given signal.</p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Only one method per view can be registered with a particular signal in delv.</p>
+</div>
+<dl class="method">
+<dt id="delv.addView">
+<tt class="descclassname">delv.</tt><tt class="descname">addView</tt><big>(</big><em>view</em>, <em>id</em><big>)</big><a class="headerlink" href="#delv.addView" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>view</strong> &#8211; the view instance to be added to Delv&#8217;s list of known views</li>
+<li><strong>id</strong> (<em>string</em>) &#8211; a string uniquely identifying this view instance</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the delv instance (to support method chaining)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Registers a view with Delv.  <a class="reference internal" href="#delv.d3Chart" title="delv.d3Chart"><tt class="xref py py-class docutils literal"><span class="pre">delv.d3Chart</span></tt></a> and <a class="reference internal" href="#delv.processingSketch" title="delv.processingSketch"><tt class="xref py py-class docutils literal"><span class="pre">delv.processingSketch</span></tt></a> both automatically register the view they construct with Delv, so this method <strong>does not</strong> need to be called for views constructed in this fashion.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.reloadData">
+<tt class="descclassname">delv.</tt><tt class="descname">reloadData</tt><big>(</big><em>source</em><big>)</big><a class="headerlink" href="#delv.reloadData" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; a string identifying who is calling reloadData</td>
+</tr>
+</tbody>
+</table>
+<p>Delv will tell all views to reloadData(source).  Call this when a data source has finished
+initial load or has changed.</p>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="delv-js-api">
+<h2>delv.js API<a class="headerlink" href="#delv-js-api" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt>
+<tt class="descname">delv</tt></dt>
+<dd><p>delv is a namespace implementing the delv interface that is created when delv.js is loaded.
+In addition to the basic delv API, delv.js also provides some helper functions to support
+using delv in an asynchronous environment and to ease the integration of visualizations written
+in Processing or D3.js.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.addDataIF">
+<tt class="descclassname">delv.</tt><tt class="descname">addDataIF</tt><big>(</big><em>dataIF</em>, <em>id</em><big>)</big><a class="headerlink" href="#delv.addDataIF" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataIF</strong> &#8211; reference to a <a class="reference internal" href="#dataIF" title="dataIF"><tt class="xref py py-class docutils literal"><span class="pre">dataIF</span></tt></a> instance</li>
+<li><strong>id</strong> (<em>string</em>) &#8211; unique name of the dataIF instance</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>addDataIF adds the dataIF to Delv&#8217;s list of dataSources and also connects the dataIF&#8217;s <a class="reference internal" href="#dataif-signals"><em>signals</em></a> to Delv&#8217;s signal handler.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.resizeAll">
+<tt class="descclassname">delv.</tt><tt class="descname">resizeAll</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.resizeAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Has delv resize all views based on the current window size.  Delv automatically registers resizeAll to listen for the SVGResize and resize events, so you should not need to call resizeAll yourself.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="class">
+<dt id="delv.d3Chart">
+<em class="property">class </em><tt class="descclassname">delv.</tt><tt class="descname">d3Chart</tt><big>(</big><em>elementId</em>, <em>script</em>, <em>viewConstructor</em>, <em>loadCompleteCallback</em><big>)</big><a class="headerlink" href="#delv.d3Chart" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>elementId</strong> (<em>string</em>) &#8211; ID of the html document element where the d3Chart should be drawn to.</li>
+<li><strong>script</strong> (<em>string</em>) &#8211; name of the javascript file containing the code implementing the view and view for this chart</li>
+<li><strong>viewConstructor</strong> (<em>string</em>) &#8211; name of the view constructor method that should be used to construct the view that will be drawing in this chart</li>
+<li><strong>loadCompleteCallback</strong> (<em>function</em>) &#8211; function to call when the script has finished loading and the view has been successfully constructed</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>d3Chart is a helper class that loads the given script on demand, constructs the specified view and tells it to draw in the given html element, and finally calls the loadCompleteCallback once all of this has been done successfully.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="class">
+<dt id="delv.processingSketch">
+<em class="property">class </em><tt class="descclassname">delv.</tt><tt class="descname">processingSketch</tt><big>(</big><em>canvas</em>, <em>sketchList</em>, <em>viewConstructor</em>, <em>loadCompleteCallback</em><big>)</big><a class="headerlink" href="#delv.processingSketch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>canvas</strong> (<em>string</em>) &#8211; ID of the html5 canvas element where the processing sketch should draw to.</li>
+<li><strong>sketchList</strong> (<em>string</em>) &#8211; list of the processing .pde files containing the code implementing the view, view and helper objects for this sketch</li>
+<li><strong>viewConstructor</strong> (<em>string</em>) &#8211; name of the view constructor method that should be used to construct the view that will be drawing this sketch</li>
+<li><strong>loadCompleteCallback</strong> (<em>function</em>) &#8211; function to call when the sketches have finished loading and the view has been successfully constructed</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>processingSketch is a helper class that loads the given processing .pde files on demand, constructs the specified view and tells it to draw in the given html5 canvas element, and finally calls the loadCompleteCallback once all of this has been done successfully.</p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Be sure to include DelvView.pde, Delv1DView.pde and Delv.pde in the sketchList</p>
+</div>
+<hr class="docutils" />
+<dl class="class">
+<dt id="delv.view">
+<em class="property">class </em><tt class="descclassname">delv.</tt><tt class="descname">view</tt><a class="headerlink" href="#delv.view" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="delv.view.dataIF">
+<tt class="descclassname">view.</tt><tt class="descname">dataIF</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.view.dataIF" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>string</em>) &#8211; The name of the data interface</td>
+</tr>
+</tbody>
+</table>
+<p>sets the view&#8217;s DataIF to the data interface with the given name</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.view.getName">
+<tt class="descclassname">view.</tt><tt class="descname">getName</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.view.getName" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.view.setName">
+<tt class="descclassname">view.</tt><tt class="descname">setName</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.view.setName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get and set the name of the view.</p>
+<p><strong>Supports method chaining</strong></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.view.connectSignals">
+<tt class="descclassname">view.</tt><tt class="descname">connectSignals</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.view.connectSignals" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default implementation has no signals connected.  This method is called by Delv once the view has been fully loaded in Javascript.  This is the recommended place to put calls to <a class="reference internal" href="#delv.connectToSignal" title="delv.connectToSignal"><tt class="xref py py-func docutils literal"><span class="pre">delv.connectToSignal()</span></tt></a> like:</p>
+</dd></dl>
+
+<div class="highlight-javascript"><div class="highlight"><pre><span class="nx">_delvIF</span><span class="p">.</span><span class="nx">connectToSignal</span><span class="p">(</span><span class="s2">&quot;categoryVisibilityChanged&quot;</span><span class="p">,</span> <span class="s2">&quot;YourViewName&quot;</span><span class="p">,</span> <span class="s2">&quot;YourVisibilityChangedCallback&quot;</span><span class="p">);</span>
+<span class="nx">_delvIF</span><span class="p">.</span><span class="nx">connectToSignal</span><span class="p">(</span><span class="s2">&quot;YourCustomSignal&quot;</span><span class="p">,</span> <span class="s2">&quot;YourViewName&quot;</span><span class="p">,</span> <span class="s2">&quot;YourCustomSignalCallback&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">See <a class="reference internal" href="#delv-signals"><em>delv signals</em></a> for a complete list of recognized Delv signals.</p>
+</div>
+<hr class="docutils" />
+<dl class="class">
+<dt id="delv.d3View">
+<em class="property">class </em><tt class="descclassname">delv.</tt><tt class="descname">d3View</tt><big>(</big><em>svgElem</em><big>)</big><a class="headerlink" href="#delv.d3View" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>svgElem</strong> (<em>string</em>) &#8211; the name of the svg element that the d3 view can modify and draw in</td>
+</tr>
+</tbody>
+</table>
+<p>the d3 view is a <a class="reference internal" href="#delv.view" title="delv.view"><tt class="xref py py-class docutils literal"><span class="pre">delv.view</span></tt></a> that additionally knows the name of the containing svg element that it is allowed to modify and draw in</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="class">
+<dt id="delv.d3HierarchyView">
+<em class="property">class </em><tt class="descclassname">delv.</tt><tt class="descname">d3HierarchyView</tt><big>(</big><em>svgElem</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>svgElem</strong> (<em>string</em>) &#8211; the name of the svg element that the d3 view can modify and draw in</td>
+</tr>
+</tbody>
+</table>
+<p>the d3 hierarchy view is a <a class="reference internal" href="#delv.d3View" title="delv.d3View"><tt class="xref py py-class docutils literal"><span class="pre">delv.d3View</span></tt></a> that knows how to convert attributes defining node size, node name, link start, and link end into the hierarchy data object recognized by d3 examples such as bar_hierarchy, force_collapsible, partition_sunburst_zoom, and tree_interactive</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getNodeDatasetName">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getNodeDatasetName</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getNodeDatasetName" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setNodeDatasetName">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setNodeDatasetName</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setNodeDatasetName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the dataset containing the node name and node size attributes.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getLinkDatasetName">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getLinkDatasetName</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getLinkDatasetName" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setLinkDatasetName">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setLinkDatasetName</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setLinkDatasetName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the dataset containing the link start and link end attributes.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getNodeSizeAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getNodeSizeAttr</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getNodeSizeAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setNodeSizeAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setNodeSizeAttr</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setNodeSizeAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the attribute that describes the node size.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getNodeNameAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getNodeNameAttr</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getNodeNameAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setNodeNameAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setNodeNameAttr</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setNodeNameAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the attribute that contains the unique identifiers for the nodes.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getLinkStartAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getLinkStartAttr</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getLinkStartAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setLinkStartAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setLinkStartAttr</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setLinkStartAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the attribute that contains the names of the nodes that are the start of each link.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.getLinkEndAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">getLinkEndAttr</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.getLinkEndAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="delv.d3HierarchyView.setLinkEndAttr">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">setLinkEndAttr</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.setLinkEndAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set the name of the attribute that contains the names of the nodes that are the end of each link.</p>
+<p><strong>Supports method chaining</strong>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="delv.d3HierarchyView.convertToHierarchy">
+<tt class="descclassname">d3HierarchyView.</tt><tt class="descname">convertToHierarchy</tt><big>(</big><big>)</big><a class="headerlink" href="#delv.d3HierarchyView.convertToHierarchy" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the node hierarchy in a data object that the d3 hierarchy views can accept as input to their bindData method</td>
+</tr>
+</tbody>
+</table>
+<p>Convert from node size, node name, link start and link end lists into a hierarchy of objects with name, tag, children, and size attributes.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="processing_tutorial.html" title="Using Delv with Processing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Delv Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">Delv 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Kris Zygmunt.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

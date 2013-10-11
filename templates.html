@@ -1,0 +1,579 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Code Templates &mdash; Delv 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Delv 1.0.0 documentation" href="index.html" />
+    <link rel="prev" title="Using Delv with D3.js" href="d3_tutorial.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="d3_tutorial.html" title="Using Delv with D3.js"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Delv 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Code Templates</a><ul>
+<li><a class="reference internal" href="#xhtml-layout-templates">xhtml Layout Templates</a></li>
+<li><a class="reference internal" href="#javascript-templates">Javascript Templates</a></li>
+<li><a class="reference internal" href="#processing-templates">Processing Templates</a></li>
+<li><a class="reference internal" href="#d3-templates">D3 Templates</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="d3_tutorial.html"
+                        title="previous chapter">Using Delv with D3.js</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/templates.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="code-templates">
+<h1>Code Templates<a class="headerlink" href="#code-templates" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">These templates assume that the files are organized in the same way as this <a class="reference internal" href="processing_tutorial.html#processing-project-layout"><em>processing project layout</em></a> or
+this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em>d3.js project layout</em></a>.  Adjust the templates to match your file organization.</p>
+</div>
+<div class="section" id="xhtml-layout-templates">
+<span id="xhtml-templates"></span><h2>xhtml Layout Templates<a class="headerlink" href="#xhtml-layout-templates" title="Permalink to this headline">¶</a></h2>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">Download <a class="reference download internal" href="_downloads/example_layout.xhtml"><tt class="xref download docutils literal"><span class="pre">example</span> <span class="pre">xhtml</span> <span class="pre">layout</span></tt></a></p>
+</div>
+<div class="highlight-xml"><div class="highlight"><pre><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="nt">&lt;html</span>
+   <span class="na">xmlns:dc=</span><span class="s">&quot;http://purl.org/dc/elements/1.1/&quot;</span>
+   <span class="na">xmlns:xlink=</span><span class="s">&quot;http://www.w3.org/1999/xlink&quot;</span> 
+   <span class="na">xmlns:svg=</span><span class="s">&quot;http://www.w3.org/2000/svg&quot;</span>
+   <span class="na">xmlns=</span><span class="s">&quot;http://www.w3.org/1999/xhtml&quot;</span>
+   <span class="na">xml:lang=</span><span class="s">&quot;en&quot;</span>   
+   <span class="na">lang=</span><span class="s">&quot;en&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+
+<span class="c">&lt;!-- Change the title to something appropriate for your website / --&gt;</span>
+<span class="c">&lt;!-- application --&gt;</span>
+<span class="nt">&lt;title&gt;</span>Example App<span class="nt">&lt;/title&gt;</span>
+
+<span class="c">&lt;!-- delv uses jquery --&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;jquery.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/jquery-1.7.2.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- include d3 if using d3.js --&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;d3.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/d3.v2.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- include processing if using processing.js --&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;processing.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/processing-1.4.0.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- include delv --&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;delv.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/delv.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- script containing the application-specific logic for connecting --&gt;</span>
+<span class="c">&lt;!-- to delv and configuring mediators. --&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;app.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/example_app.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+
+<span class="c">&lt;!-- Note that onload calls init() which should be defined in your app --&gt;</span>
+<span class="c">&lt;!-- script.  Also, the body onresize should call delv.resizeAll() --&gt;</span>
+<span class="c">&lt;!-- (or a custom function that also calls delv.resizeAll()) so that --&gt;</span>
+<span class="c">&lt;!-- each mediator/view can resize and redraw itself appropriately.--&gt;</span>
+<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">&quot;init()&quot;</span> <span class="na">onresize=</span><span class="s">&quot;delv.resizeAll()&quot;</span><span class="nt">&gt;</span>
+
+<span class="c">&lt;!-- Note that sizes are expressed as percentages in most places.  It --&gt;</span>
+<span class="c">&lt;!-- is possible to use pixels for sizing, at least for individual --&gt;</span>
+<span class="c">&lt;!-- divs within the layout. --&gt;</span>
+<span class="nt">&lt;div</span>
+  <span class="na">id=</span><span class="s">&quot;YourApp&quot;</span>
+  <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:100%;position:absolute&quot;</span><span class="nt">&gt;</span>
+
+  <span class="c">&lt;!-- create a layout with 4 d3.js views and 1 processing view --&gt;</span>
+  <span class="c">&lt;!-- ________________________________________________________ --&gt;</span>
+  <span class="c">&lt;!-- |                            |                         | --&gt;</span>
+  <span class="c">&lt;!-- |       d3 view 1            |        d3 view 2        | --&gt;</span>
+  <span class="c">&lt;!-- |                            |                         | --&gt;</span>
+  <span class="c">&lt;!-- ________________________________________________________ --&gt;</span>
+  <span class="c">&lt;!-- |                            |                         | --&gt;</span>
+  <span class="c">&lt;!-- |       d3 view 3            |        d3 view 4        | --&gt;</span>
+  <span class="c">&lt;!-- |                            |                         | --&gt;</span>
+  <span class="c">&lt;!-- ________________________________________________________ --&gt;</span>
+  <span class="c">&lt;!-- |                     processing view                  | --&gt;</span>
+  <span class="c">&lt;!-- ________________________________________________________ --&gt;</span>
+  <span class="c">&lt;!-- use style on the div to create the desired layout, then tell --&gt;</span>
+  <span class="c">&lt;!-- the svg elements to use 100% of the space they&#39;ve been --&gt;</span>
+  <span class="c">&lt;!-- allocated --&gt;</span>
+  
+  <span class="nt">&lt;div</span>
+    <span class="na">id =</span> <span class="s">&quot;d3_views&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:90%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- Note that the d3 views are svg elements --&gt;</span>
+ <span class="nt">&lt;div</span>
+    <span class="na">id =</span><span class="s">&quot;d3_view1_container&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:3%;left:3%;width:47%;height:47%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- if id matches the name of the mediator for this element, then --&gt;</span>
+    <span class="c">&lt;!-- the example_app.js can use this assumption to automatically --&gt;</span>
+    <span class="c">&lt;!-- construct the mediator based on element id.  Otherwise, will --&gt;</span>
+    <span class="c">&lt;!-- need to pass in the name of the desired mediator to a --&gt;</span>
+    <span class="c">&lt;!-- javascript construction function of some sort. --&gt;</span>
+    <span class="c">&lt;!-- In this case, construct a partition_sunburst_zoom_mediator --&gt;</span>
+    <span class="nt">&lt;svg:svg</span>
+       <span class="na">id=</span><span class="s">&quot;partition_sunburst_zoom&quot;</span>
+       <span class="na">class=</span><span class="s">&quot;d3&quot;</span>
+       <span class="na">x=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">y=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">width=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">height=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">version=</span><span class="s">&quot;1.1&quot;</span>
+       <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;position:absolute&quot;</span><span class="nt">&gt;</span>
+   <span class="nt">&lt;/svg:svg&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;div</span>
+    <span class="na">id =</span><span class="s">&quot;d3_view2_container&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:3%;left:50%;width:47%;height:47%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;svg:svg</span>
+       <span class="na">id=</span><span class="s">&quot;bar_hierarchy&quot;</span>
+       <span class="na">class=</span><span class="s">&quot;d3&quot;</span>
+       <span class="na">x=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">y=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">width=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">height=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">version=</span><span class="s">&quot;1.1&quot;</span>
+       <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/svg:svg&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;div</span>
+    <span class="na">id =</span><span class="s">&quot;d3_view3_container&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:50%;left:3%;width:47%;height:47%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;svg:svg</span>
+       <span class="na">id=</span><span class="s">&quot;force_collapsible&quot;</span>
+       <span class="na">class=</span><span class="s">&quot;d3&quot;</span>
+       <span class="na">x=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">y=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">width=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">height=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">version=</span><span class="s">&quot;1.1&quot;</span>
+       <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;position:absolute&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;/svg:svg&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;div</span>
+    <span class="na">id =</span><span class="s">&quot;d3_view4_container&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:50%;left:50%;width:47%;height:47%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;svg:svg</span>
+       <span class="na">id=</span><span class="s">&quot;tree_interactive&quot;</span>
+       <span class="na">class=</span><span class="s">&quot;d3&quot;</span>
+       <span class="na">x=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">y=</span><span class="s">&quot;0%&quot;</span>
+       <span class="na">width=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">height=</span><span class="s">&quot;100%&quot;</span>
+       <span class="na">version=</span><span class="s">&quot;1.1&quot;</span>
+       <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;position:absolute&quot;</span><span class="nt">&gt;</span>
+   <span class="nt">&lt;/svg:svg&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+    <span class="c">&lt;!-- Note that the processing views are canvas elements --&gt;</span>
+    <span class="nt">&lt;div</span>
+    <span class="na">id =</span> <span class="s">&quot;processing_views&quot;</span>
+    <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:1;top:90%;left:0;width:100%;height:10%;position:absolute&quot;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- if id matches the name of the mediator for this element, then --&gt;</span>
+    <span class="c">&lt;!-- the example_app.js can use this assumption to automatically --&gt;</span>
+    <span class="c">&lt;!-- construct the mediator based on element id.  Otherwise, will --&gt;</span>
+    <span class="c">&lt;!-- need to pass in the name of the desired mediator to a --&gt;</span>
+    <span class="c">&lt;!-- javascript construction function of some sort. --&gt;</span>
+    <span class="c">&lt;!-- In this case, construct a RegionMediator --&gt;</span>
+    <span class="nt">&lt;div</span>
+      <span class="na">id=</span><span class="s">&quot;processing_view_container&quot;</span>
+      <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:95%;position:absolute&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;canvas</span>
+      <span class="na">id=</span><span class="s">&quot;Region&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+
+      <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="javascript-templates">
+<span id="id1"></span><h2>Javascript Templates<a class="headerlink" href="#javascript-templates" title="Permalink to this headline">¶</a></h2>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">Download <a class="reference download internal" href="_downloads/example_app.js"><tt class="xref download docutils literal"><span class="pre">example</span> <span class="pre">javascript</span> <span class="pre">app</span> <span class="pre">utilities</span></tt></a></p>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="c1">// ======================================================================</span>
+<span class="c1">// Copyright (c) 2013, Scientific Computing and Imaging Institute,</span>
+<span class="c1">// University of Utah. All rights reserved.</span>
+<span class="c1">// Author: Kris Zygmunt</span>
+<span class="c1">// License: New BSD 3-Clause (see accompanying LICENSE file for details)</span>
+<span class="c1">// ======================================================================</span>
+
+<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;entering init&quot;</span><span class="p">);</span>
+  <span class="nx">dataLoaded</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="nx">d3Array</span> <span class="o">=</span> <span class="nb">Array</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagNameNS</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span><span class="s2">&quot;svg&quot;</span><span class="p">));</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">d3Array</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">d3Array</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">svgElem</span> <span class="o">=</span> <span class="nx">d3Array</span><span class="p">[</span><span class="nx">j</span><span class="p">];</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;loading script: &quot;</span> <span class="o">+</span> <span class="s2">&quot;./&quot;</span> <span class="o">+</span> <span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;.js&quot;</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">chart</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">delv</span><span class="p">.</span><span class="nx">d3Chart</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="s2">&quot;./&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;.js&quot;</span><span class="p">,</span> <span class="s2">&quot;d3WrapperNS.&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;_view&quot;</span><span class="p">,</span> <span class="nx">init_view_instance</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nx">canvasArray</span> <span class="o">=</span> <span class="nb">Array</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagNameNS</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span><span class="s2">&quot;canvas&quot;</span><span class="p">));</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">canvasArray</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">canvasArray</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">canvas</span> <span class="o">=</span> <span class="nx">canvasArray</span><span class="p">[</span><span class="nx">j</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">sketch</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">delv</span><span class="p">.</span><span class="nx">processingSketch</span><span class="p">(</span><span class="nx">canvas</span><span class="p">,</span>
+					    <span class="p">[</span><span class="s2">&quot;./Globals.pde&quot;</span><span class="p">,</span>
+					     <span class="s2">&quot;./Attribute.pde&quot;</span><span class="p">,</span>
+					     <span class="s2">&quot;./DelvView.pde&quot;</span><span class="p">,</span>
+						   <span class="s2">&quot;./Delv1DView.pde&quot;</span><span class="p">,</span>
+						   <span class="s2">&quot;./Delv2DView.pde&quot;</span><span class="p">,</span>
+						   <span class="s2">&quot;./DelvCategoryView.pde&quot;</span><span class="p">,</span>
+					     <span class="s2">&quot;./Delv.pde&quot;</span><span class="p">,</span>
+					     <span class="s2">&quot;./BasicRegion.pde&quot;</span><span class="p">,</span> <span class="c1">// currently only needed for the RegionView</span>
+					     <span class="s2">&quot;./&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;.pde&quot;</span><span class="p">],</span>
+					    <span class="nx">id</span><span class="o">+</span><span class="s2">&quot;View&quot;</span><span class="p">,</span>
+					    <span class="nx">init_view_instance</span><span class="p">);</span>
+  <span class="p">}</span>     
+
+  <span class="c1">// TODO just a demonstration of how to send a signal back to Python</span>
+  <span class="nx">$</span><span class="p">(</span> <span class="nb">document</span> <span class="p">).</span><span class="nx">bind</span><span class="p">(</span><span class="s2">&quot;testEventForPython&quot;</span><span class="p">,</span> <span class="nx">emitPythonEvent</span><span class="p">);</span>
+
+  <span class="c1">// TODO to get behavior working like releasing a scroll bar while not over a particular view,</span>
+  <span class="c1">// may need to catch the document-level mouse released event and forward it on to all views</span>
+  <span class="c1">// otherwise when mouse is moved back into that view, the view will be behaving as if the mouse is still pressed</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">dataIF</span><span class="p">)</span> <span class="o">===</span> <span class="s2">&quot;undefined&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// dataCanvasId = &quot;d3DemoData&quot;</span>
+    <span class="c1">// var canvas = document.createElement(&#39;canvas&#39;);</span>
+    <span class="c1">// canvas.id     = dataCanvasId;</span>
+    <span class="c1">// canvas.width  = 0;</span>
+    <span class="c1">// canvas.height = 0;</span>
+    <span class="c1">// canvas.style.zIndex   = 8;</span>
+    <span class="c1">// document.body.appendChild(canvas);</span>
+
+    <span class="c1">// Processing.loadSketchFromSources(dataCanvasId,</span>
+		<span class="c1">// 			 [&quot;./Globals.pde&quot;,</span>
+		<span class="c1">// 				&quot;./DelvBasicData.pde&quot;,</span>
+		<span class="c1">// 				&quot;./DelvColorMap.pde&quot;,</span>
+		<span class="c1">// 				&quot;./DelvEnums.java&quot;,</span>
+		<span class="c1">// 			  &quot;./d3DemoData.pde&quot;]);</span>
+	  <span class="c1">// setTimeout(finishLoadingData, 50);</span>
+    <span class="nx">dataIF</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">d3WrapperNS</span><span class="p">.</span><span class="nx">d3_demo_data</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+    <span class="nx">dataIF</span><span class="p">.</span><span class="nx">load_data</span><span class="p">();</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">giveDataIFToViews</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">reloadData</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+    
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">addDataIF</span><span class="p">(</span><span class="nx">dataIF</span><span class="p">,</span> <span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nx">resizeAll</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">finishLoadingData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">p</span> <span class="o">=</span> <span class="nx">Processing</span><span class="p">.</span><span class="nx">getInstanceById</span><span class="p">(</span><span class="nx">dataCanvasId</span><span class="p">);</span>
+  <span class="k">try</span> <span class="p">{</span>
+	  <span class="nx">pDataIF</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">p</span><span class="p">.</span><span class="nx">d3DemoData</span><span class="p">();</span>
+	  <span class="nx">dataLoaded</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+	  <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Test data initialized!!!&quot;</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+	  <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;initializing Test data failed.  Try again later&quot;</span><span class="p">);</span>
+	  <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">finishLoadingData</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+	  <span class="nx">dataLoaded</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">dataLoaded</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">pDataIF</span><span class="p">.</span><span class="nx">loadData</span><span class="p">();</span>
+    <span class="nx">pDataIF</span><span class="p">.</span><span class="nx">setDelvIF</span><span class="p">(</span><span class="nx">delv</span><span class="p">);</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">addDataIF</span><span class="p">(</span><span class="nx">pDataIF</span><span class="p">,</span> <span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">giveDataIFToViews</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">reloadData</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+  <span class="p">}</span>  
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">init_view_instance</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">elemId</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;init_view_instance(&quot;</span> <span class="o">+</span> <span class="nx">view</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="nx">elemId</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span>
+  <span class="nx">view</span><span class="p">.</span><span class="nx">dataIF</span><span class="p">(</span><span class="s2">&quot;d3Demo&quot;</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">elemId</span> <span class="o">==</span> <span class="s2">&quot;Region&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;init_view_instance Region setup&quot;</span><span class="p">);</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">name</span><span class="p">(</span><span class="s2">&quot;d3Demo.Region&quot;</span><span class="p">);</span>
+    <span class="nx">aboveDataset</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">createDataset</span><span class="p">(</span><span class="s2">&quot;Nodes&quot;</span><span class="p">);</span>
+    <span class="nx">aboveDataset</span><span class="p">.</span><span class="nx">barStartAttr</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">barTagAttr</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">units</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">defaultRegionType</span><span class="p">(</span><span class="s2">&quot;allNodes&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">defaultBarHeight</span><span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">defaultBarLength</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">defaultBarType</span><span class="p">(</span><span class="s2">&quot;node&quot;</span><span class="p">);</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">addDataset</span><span class="p">(</span><span class="nx">aboveDataset</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">elemId</span> <span class="o">==</span> <span class="s2">&quot;partition_sunburst_zoom&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="s2">&quot;d3Demo.partition_sunburst_zoom&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeDatasetName</span><span class="p">(</span><span class="s2">&quot;Nodes&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkDatasetName</span><span class="p">(</span><span class="s2">&quot;Links&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeSizeAttr</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeNameAttr</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkStartAttr</span><span class="p">(</span><span class="s2">&quot;StartNode&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkEndAttr</span><span class="p">(</span><span class="s2">&quot;EndNode&quot;</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">elemId</span> <span class="o">==</span> <span class="s2">&quot;force_collapsible&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="s2">&quot;d3Demo.force_collapsible&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeDatasetName</span><span class="p">(</span><span class="s2">&quot;Nodes&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkDatasetName</span><span class="p">(</span><span class="s2">&quot;Links&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeSizeAttr</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeNameAttr</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkStartAttr</span><span class="p">(</span><span class="s2">&quot;StartNode&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkEndAttr</span><span class="p">(</span><span class="s2">&quot;EndNode&quot;</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">elemId</span> <span class="o">==</span> <span class="s2">&quot;bar_hierarchy&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="s2">&quot;d3Demo.bar_hierarchy&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeDatasetName</span><span class="p">(</span><span class="s2">&quot;Nodes&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkDatasetName</span><span class="p">(</span><span class="s2">&quot;Links&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeSizeAttr</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeNameAttr</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkStartAttr</span><span class="p">(</span><span class="s2">&quot;StartNode&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkEndAttr</span><span class="p">(</span><span class="s2">&quot;EndNode&quot;</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">elemId</span> <span class="o">==</span> <span class="s2">&quot;tree_interactive&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="s2">&quot;d3Demo.tree_interactive&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeDatasetName</span><span class="p">(</span><span class="s2">&quot;Nodes&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkDatasetName</span><span class="p">(</span><span class="s2">&quot;Links&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeSizeAttr</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setNodeNameAttr</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkStartAttr</span><span class="p">(</span><span class="s2">&quot;StartNode&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">setLinkEndAttr</span><span class="p">(</span><span class="s2">&quot;EndNode&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// if (dataLoaded) {</span>
+    <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;init_view_instance reloadData&quot;</span><span class="p">);</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">reloadData</span><span class="p">(</span><span class="s2">&quot;d3Demo.js&quot;</span><span class="p">);</span>
+  <span class="c1">// }</span>
+  <span class="nx">delv</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;init_view_instance resizeAll&quot;</span><span class="p">);</span>
+  <span class="nx">resizeAll</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">logEvent</span><span class="p">(</span><span class="nx">evt</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Event &quot;</span> <span class="o">+</span> <span class="nx">evt</span> <span class="o">+</span> <span class="s2">&quot; logged.&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">resizeAll</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">delv</span><span class="p">.</span><span class="nx">resizeAll</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">// kept around in case we need to do this in the future, but not used really right now</span>
+<span class="kd">function</span> <span class="nx">emitPythonEvent</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">QtWin</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;undefined&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="o">===</span> <span class="s2">&quot;object&quot;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;QtWin: &quot;</span> <span class="o">+</span> <span class="nx">QtWin</span> <span class="o">+</span> <span class="s2">&quot;, event(&quot;</span> <span class="o">+</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;): &quot;</span> <span class="o">+</span> <span class="nx">name</span><span class="p">);</span>
+      <span class="nx">QtWin</span><span class="p">.</span><span class="nx">emitEvent</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">args</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;QtWin: &quot;</span> <span class="o">+</span> <span class="nx">QtWin</span> <span class="o">+</span> <span class="s2">&quot;, event(&quot;</span> <span class="o">+</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;): &quot;</span> <span class="o">+</span> <span class="nx">e</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
+      <span class="nx">QtWin</span><span class="p">.</span><span class="nx">emitEvent</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span> <span class="nx">args</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;No QtWin yet&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="processing-templates">
+<span id="id2"></span><h2>Processing Templates<a class="headerlink" href="#processing-templates" title="Permalink to this headline">¶</a></h2>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">Download <a class="reference download internal" href="_downloads/processing_template.pde"><tt class="xref download docutils literal"><span class="pre">example</span> <span class="pre">processing</span> <span class="pre">template</span></tt></a></p>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">///////////////////////////////////</span>
+<span class="c1">//              View             //</span>
+<span class="c1">///////////////////////////////////</span>
+
+<span class="c1">// EDIT: search and replace YourView with the name of your view</span>
+
+<span class="c1">// NOTE: extend DelvBasicView which implements DelvView to get some common delv and processing.js functionality, or extend DelvCategoryView to get additional functionality when visualizing the categories of a dataset</span>
+
+<span class="kd">class</span> <span class="nc">YourView</span> <span class="kd">extends</span> <span class="n">DelvCategoryView</span> <span class="o">{</span>
+  <span class="c1">// EDIT: add any view member variables</span>
+  <span class="c1">// String[] choices;</span>
+  <span class="c1">// boolean[] choices_selected;</span>
+
+  <span class="n">YourView</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// EDIT: provide a more appropriate default name for the view</span>
+    <span class="k">this</span><span class="o">(</span><span class="s">&quot;DefaultName&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="n">YourView</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// NOTE: be sure to call the superclass&#39;s constructor</span>
+    <span class="kd">super</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+    <span class="c1">// EDIT: any other appropriate initialization</span>
+    <span class="n">choices</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+    <span class="n">choices_selected</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">boolean</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+    <span class="n">textFont</span><span class="o">(</span> <span class="n">_verdana_font_12</span> <span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="c1">// EDIT: add any other getters and setters for view variables</span>
+
+  <span class="c1">// EDIT: implement the methods that the will pass data to be visualized</span>
+  <span class="kt">void</span> <span class="nf">setChoices</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">new_choices</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">choices</span> <span class="o">=</span> <span class="n">new_choices</span><span class="o">;</span>
+    <span class="n">choices_selected</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">boolean</span><span class="o">[</span><span class="n">choices</span><span class="o">.</span><span class="na">length</span><span class="o">];</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">choices</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">choices_selected</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="c1">// NOTE: when this is used in processing.js, the normal draw cycle doesn&#39;t happen as expected.</span>
+    <span class="c1">// therefore, you should call redraw() explicitly when the data or visualization has changed.</span>
+    <span class="n">redraw</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">setSelectedChoices</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">selected_choices</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">choices</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">choices_selected</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">selected_choices</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="o">++</span><span class="n">j</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">selected_choices</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">equals</span><span class="o">(</span><span class="n">choices</span><span class="o">[</span><span class="n">i</span><span class="o">]))</span> <span class="o">{</span>
+          <span class="n">choices_selected</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="c1">// NOTE: when this is used in processing.js, the normal draw cycle doesn&#39;t happen as expected.</span>
+    <span class="c1">// therefore, you should call redraw() explicitly when the data or visualization has changed.</span>
+    <span class="n">redraw</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="c1">// NOTE: The parent class View&#39;s draw() method takes care of setting the background</span>
+  <span class="c1">// and translating to _origin.</span>
+  <span class="c1">// After the translation, draw will call render() which should be overridden here.</span>
+  <span class="c1">// After render() has completed, draw will translate back from _origin.</span>
+  <span class="kt">void</span> <span class="nf">render</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// EDIT: draw stuff here!</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">setup</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// EDIT: implement as you would any Processing setup method</span>
+  <span class="o">}</span>
+
+  <span class="c1">// EDIT: The parent class implements resize by setting _w and _h, and calling redraw()</span>
+  <span class="c1">// reimplement resize here if this is insufficient for your purposes.</span>
+
+  <span class="kt">void</span> <span class="nf">mouseMovedInView</span><span class="o">(</span><span class="kt">int</span> <span class="n">mx</span><span class="o">,</span> <span class="kt">int</span> <span class="n">my</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// EDIT: handle mouse move events</span>
+    <span class="c1">// NOTE: remember to call redraw() explicitly to ensure that the visualization is updated</span>
+    <span class="c1">// for processing.js</span>
+    <span class="c1">// NOTE: remember to notify DelvBasicView if some event has happened (like a hover has occurred)</span>
+    <span class="c1">// so that the View can notify the world.</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">mousePressedInView</span><span class="o">(</span><span class="kt">int</span> <span class="n">mx</span><span class="o">,</span> <span class="kt">int</span> <span class="n">my</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">rightPressed</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// EDIT: handle mouse press events</span>
+    <span class="c1">// NOTE: remember to call redraw() explicitly to ensure that the visualization is updated</span>
+    <span class="c1">// for processing.js</span>
+    <span class="c1">// NOTE: remember to notify DelvBasicView if some event has happened (like a hover has occurred)</span>
+    <span class="c1">// so that the View can notify the world.</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">mouseReleasedInView</span><span class="o">(</span><span class="kt">int</span> <span class="n">mx</span><span class="o">,</span> <span class="kt">int</span> <span class="n">my</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// EDIT: handle mouse release events</span>
+    <span class="c1">// NOTE: remember to call draw() explicitly to ensure that the visualization is updated</span>
+    <span class="c1">// for processing.js</span>
+    <span class="c1">// NOTE: remember to notify DelvBasicView if some event has happened (like a hover has occurred)</span>
+    <span class="c1">// so that the View can notify the world.</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">mouseDraggedInView</span><span class="o">(</span><span class="kt">int</span> <span class="n">mx</span><span class="o">,</span> <span class="kt">int</span> <span class="n">my</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// EDIT: handle mouse drag events</span>
+    <span class="c1">// NOTE: remember to call draw() explicitly to ensure that the visualization is updated</span>
+    <span class="c1">// for processing.js</span>
+    <span class="c1">// NOTE: remember to notify DelvBasicView if some event has happened (like a hover has occurred)</span>
+    <span class="c1">// so that the View can notify the world.</span>
+  <span class="o">}</span>
+
+  <span class="kt">void</span> <span class="nf">mouseScrolledInView</span><span class="o">(</span><span class="kt">int</span> <span class="n">wr</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// EDIT: handle mouse scroll events</span>
+    <span class="c1">// NOTE: remember to call draw() explicitly to ensure that the visualization is updated</span>
+    <span class="c1">// for processing.js</span>
+    <span class="c1">// NOTE: remember to notify DelvBasicView if some event has happened (like a hover has occurred)</span>
+    <span class="c1">// so that the View can notify the world.</span>
+  <span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="d3-templates">
+<span id="id3"></span><h2>D3 Templates<a class="headerlink" href="#d3-templates" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="d3_tutorial.html" title="Using Delv with D3.js"
+             >previous</a> |</li>
+        <li><a href="index.html">Delv 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Kris Zygmunt.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>
