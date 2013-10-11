@@ -2,13 +2,13 @@
 Welcome
 #######
 
-.. todo::
-   Add an overview of Delv's purpose
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 1
 
    intro
+   examples
    API
    processing_tutorial
    d3_tutorial
