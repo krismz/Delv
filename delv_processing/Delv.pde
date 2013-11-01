@@ -8,6 +8,7 @@
 // classes and interfaces used to talk back and forth between javascript and processing
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map.Entry;
 
 interface Delv {
   void log(String msg);
@@ -26,14 +27,17 @@ interface Delv {
 class DelvImpl implements Delv {
   DelvData dataIF;
   HashMap<String, DelvView> views;
+  HashMap< String, HashMap<String, String> > signalHandlers;
 
   DelvImpl() {
     views = new HashMap<String, DelvView>();
+    signalHandlers = new HashMap< String, HashMap<String, String> >();
   }
 
   DelvImpl(DelvData dataInt) {
     dataIF = dataInt;
     views = new HashMap<String, DelvView>();
+    signalHandlers = new HashMap< String, HashMap<String, String> >();
   }
 
   void log(String msg) {
@@ -56,10 +60,37 @@ class DelvImpl implements Delv {
 
   void emitSignal(String signal, String invoker, String dataset, String attribute) {
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset + " and attribute " + attribute);
-    // TODO fix this hack
-    if (signal.equals("dataUpdated")) {
-      for (DelvView view : views.values()) {
-        view.onDataUpdated(invoker, dataset, attribute);
+    Class[] params = new Class[3];
+    params[0] = invoker.getClass();
+    params[1] = dataset.getClass();
+    params[2] = attribute.getClass();
+    Object[] args = new Object[3];
+    args[0] = invoker;
+    args[1] = dataset;
+    args[2] = attribute;
+    // TODO Bug in Processing, following entrySet syntax doesn't compile.
+    // iterating on just keys for now instead
+    //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
+    for (String key: signalHandlers.get(signal).keySet()) {
+      // since we don't have entrySet yet, do the following instead:
+      // view = views.get(entry.getKey());
+      DelvView view = views.get(key);
+      try {
+        // since we don't have entrySet yet, do the following instead:
+        //Method m = view.getClass().getMethod(entry.getValue(), params);
+        Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+        m.invoke(view, args);
+      } catch (IllegalArgumentException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        e.getTargetException().printStackTrace();
+      } catch (NoSuchMethodException nsme) {
+        System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
+                         "in the class " + view.getClass().getName());
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
@@ -73,10 +104,37 @@ class DelvImpl implements Delv {
       }
     }
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset + " and attributes " + attrMesg + " after " + (millis()/1000.0) + " seconds");
-    // TODO fix this hack
-    if (signal.equals("dataUpdated")) {
-      for (DelvView view : views.values()) {
-        view.onDataUpdated(invoker, dataset, attributes);
+    Class[] params = new Class[3];
+    params[0] = invoker.getClass();
+    params[1] = dataset.getClass();
+    params[2] = attributes.getClass();
+    Object[] args = new Object[3];
+    args[0] = invoker;
+    args[1] = dataset;
+    args[2] = attributes;
+    // TODO Bug in Processing, following entrySet syntax doesn't compile.
+    // iterating on just keys for now instead
+    //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
+    for (String key: signalHandlers.get(signal).keySet()) {
+      // since we don't have entrySet yet, do the following instead:
+      // view = views.get(entry.getKey());
+      DelvView view = views.get(key);
+      try {
+        // since we don't have entrySet yet, do the following instead:
+        //Method m = view.getClass().getMethod(entry.getValue(), params);
+        Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+        m.invoke(view, args);
+      } catch (IllegalArgumentException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        e.getTargetException().printStackTrace();
+      } catch (NoSuchMethodException nsme) {
+        System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
+                         "in the class " + view.getClass().getName());
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
@@ -84,10 +142,17 @@ class DelvImpl implements Delv {
   void connectToSignal(String signal, String name, String method) {
     // TODO figure out how to support callbacks in Java version of Processing (require a naming convention etc?)
     log("Connecting " + signal + " to " + name + "." + method);
+    if (!signalHandlers.containsKey(signal)) {
+      signalHandlers.put(signal, new HashMap<String, String>());
+    }
+    signalHandlers.get(signal).put(name, method);
   }
 
   void disconnectFromSignal(String signal, String name) {
     log("Disconnecting " + signal + " from " + name);
+    if (signalHandlers.containsKey(signal) && signalHandlers.get(signal).containsKey(name)) {
+      signalHandlers.get(signal).remove(name);
+    }
   }
 
   void addView(DelvView view, String name) {
