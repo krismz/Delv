@@ -23,10 +23,6 @@ function init() {
     var sketch = new delv.processingSketch(canvas,
 					    ["./Globals.pde",
 					     "./Attribute.pde",
-					     "./DelvView.pde",
-						   "./Delv1DView.pde",
-						   "./Delv2DView.pde",
-						   "./DelvCategoryView.pde",
 					     "./Delv.pde",
 					     "./BasicRegion.pde", // currently only needed for the RegionView
 					     "./"+id+".pde"],
@@ -52,9 +48,7 @@ function init() {
 
     // Processing.loadSketchFromSources(dataCanvasId,
 		// 			 ["./Globals.pde",
-		// 				"./DelvBasicData.pde",
-		// 				"./DelvColorMap.pde",
-		// 				"./DelvEnums.java",
+		// 				"./Delv.pde",
 		// 			  "./d3DemoData.pde"]);
 	  // setTimeout(finishLoadingData, 50);
     dataIF = new d3WrapperNS.d3_demo_data("d3Demo");
@@ -63,7 +57,7 @@ function init() {
     delv.reloadData("d3Demo");
     
   } else {
-    delv.addDataIF(dataIF, "d3Demo");
+    delv.addDataIF(dataIF);
   }
 
   resizeAll();
@@ -72,7 +66,7 @@ function init() {
 function finishLoadingData() {
   p = Processing.getInstanceById(dataCanvasId);
   try {
-	  pDataIF = new p.d3DemoData();
+	  pDataIF = new p.d3DemoData("d3Demo");
 	  dataLoaded = true;
 	  delv.log("Test data initialized!!!");
   } catch (e) {
@@ -83,7 +77,7 @@ function finishLoadingData() {
   if (dataLoaded) {
     pDataIF.loadData();
     pDataIF.setDelvIF(delv);
-    delv.addDataIF(pDataIF, "d3Demo");
+    delv.addDataIF(pDataIF);
     delv.giveDataIFToViews("d3Demo");
     delv.reloadData("d3Demo");
   }  

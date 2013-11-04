@@ -25,8 +25,8 @@ NER.setMongoDBServer = function (val) {
     return localStorage.setItem('NER:mongodb-server', val);
 };
 
-NER.dataIF = function() {
-  var newIF = new delv.data();
+NER.dataIF = function(name) {
+  var newIF = new delv.data(name);
   newIF.setDelvIF(delv);
   // TODO extend basic js dataIF
 
@@ -126,13 +126,13 @@ NER.dataIF = function() {
   return newIF;
 }; // end NER.dataIF
 
-NER.data = new NER.dataIF();
+NER.data = new NER.dataIF("NER");
 
 // "nodes" is a table of entity names, mapping to an array position generated
 // uniquely by the "counter" variable.  Once the table is complete, the nodes
 // table can be recast into an array.
 NER.data.initTables();
-delv.addDataIF(NER.data, "NER");
+delv.addDataIF(NER.data);
 // NER.nodes = {};
 // NER.links = {};
 // NER.counter = 0;
@@ -678,10 +678,6 @@ window.onload = function () {
           delv.processingSketch(canvas, 
                                  ["./views/Globals.pde",
 					                        "./views/Attribute.pde",
-					                        "./views/DelvView.pde",
-						                      "./views/Delv1DView.pde",
-						                      "./views/Delv2DView.pde",
-						                      "./views/DelvCategoryView.pde",
 					                        "./views/Delv.pde",
 					                        "./views/ColorPickerLegend.pde"],
 					                       "ColorPickerLegendView",
@@ -697,10 +693,6 @@ window.onload = function () {
           delv.processingSketch(canvas, 
                                  ["./views/Globals.pde",
 					                        "./views/Attribute.pde",
-					                        "./views/DelvView.pde",
-						                      "./views/Delv1DView.pde",
-						                      "./views/Delv2DView.pde",
-						                      "./views/DelvCategoryView.pde",
 					                        "./views/Delv.pde",
 					                        "./views/BasicRegion.pde", // currently only needed for the RegionView
 					                        "./views/Region.pde"],

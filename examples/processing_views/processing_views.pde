@@ -28,7 +28,7 @@ void testTemplate200() {
   size(750,750);
   Template200View view = new Template200View("template 200");
   _view = view;
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   ((DelvBasicData)_dataIF).setDelvIF(_delv);
@@ -49,7 +49,7 @@ void testSparkline() {
   size(1300,30);
   SparklineView view = new SparklineView("sparkline");
   _view = view;
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   ((DelvBasicData)_dataIF).setDelvIF(_delv);
@@ -74,7 +74,7 @@ void testInsite() {
   _barView = new BarHeightView(name+"BarHeight");
   _alignView = new AlignmentView(name+"Alignment");
 
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);
@@ -383,7 +383,7 @@ void redraw() {
 void testInsiteView() {
   InSiteView insite_view = new InSiteView();
   _view = insite_view;
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   DelvImpl _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);
@@ -403,7 +403,7 @@ void testRegion(int x_origin, int y_origin,
   RegionView view = new RegionView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);
@@ -461,7 +461,7 @@ void testDropDown(int x_origin, int y_origin,
   _view = view;
   ((DelvBasicView)_view).setOrigin(x_origin, y_origin);
   view.setBackgroundColor(205);
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);
@@ -484,7 +484,7 @@ void testColorPickerLegend(int x_origin, int y_origin) {
   ColorPickerLegendView view = new ColorPickerLegendView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);
@@ -503,7 +503,7 @@ void testColorLegendWithDropdown(int x_origin, int y_origin) {
   ColorLegendWithDropdownView view = new ColorLegendWithDropdownView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData();
+  InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
   Delv _delv = new DelvImpl(_dataIF);
   _dataIF.setDelvIF(_delv);

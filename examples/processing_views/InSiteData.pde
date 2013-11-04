@@ -7,6 +7,10 @@
 
 class InSiteData extends DelvBasicData {
 
+  InSiteData(String name) {
+    super(name);
+  }
+
   // overridden functions
   void loadData() {
     load_from_file("./test_data/config.txt");

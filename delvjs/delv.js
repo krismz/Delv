@@ -447,9 +447,9 @@ var Processing = Processing || {};
     }
   };
 
-  delv.addDataIF = function (dataIF, id) {
-    console.log("Adding dataIF: " + id);
-    dataSources[id] = dataIF;
+  delv.addDataIF = function (dataIF) {
+    console.log("Adding dataIF: " + dataIF.getName());
+    dataSources[dataIF.getName()] = dataIF;
     // TODO, the current new way is to have the dataIF call delv.emitSignal, but this requires delv and dataIF to each know about the other.  Is it ok to have them so closely coupled?
     return delv;
   };
@@ -539,9 +539,18 @@ var Processing = Processing || {};
   delv.dataSetException.prototype = new delv.exception();
 
   // a basic implementation of the delv data interface
-  delv.data = function() {
+  delv.data = function(nm) {
     var delvIF = {};
     var data = {};
+    var name = nm;
+
+    this.setName = function(nm) {
+      name = nm;
+      return this;
+    };
+    this.getName = function() {
+      return name;
+    };
 
     this.setDelvIF = function(dlv) {
       delvIF = dlv;

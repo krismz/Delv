@@ -18,23 +18,14 @@ function init() {
 	// temp hack to try programming data interface in processing
         Processing.loadSketchFromSources(canvas,
 					 ["./Globals.pde",
-						"./DelvBasicData.pde",
-						"./DelvColorMap.pde",
-						"./DelvEnums.java",
+            "./Delv.pde",
 					  "./InSiteData.pde"]);
 	setTimeout(finishLoadingData, 50);
 	    
     } else {
 	var sketch = new delv.processingSketch(canvas,
 						["./Globals.pde",
-						 "./DelvView.pde",
 						 "./Delv.pde",
-						 "./Delv1DView.pde",
-						 "./Delv2DView.pde",
-						 "./DelvCategoryView.pde",
-						 "./DelvBasicData.pde",
-						 "./DelvColorMap.pde",
-						 "./DelvEnums.java",
 						 "./"+id+".pde"],
 						 id+"View",
 						initProcessingSketch);
@@ -57,7 +48,7 @@ function init() {
 function finishLoadingData() {
   p = Processing.getInstanceById(dataCanvasId);
   try {
-	  pDataIF = new p.InSiteData();
+	  pDataIF = new p.InSiteData("inSite");
 	  dataLoaded = true;
 	  delv.log("Test data initialized!!!");
   } catch (e) {
@@ -68,7 +59,7 @@ function finishLoadingData() {
   if (dataLoaded) {
     pDataIF.loadData();
     pDataIF.setDelvIF(delv);
-    delv.addDataIF(pDataIF, "inSite");
+    delv.addDataIF(pDataIF);
     delv.giveDataIFToViews("inSite");
     delv.reloadData();
   }  

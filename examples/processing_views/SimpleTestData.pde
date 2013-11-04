@@ -3,6 +3,7 @@
 
 class SimpleTestData implements DelvData {
   Delv _delvIF;
+  String _name;
   String _pointFile;
   String _dataset;
   String _highlightedID;
@@ -11,7 +12,8 @@ class SimpleTestData implements DelvData {
   ArrayList<String> _col0;
   ArrayList<String> _col1;
 
-  SimpleTestData(String pointFile) {
+  SimpleTestData(String name, String pointFile) {
+    _name = name;
     _pointFile = pointFile;
     _highlightedID = "";
     _hoveredID = "";
@@ -20,6 +22,13 @@ class SimpleTestData implements DelvData {
     _col0 = new ArrayList<String>();
     _col1 = new ArrayList<String>();
     readPoints(_pointFile);
+  }
+
+  void setName(String name) {
+    _name = name;
+  }
+  String getName() {
+    return _name;
   }
 
   // TODO should data interface and delv interface be so tightly coupled? (each with a reference to the other?)

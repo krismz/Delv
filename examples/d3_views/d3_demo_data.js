@@ -12,9 +12,9 @@ var d3WrapperNS = d3WrapperNS || {};
 ///////////////////////////////////
 
 d3WrapperNS.d3_demo_data = function ( name ) {
-  var newObj = new delv.data();
+  var newObj = new delv.data(name);
   newObj.setDelvIF(delv);
-  delv.addDataIF(newObj, name);
+  delv.addDataIF(newObj);
 
   newObj.load_data = function() {
     this.load_from_file("./test_data/flare.json");
