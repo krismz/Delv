@@ -7,6 +7,7 @@
 
 import java.awt.event.MouseWheelListener;
 import java.awt.event.MouseWheelEvent;
+import java.util.Iterator;
 
 ///////////////////////////////////
 //         RegionDataset         //
@@ -491,7 +492,7 @@ class RegionView extends DelvBasicView {
     regionList.addAll(regionMap.values());
     Iterator regIt = regionList.iterator();
     while (regIt.hasNext()) {
-      Region curReg = regIt.next();
+      Region curReg = (Region)regIt.next();
       curReg.units(_above_dataset.units());
       curReg.computeStop();
       if (_below_dataset == null) {
