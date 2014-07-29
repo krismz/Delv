@@ -177,23 +177,24 @@ class BarHeightView extends Delv2DView {
 
   void render() {
     int x, y;
-    x = y = 0;
+    x = 0;
+    y = 22+15; // to compensate for height of "bar height"
+    int rh = _h-37-7;
+    int rw = 26;
 
     stroke( REGION_LINE_COLOR );
     strokeWeight( 1 );
-    line( x, y-20, x+_w, y-20 );
+    line( x, y-20, x+80, y-20 );
     fill( REGION_LINE_COLOR );
     textFont( _pixel_font_8 );
     textAlign( RIGHT, BOTTOM );
-    text( "bar height", x+_w, y-22 );
+    text( "bar height", x+80, y-22 );
 
     // the bar legend
     x += LEGEND_COLOR_PICKER_OFFSET;
-    y = 10;
+    y = 22+7;
 //     int rh = 40;
 //     int rw = 26;
-    int rh = _h-20;
-    int rw = 26;
     rectMode( CORNER );
     noStroke();
     fill( REGION_MAX_VALUE_BAND_COLORS[0] );
@@ -218,7 +219,7 @@ class BarHeightView extends Delv2DView {
       textAlign( LEFT, BOTTOM );
       text( _hovered_max, x+rw+12, y );
 
-      textAlign( LEFT, BOTTOM );
+      textAlign( LEFT, TOP );
       text( _hovered_min, x+rw+12, y+rh );
 
       // if an item is rolled over, show it in the legend

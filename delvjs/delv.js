@@ -870,7 +870,6 @@ var Processing = Processing || {};
         items[i] = attributes[attr].getItem(itemIds[i].name);
       }
       return items;
-      // return attributes[attr].getAllItems();
     };
 
     this.getAllItemsAsFloat = function(attr) {
@@ -881,7 +880,6 @@ var Processing = Processing || {};
         items[i] = attributes[attr].getItemAsFloat(itemIds[i].name);
       }
       return items;
-      // return attributes[attr].getAllItemsAsFloat();
     };
 
     this.getAllIds = function(attr) {

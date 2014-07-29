@@ -1756,13 +1756,27 @@ class DelvBasicDataSet {
   }
 
   String[] getAllItems(String attr) {
-    return _attributes.get(attr).getAllItems();
+    int numItems = _itemIds.size();
+    String[] items = new String[numItems];
+    for (i = 0; i < numItems; i++) {
+      items[i] = _attributes.get(attr).getItem(_itemIds.get(i).name);
+    }
+    return items;
   }
   Float[] getAllItemsAsFloat(String attr) {
-    return _attributes.get(attr).getAllItemsAsFloat();
+    int numItems = _itemIds.size();
+    Float[] items = new String[numItems];
+    for (i = 0; i < numItems; i++) {
+      items[i] = _attributes.get(attr).getItemAsFloat(_itemIds.get(i).name);
+    }
+    return items;
   }
   float[][] getAllItemsAsFloatArray(String attr) {
-    return _attributes.get(attr).getAllItemsAsFloatArray();  
+    int numItems = _itemIds.size();
+    float[][] items = new String[numItems];
+    for (i = 0; i < numItems; i++) {
+      items[i] = _attributes.get(attr).getItemAsFloatArray(_itemIds.get(i).name);
+    }
   }
 
   String getItem(String attr, String id) {

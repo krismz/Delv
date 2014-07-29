@@ -19,7 +19,6 @@ class DropDownView extends DelvCategoryView {
   boolean[] cats_selected;
   int dropdown_min_width;
   int dropbox_max_width;
-  String label;
 
   DropDownView() {
     this("DropDown");

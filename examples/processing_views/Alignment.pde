@@ -58,15 +58,16 @@ class AlignmentView extends DelvBasicView {
 
   void render() {
     int x, y;
-    x = y = 0;
+    x = 0;
+    y = 15; // to compensate for height of "justify"
 
     stroke( REGION_LINE_COLOR );
     strokeWeight( 1 );
-    line( x, y-5, x+_w, y-5 );
+    line( x, y-5, x+_alignment_selector_w, y-5 );
     fill( REGION_LINE_COLOR );
     textFont( _pixel_font_8 );
     textAlign( RIGHT, BOTTOM );
-    text( "justify", x+_w, y-7 );
+    text( "justify", x+_alignment_selector_w, y-7 );
 
     for ( int i = 0; i < _alignment_choices.length; i++ )
     {

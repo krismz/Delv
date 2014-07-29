@@ -5,6 +5,13 @@
 // License: New BSD 3-Clause (see accompanying LICENSE file for details)
 // ======================================================================
 function init() {
+  // check for HTML5 File API support 
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+    // it's supported!
+  } else {
+    alert('The HTML5 File APIs are not fully supported in this browser');
+  }
+
   dataLoaded = false;
   canvasArray = Array.prototype.slice.call(document.getElementsByTagNameNS("*","canvas"));
   for (var j = 0; j < canvasArray.length; j++) {

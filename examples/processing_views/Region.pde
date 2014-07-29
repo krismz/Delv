@@ -489,7 +489,9 @@ class RegionView extends DelvBasicView {
 
     ArrayList<Region> regionList = new ArrayList<Region>();
     regionList.addAll(regionMap.values());
-    for (Region curReg : regionList) {
+    Iterator regIt = regionList.iterator();
+    while (regIt.hasNext()) {
+      Region curReg = regIt.next();
       curReg.units(_above_dataset.units());
       curReg.computeStop();
       if (_below_dataset == null) {
@@ -1234,7 +1236,8 @@ class RegionView extends DelvBasicView {
 
     // determine which region the y position is in
     int index = 0;
-    int y = 0;
+    int num_regions_skipped = floor( (float)amt_scrolled / (float)(REGION_HEIGHT+REGION_OFFSET) );
+    int y = num_regions_skipped*(REGION_HEIGHT+REGION_OFFSET);
     int num_active_regions = 0;
     for ( int j = 0; j < _regions.length; j++ )
     {
@@ -1287,8 +1290,8 @@ class RegionView extends DelvBasicView {
             _rolled_over_region = index;
             _feature_above_mouseX = mx+_regions_origin[0];
             _feature_above_mouseY = my+_regions_origin[1];
+            return _regions[_rolled_over_region].intervalFeatureAbove(_rolled_over_feature_above).id();
           }
-          return _regions[_rolled_over_region].intervalFeatureAbove(_rolled_over_feature_above).id();
         }
         else continue;
       }
@@ -1313,7 +1316,6 @@ class RegionView extends DelvBasicView {
           _rolled_over_region = index;
           _feature_below_mouseX = mx+_regions_origin[0];
           _feature_below_mouseY = my+_regions_origin[1];
-
 
           return _regions[_rolled_over_region].intervalFeatureBelow(_rolled_over_feature_below).id();
         }

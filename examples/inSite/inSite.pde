@@ -13,7 +13,7 @@ BarHeightView _barView;
 AlignmentView _alignView;
 
 void setup() {
-  size(1560, 1540);
+  size(1400, 800);
   frameRate(10);
   //testRegion();
   //testDropDown();
@@ -180,6 +180,7 @@ class InSiteView extends DelvCompositeView {
 
     _legendView.datasetName("Regions");
     _legendView.dataAttr("motif_type");
+    _legendView.label("TF");
 
     _barView.datasetName("Regions");
     _barView.dim1Attr("strength");
@@ -221,7 +222,7 @@ class InSiteView extends DelvCompositeView {
     _alignView.resize(int(view_w), int(view_h));
 
     y += view_h;
-    view_h = 85;
+    view_h = 105;
     println("Setting bar origin to " + int(x) + ", " + int(y));
     println("Resizing bar to " + int(view_w) + ", " + int(view_h));
     _barView.setOrigin(int(x), int(y));
@@ -349,7 +350,7 @@ void testInsiteView() {
   insite_view.setup();
   insite_view.connectSignals();
   insite_view.reloadData("Processing.pde");
-  insite_view.resize(1600, 1400);
+  insite_view.resize(1400, 800);
 }
 
 void testRegion() {
