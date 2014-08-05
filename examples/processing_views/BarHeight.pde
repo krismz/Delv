@@ -121,7 +121,7 @@ class BarHeightView extends Delv2DView {
         if (attribute.equals(_dim2Attr)) {
           updateHoveredCategory(_dataIF.getHoveredCategory(_datasetName, _dim2Attr));
         } else {
-          updateHoveredCategory("default");
+          updateHoveredCategory("");
         }
       }
     }
@@ -161,8 +161,10 @@ class BarHeightView extends Delv2DView {
     _hovered_type = type;
     if (!_hovered_type.equals("")) {
       MinMax val = _minMaxMap.get(_hovered_type);
-      _hovered_min = val.min();
-      _hovered_max = val.max();
+      if (val != null) {
+        _hovered_min = val.min();
+        _hovered_max = val.max();
+      }
     }
     draw();
   }

@@ -56,7 +56,7 @@ class InSiteData extends DelvBasicData {
 
     // set up datasets
     color def_col = color( 210, 210, 210 );
-    DelvBasicDataSet ds = addDataSet("Regions");
+    DelvDataSet ds = addDataSet("Regions");
     ds.addAttribute(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttribute(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttribute(new DelvBasicAttribute("class", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
@@ -144,7 +144,7 @@ class InSiteData extends DelvBasicData {
 
       else if ( cols[0].equalsIgnoreCase("binding_site") )
       {
-        DelvBasicDataSet ds = _data.get("Regions");
+        DelvDataSet ds = _data.get("Regions");
         String id = ds.getNextId();
 
         // TODO, really could get column names and position from file header
@@ -163,7 +163,7 @@ class InSiteData extends DelvBasicData {
 
       else if ( cols[0].equalsIgnoreCase("feature") || cols[0].equalsIgnoreCase("annotation") )
       {
-        DelvBasicDataSet ds = _data.get("Annotations");
+        DelvDataSet ds = _data.get("Annotations");
         String id = ds.getNextId();
 
         // TODO, really could get column names and position from file header

@@ -55,6 +55,11 @@ interface DelvView {
 interface DelvData {
   String getName();
   void setName(String name);
+
+  DelvDataSet addDataSet(String dataset);
+  DelvDataSet getDataSet(String dataset);
+  void removeDataSet(String dataset);
+
   void updateCategoryVisibility(String invoker, String dataset, String attribute, String selection);
   void updateCategoryColor(String invoker, String dataset, String attribute, String selection, String[] rgbColor);
   void updateHighlightedCategory(String invoker, String dataset, String attribute, String selection);
@@ -63,6 +68,7 @@ interface DelvData {
   void updateHoveredId(String invoker, String dataset, String id);
   void updateSelectedIds(String invoker, String dataset, String[] ids);
 
+  void clearItems(String dataset);
   void setItem(String dataset, String attribute, String identifier, String item);
   void setFloatItem(String dataset, String attribute, String identifier, Float item);
   void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
@@ -88,21 +94,100 @@ interface DelvData {
   String getHoveredCategory(String dataset, String attribute);
 }
 
+interface DelvDataSet {
+  void clearItems();
+  void clearAttributes();
+
+  void addId(String id);
+  boolean hasId(String id);
+  String[] getSelectedIds();
+  String[] getVisibleIds();
+  String getHighlightedId();
+  String getHoveredId();
+  int getNumIds();
+  String getNextId();
+  void removeId(String id);
+
+  void addAttribute(DelvBasicAttribute attr);
+  Boolean hasAttribute(String attr);
+  String[] getAttributes();
+
+  void setItem(String attr, String id, String item);
+  void setFloatItem(String attr, String id, Float item);
+  void setFloatArrayItem(String attr, String id, float[] item);
+
+  String[] getAllCategories(String attr);
+  String[] getVisibleCategories(String attr);
+  String[][] getAllCategoryColors(String attr);
+  String[][] getVisibleCategoryColors(String attr);
+  String[] getItemColor(String attr, String id);
+  String getHighlightedCategory(String attr);
+  String getHoveredCategory(String attr);
+
+  String[] getAllItems(String attr);
+  Float[] getAllItemsAsFloat(String attr);
+  float[][] getAllItemsAsFloatArray(String attr);
+  String getItem(String attr, String id);
+  Float getItemAsFloat(String attr, String id);
+  float[] getItemAsFloatArray(String attr, String id);
+  String[] getAllIds(String attr);
+
+  void updateCategoryVisibility(String attr, String cat);
+  void updateCategoryColor(String attr, String cat, String[] rgbColor);
+  void updateHighlightedCategory(String attr, String cat);
+  void updateHoveredCategory(String attr, String cat);
+
+  void determineItemVisibility();
+  void updateSelectedIds(String[] ids);
+  void updateHighlightedId(String id);
+  void updateHoveredId(String id);
+}
+
+interface DelvAttribute {
+  void clear();
+
+  void setItem(String id, String item);
+  void setFloatItem(String id, Float item);
+  void setFloatArrayItem(String id, float[] item);
+
+  String getItem(String id);
+  Float getItemAsFloat(String id);
+  float[] getItemAsFloatArray(String id);
+  String[] getAllItems();
+  Float[] getAllItemsAsFloat();
+  float[][] getAllItemsAsFloatArray();
+
+  void removeId(String id);
+
+  void updateHighlightedCategory(String cat);
+  void updateHoveredCategory(String cat);
+  String getHighlightedCategory();
+  String getHoveredCategory();
+  void toggleVisibility(String cat);
+  String[] getAllCategories();
+  String[] getVisibleCategories();
+  String[][] getAllCategoryColors();
+  String[][] getVisibleCategoryColors();
+  String[] getItemColor(String id);
+  void setCategoryColor(String cat, String[] rgbColor);
+
+  void updateVisibility(String item);
+  boolean isItemVisible(String id);
+}
+
 interface DelvColorMap {
-
   // TODO for now only assume RGB tuple, and work on defining interface needs later
-
   color getColor(String value);
-
   // TODO somewhat dangerous, decide if this method is even necessary
   // void setMap(DelvColorMap colorMap);
-
   void setColor(String value, color c);
-
   void setDefaultColor(color c);
-
   void drawToFile(String filename);
 } // end interface ColorMap
+
+///////////////////////////////////////////
+//         BEGIN IMPLEMENTATIONS         //
+///////////////////////////////////////////
 
 class DelvImpl implements Delv {
   HashMap<String, DelvData> dataIFs;
@@ -1352,7 +1437,7 @@ public static final class AttributeType {
     }
 }
 
-class DelvBasicAttribute {
+class DelvBasicAttribute implements DelvAttribute {
   String _name;
   HashMap<String, String> _items;
   // TODO should decide a better name and probably store as double
@@ -1382,6 +1467,13 @@ class DelvBasicAttribute {
     _visibleRange = data_range;
     _highlightCategory = "";
     _hoverCategory = "";
+  }
+
+  void clear() {
+    _items = new HashMap<String, String>();
+    _floatArrayMap = new HashMap<String, Integer>();
+    _floatArrayItems = new float[0][];
+    _floatItems = new HashMap<String, Float>();
   }
 
   void setItem(String id, String item) {
@@ -1525,6 +1617,34 @@ class DelvBasicAttribute {
     return (new float[0][0]);
   }
 
+  void removeId(String id) {
+    // TODO need error handling here if id is not found in the map
+    _items.remove(id);
+    _floatItems.remove(id);
+    if (_type.equals(AttributeType.FLOAT_ARRAY)) {
+      Integer idx = _floatArrayMap.get(id);
+      int old_size = _floatArrayItems.length;
+      float[][] tmpArray = new float[old_size-1][];
+      System.arraycopy(_floatArrayItems, 0, tmpArray, 0, idx);
+      System.arraycopy(_floatArrayItems, idx+1, tmpArray, idx, old_size-idx-1);
+      _floatArrayItems = tmpArray;
+      _floatArrayMap.remove(id);
+      // and now update the indexes in the map
+      // TODO Bug in Processing, following entrySet syntax doesn't compile.
+      // iterating on just keys for now instead
+      //for (Map.Entry<String, Integer> entry : _floatArrayMap.entrySet()) {
+      for (String anId : _floatArrayMap.keySet()) {
+        // since we don't have entrySet yet, do the following instead:
+        // String anId = entry.getKey();
+        // Integer anIdx = entry.getValue();
+        Integer anIdx = _floatArrayMap.get(anId);
+        if (anIdx > idx) {
+          _floatArrayMap.put(anId, anIdx-1);
+        }
+      }
+    }
+  }
+
   void updateHighlightedCategory(String cat) {
     _highlightCategory = cat;
   }
@@ -1635,7 +1755,7 @@ class DelvBasicAttribute {
 
 } // end class DelvBasicAttribute
 
-class DelvBasicDataSet {
+class DelvBasicDataSet implements DelvDataSet {
   String _name;
   ArrayList<DelvItemId> _itemIds;
   HashMap<String, DelvBasicAttribute> _attributes;
@@ -1648,6 +1768,18 @@ class DelvBasicDataSet {
     _attributes = new HashMap<String, DelvBasicAttribute>();
     _highlightId = "";
     _hoverId = "";
+  }
+
+  void clearItems() {
+    // TODO switch to entrySet once working in Processing
+    for (String attr : _attributes.keySet()) {
+      _attributes.get(attr).clear();
+    }
+    _itemIds = new ArrayList<DelvItemId>();
+  }
+
+  void clearAttributes() {
+    _attributes = new HashMap<String, DelvBasicAttribute>();
   }
 
   void addId(String id) {
@@ -1697,6 +1829,14 @@ class DelvBasicDataSet {
 
   String getNextId() {
     return "" + _itemIds.size();
+  }
+
+  void removeId(String id) {
+    // TODO switch to entrySet once working in Processing
+    for (String attr : _attributes.keySet()) {
+      _attributes.get(attr).removeId(id);
+    }
+    _itemIds.remove(id);
   }
 
   void setItem(String attr, String id, String item) {
@@ -1911,6 +2051,10 @@ class DelvBasicData implements DelvData {
     _delvIF.emitSignal("selectedIdsChanged",invoker, dataset, ids);
   }
 
+  void clearItems(String dataset) {
+    _data.get(dataset).clearItems();
+  }
+
   void setItem(String dataset, String attribute, String identifier, String item) {
     _data.get(dataset).setItem(attribute, identifier, item);
   }
@@ -1986,11 +2130,20 @@ class DelvBasicData implements DelvData {
     return _data.get(dataset).getHoveredCategory(attribute);
   }
 
-  DelvBasicDataSet addDataSet(String dataset) {
+  DelvDataSet addDataSet(String dataset) {
     DelvBasicDataSet ds = new DelvBasicDataSet(dataset);
     _data.put(dataset, ds);
     return ds;
   }
+
+  DelvDataSet getDataSet(String dataset) {
+    return _data.get(dataset);
+  }
+
+  void removeDataSet(String dataset) {
+    _data.remove(dataset);
+  }
+
 } // end class DelvBasicData
 
 // DelvColorMap implementations

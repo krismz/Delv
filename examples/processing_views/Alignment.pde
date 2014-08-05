@@ -21,6 +21,7 @@ class AlignmentView extends DelvBasicView {
   boolean _alignment_selected;
   int[] _alignment_selector_line_w;
   int _max_alignment_selector_line_w;
+  int TEXT_HEIGHT;
 
   AlignmentView() {
     this("Alignment");
@@ -44,6 +45,8 @@ class AlignmentView extends DelvBasicView {
     _alignment_selector_w = 4*ALIGNMENT_SELECTOR_BOX_W;
     _alignment_selector_h = ALIGNMENT_SELECTOR_BOX_W;
 
+    TEXT_HEIGHT = 15;
+
   }
 
   // TODO we have to override the following because we aren't displaying data, thus we may need to break DelvBasicView into an even more basic data attr less view first
@@ -59,7 +62,7 @@ class AlignmentView extends DelvBasicView {
   void render() {
     int x, y;
     x = 0;
-    y = 15; // to compensate for height of "justify"
+    y = TEXT_HEIGHT; // to compensate for height of "justify"
 
     stroke( REGION_LINE_COLOR );
     strokeWeight( 1 );
@@ -129,10 +132,11 @@ class AlignmentView extends DelvBasicView {
   void mousePressedInView( int mx, int my, boolean rightPressed )
   {
     _alignment_selected = false;
+    int adjust_y = my - TEXT_HEIGHT;
     // check if we are in the alignment selector region
     if ( (mx >= 0) && (mx <= _alignment_selector_w) &&
-         (my >= 0) && (my <= _alignment_selector_h) ) {
-      _alignment_selected = overAlignmentSelector( mx, my );
+         (adjust_y >= 0) && (adjust_y <= _alignment_selector_h) ) {
+      _alignment_selected = overAlignmentSelector( mx, adjust_y );
     }
   }
 
