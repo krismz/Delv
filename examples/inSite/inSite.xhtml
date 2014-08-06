@@ -8,12 +8,7 @@
    lang="en">
 <head>
 <title>InSite</title>
-<link rel="stylesheet" href="./delvjs/bootstrap/css/bootstrap.min.css"/>
 <script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
-<!-- Add jquery-json to allow JSON stringify -->
-<script type="text/ecmascript" id="jquery-json.script" src="./delvjs/jquery.json-2.3.js"></script>
-<script type="text/javascript" src="./delvjs/angular.min.js"></script>
-<script type="text/javascript" src="./delvjs/ui-bootstrap-tpls-0.10.0.min.js"></script>
 <script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script>
 <script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
 <script type="text/ecmascript" id="insite.script" src="./inSite.js"></script>
@@ -22,20 +17,11 @@
 <div
   id="inSite"
   style="overflow:hidden;zindex:1;top:0;left:0;width:100%;height:100%;position:absolute">  
-<!--<div
-  id="ConfigContainer"
-  ng-app="inSiteApp"
-  ng-controller="inSiteController"
-   style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:100%;height:5%;position:absolute">
-</div>-->
 <div
   id="FileInputs"
-  style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:100%;height:5%;position:absolute">
-  <table>
+  style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:100%;height:7%;position:absolute">
+  <table style="padding-bottom: 10px">
     <tr>
-      <td style="padding-left: 10px">  <label for="config_file">Config file: </label> </td>
-      <td style="padding-left: 10px">  <input type="file" id="config_file" name="config_file[]"/>
-        <output id="config_file_list"></output> </td>
       <td style="padding-left: 10px"> <label for="region_files">Region files: </label> </td>
       <td style="padding-left: 10px"> <input type="file" id="region_files" name="region_files[]" multiple="multiple"/>
         <output id="region_files_list"></output> </td>
@@ -44,19 +30,19 @@
 </div>
 <div
   id="DropDownContainer"
-   style="overflow:hidden;zindex:3;top:7.5%;left:2.5%;width:8%;height:90%;position:absolute">
+   style="overflow:hidden;zindex:3;top:9.5%;left:2.5%;width:8%;height:88%;position:absolute">
    <canvas
    id="DropDown"/>
   </div>
 <div
   id="RegionContainer"
-   style="overflow:hidden;zindex:3;top:7.5%;left:10.5%;width:75%;height:90%;position:absolute">
+   style="overflow:hidden;zindex:3;top:9.5%;left:10.5%;width:75%;height:88%;position:absolute">
    <canvas
    id="Region"/>
 </div>
 <div
   id="legendDiv"
-  style="overflow:hidden;zindex:1;top:7.5%;left:85.5%;width:12%;height:90%;position:absolute">
+  style="overflow:hidden;zindex:1;top:9.5%;left:85.5%;width:12%;height:88%;position:absolute">
   <!-- because the following divs have height less than 95% (height of -->
   <!-- all the other divs), they need to be wrapped within a div that -->
   <!-- has the same width as themselves and the same height as the -->

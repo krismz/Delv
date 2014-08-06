@@ -6,9 +6,13 @@
 // ======================================================================
 
 class InSiteData extends DelvBasicData {
+  ArrayList _region_files;
+  boolean _normalize_globally;
 
   InSiteData(String name) {
     super(name);
+    _normalize_globally = false;
+    _global_min_v = 5.0;
   }
 
   // overridden functions
@@ -16,46 +20,12 @@ class InSiteData extends DelvBasicData {
     load_from_file("./test_data/config.txt");
   }
 
-  // subclass-specific functions
-  void load_from_file(String filename) {
-
-    String[] rows = loadStrings( filename );
-
-    int counter = 0;
-    String[] cols;
-    ArrayList region_files = new ArrayList();
-
-    boolean normalize_globally = false;
-
-    // read in the lines and store the file names
-    while ( counter < rows.length )
-    {
-      cols = splitTokens( rows[counter++] );
-
-      if ( cols.length == 0 )
-        continue;
-
-      else if ( cols[0].equals("REGION:") )
-        region_files.add( cols[1] );
-
-      // _region_label ignored right now, hard-coded by inSite.js
-      else if ( cols[0].equals("REGION_LABEL:") )
-        _region_label = cols[1];
-
-      // _type_label ignored right now, hard-coded by inSite.js
-      else if ( cols[0].equals("TYPE_LABEL:") )
-        _type_label = cols[1];
-
-      else if ( cols[0].equals("NORMALIZATION:") ) {
-        if ( cols[1].equalsIgnoreCase("global") ) normalize_globally = true;
-      }
-
-      else if ( cols[0].equals("GLOBAL_MIN_VALUE:") )
-        _global_min_v = parseFloat(cols[1]);
-    }
+  void clearRegionFiles() {
+    _region_files = new ArrayList();
 
     // set up datasets
     color def_col = color( 210, 210, 210 );
+    removeDataSet("Regions");
     DelvDataSet ds = addDataSet("Regions");
     ds.addAttribute(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttribute(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
@@ -74,12 +44,55 @@ class InSiteData extends DelvBasicData {
     ds.addAttribute(new DelvBasicAttribute("length", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
     ds.addAttribute(new DelvBasicAttribute("description", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttribute(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+  }
 
+  void addRegionFile(String filename) {
+    _region_files.add(filename);
+  }
+
+  void updateConfig(String filename) {
+    String[] rows = loadStrings( filename );
+
+    int counter = 0;
+    String[] cols;
+
+    _normalize_globally = false;
+
+    // read in the lines and store the file names
+    while ( counter < rows.length )
+    {
+      cols = splitTokens( rows[counter++] );
+
+      if ( cols.length == 0 )
+        continue;
+
+      else if ( cols[0].equals("REGION:") )
+        _region_files.add( cols[1] );
+
+      // _region_label ignored right now, hard-coded by inSite.js
+      else if ( cols[0].equals("REGION_LABEL:") )
+        _region_label = cols[1];
+
+      // _type_label ignored right now, hard-coded by inSite.js
+      else if ( cols[0].equals("TYPE_LABEL:") )
+        _type_label = cols[1];
+
+      else if ( cols[0].equals("NORMALIZATION:") ) {
+        if ( cols[1].equalsIgnoreCase("global") ) _normalize_globally = true;
+      }
+
+      else if ( cols[0].equals("GLOBAL_MIN_VALUE:") )
+        _global_min_v = parseFloat(cols[1]);
+    }
+
+  }
+
+  void updateRegions() {
 
     // read in the region files
     //_regions = new Region[region_files.size()];
-    for ( int i = 0; i < region_files.size(); i++ )
-      readRegionFile( (String)region_files.get(i) );
+    for ( int i = 0; i < _region_files.size(); i++ )
+      readRegionFile( (String)_region_files.get(i) );
 
     // print( "    regions: " );
     // print( _regions[0].tag() );
@@ -105,13 +118,30 @@ class InSiteData extends DelvBasicData {
     // determineMinMaxStrengths( normalize_globally );
   }
 
+
+  // subclass-specific functions
+  void load_from_file(String filename) {
+    clearRegionFiles();
+    updateConfig(filename);
+    updateRegions();
+  }
+
+
+  void readRegionText( String txt) {
+    String[] rows = splitTokens(txt, "\r\n");
+    readRegionRows(rows);
+  }
 //
 // REGION FILE
 //
   void readRegionFile( String file )
   {
     String[] rows = loadStrings( file );
+    readRegionRows(rows);
+  }
 
+  void readRegionRows(String[] rows)
+  {
     int counter = 0;
     String[] cols;
 

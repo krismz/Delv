@@ -48,8 +48,9 @@ public static boolean _scroll = false;
 public static int _render_region_height;
 
 // Fonts
-public PFont _pixel_font_8 = createFont( "PFTempestaSeven", 8, false );
-public PFont _pixel_font_8b = createFont( "PFTempestaSeven-Bold", 9, false );
+// TODO these font names aren't great, change when eliminating Globals.pde
+public PFont _pixel_font_8 = createFont( "PFTempestaSeven", 9, false );
+public PFont _pixel_font_8b = createFont( "PFTempestaSeven-Bold", 10, false );
 public PFont _verdana_font_12 = createFont( "Verdana", 12, true );
 public PFont _verdana_font_16 = createFont( "Verdana", 16, true );
 public PFont _verdana_font_30 = createFont( "Verdana", 30, true );

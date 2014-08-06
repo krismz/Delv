@@ -8,11 +8,19 @@ function init() {
   // check for HTML5 File API support 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     // it's supported!
+    // set up the listeners
+    
+    var regionFiles = document.getElementById('region_files');
+    regionFiles.addEventListener('change', handleRegionFilesSelect, false);
+    regionFiles.addEventListener('dragover', handleRegionFilesDragOver, false);
+    regionFiles.addEventListener('drop', handleRegionFilesDrop, false);
+
   } else {
     alert('The HTML5 File APIs are not fully supported in this browser');
   }
 
   dataLoaded = false;
+  var readers = [];
   canvasArray = Array.prototype.slice.call(document.getElementsByTagNameNS("*","canvas"));
   for (var j = 0; j < canvasArray.length; j++) {
     var id = canvasArray[j].getAttribute("id");
@@ -53,9 +61,89 @@ function init() {
   //delv.resizeAll();
 }
 
+function handleRegionFilesDragOver(evt) {
+  evt.dataTransfer.dropEffect = 'link';
+}
+function handleRegionFilesDrop(evt) {
+  var files = evt.dataTransfer.files;
+  delv.log("handleRegionFilesDrop files: ");
+  delv.log(files);
+  readRegionFiles(files);
+}
+function handleRegionFilesSelect(evt) {
+  var files = evt.target.files;
+  readRegionFiles(files);
+}
+
+// using jQuery promises
+function readRegionFile(a_file) {
+  // return a promise to read the file
+  var d = $.Deferred();
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      delv.log("reading Region text");
+      pDataIF.readRegionText(evt.target.result);
+      d.resolve();
+    } catch (e) {
+      d.reject();
+    }
+  }
+  reader.readAsText(a_file);
+  return d.promise();
+}
+
+function readRegionFiles(files) {
+  if (typeof(files) !== "undefined") {
+    var regionPromises=[];
+    pDataIF.clearRegionFiles();
+    for (var j = 0; j < files.length; j++) {
+      regionPromises[j] = readRegionFile(files[j]);
+    }
+    $.when.apply($, regionPromises)
+     .done(function (responses) { delv.reloadData(); });
+  }
+}
+
+// Once Javascript Promises are more available, use the following.
+// Otherwise stick with the jQuery implementation above.
+// function readRegionFile(a_file) {
+//   // return a promise to read the file
+//   return new Promise(function(resolve, reject) {
+//     var reader = new FileReader();
+//     reader.onload = function(evt) {
+//       try {
+//         pDataIF.readRegionText(evt.target.result);
+//         resolve("region has been read");
+//       } catch (e) {
+//         reject(e);
+//       }
+//     }
+//     reader.readAsText(a_file);
+//   });
+// }
+
+// function readRegionFiles(files) {
+//   if (typeof(files) !== "undefined") {
+//     var regionPromises=[];
+//     pDataIF.clearRegionFiles();
+//     for (var j = 0; j < files.length; j++) {
+//       regionPromises[j] = readRegionFile(files[j]);
+//     }
+//     Promise.all(regionPromises).then(
+//       function(response) {
+//         delv.reloadData();
+//       },
+//       function(error) {
+//         delv.log("Failure!!!", error);
+//       }
+//     );
+//   }
+// }
+
 // TODO, trouble with processing dataIF is that it doesn't have all the signal connect methods
 function finishLoadingData() {
-  p = Processing.getInstanceById(dataCanvasId);
+  var p = Processing.getInstanceById(dataCanvasId);
   try {
 	  pDataIF = new p.InSiteData("inSite");
 	  dataLoaded = true;
@@ -66,11 +154,13 @@ function finishLoadingData() {
 	  dataLoaded = false;
   }
   if (dataLoaded) {
-    pDataIF.loadData();
+    // TODO add any initialization or customization here
+    pDataIF.clearRegionFiles();
     pDataIF.setDelvIF(delv);
     delv.addDataIF(pDataIF);
     delv.giveDataIFToViews("inSite");
     delv.reloadData();
+
   }  
 }
 
