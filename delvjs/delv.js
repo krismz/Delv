@@ -342,6 +342,7 @@ var Processing = Processing || {};
 	        p.mouseReleased = p._view.mouseReleased;
 	        p.mouseClicked = p._view.mouseClicked;
 	        p.mouseScrolled = p._view.mouseScrolled;
+          p.movieEvent = p._view.movieEvent;
 	        p._view._p = p;
 	        // TODO where should p be bound in delv?
 	        p.bindJavascript(delv);

@@ -24,6 +24,11 @@ interface Delv {
   void runInThread(Object obj, String name);
  }
 
+// A movie interface to wrap either a stub movie, or Movie from processing.video or something else eventually.  Mostly needed to hook up the movieEvent
+interface MovieIF {
+  void read();
+}
+
 // DelvView is used to support having multiple processing sketches in both Processing and processing.js
 
 interface DelvView {
@@ -50,6 +55,7 @@ interface DelvView {
   void mousePressed();
   void mouseReleased();
   void mouseScrolled();
+  void movieEvent(MovieIF m);
 }
 
 interface DelvData {
@@ -325,9 +331,9 @@ class DelvImpl implements Delv {
 
   void reloadData() {
     log("reloading data");
-    // for (DelvView view : views.values()) {
-    //   view.reloadData("Delv");
-    // }
+     for (DelvView view : views.values()) {
+       view.reloadData("Delv");
+     }
   }
 
   void runInThread(Object obj, String name) {
@@ -661,7 +667,7 @@ public class DelvBasicView implements DelvView {
     if ( mouseCapture(mouseX, mouseY) )
       mouseScrolledInView(_p.mouseScroll);
   }
-
+  public void movieEvent(MovieIF m) {}
   // * * * Render the view (default just sets the background of the view) * * * //
   // override by each subclass
   public void render(){}
@@ -920,6 +926,11 @@ class DelvCompositeView extends DelvBasicView {
   void mouseScrolled() {
     for (DelvBasicView view : _views) {
       view.mouseScrolled();
+    }
+  }
+  void movieEvent(MovieIF m) {
+    for (DelvBasicView view : _views) {
+      view.movieEvent(m);
     }
   }
 
@@ -1457,10 +1468,10 @@ class DelvBasicAttribute implements DelvAttribute {
 
   DelvBasicAttribute(String name, AttributeType type, DelvColorMap color_map, DelvRange data_range) {
     _name = name;
-    _items = new HashMap<String, String>();
-    _floatArrayMap = new HashMap<String, Integer>();
+    _items = new HashMap<String, String>((int)Math.ceil(100000/.75)); // 75% of required capacity
+    _floatArrayMap = new HashMap<String, Integer>((int)Math.ceil(100000/.75));
     _floatArrayItems = new float[0][];
-    _floatItems = new HashMap<String, Float>();
+    _floatItems = new HashMap<String, Float>((int)Math.ceil(100000/.75));
     _type = type;
     _colorMap = color_map;
     _fullRange = data_range;
@@ -1470,10 +1481,10 @@ class DelvBasicAttribute implements DelvAttribute {
   }
 
   void clear() {
-    _items = new HashMap<String, String>();
-    _floatArrayMap = new HashMap<String, Integer>();
+    _items = new HashMap<String, String>((int)Math.ceil(100000/.75));
+    _floatArrayMap = new HashMap<String, Integer>((int)Math.ceil(100000/.75));
     _floatArrayItems = new float[0][];
-    _floatItems = new HashMap<String, Float>();
+    _floatItems = new HashMap<String, Float>((int)Math.ceil(100000/.75));
   }
 
   void setItem(String id, String item) {
@@ -1543,7 +1554,7 @@ class DelvBasicAttribute implements DelvAttribute {
       Integer idx = _floatArrayMap.get(id);
       return _floatArrayItems[idx];
       // TODO does this make sense for any other type?
-    } else if (_type.equals(AttributeType.CATEGORICAL)) {
+    } else if (_type.equals(AttributeType.CONTINUOUS)) {
       if (_items.containsKey(id)) {
         String item = _items.get(id);
         String[] vals = splitTokens( item, "," );
@@ -1755,9 +1766,12 @@ class DelvBasicAttribute implements DelvAttribute {
 
 } // end class DelvBasicAttribute
 
+// Works well for large number of attributes where only a few are displayed at a time
+// and relatively low number of items (large d, small n where n a few thousand or less)
 class DelvBasicDataSet implements DelvDataSet {
   String _name;
   ArrayList<DelvItemId> _itemIds;
+  HashMap<String, Integer> _itemIdHash;
   HashMap<String, DelvBasicAttribute> _attributes;
   String _highlightId;
   String _hoverId;
@@ -1765,6 +1779,7 @@ class DelvBasicDataSet implements DelvDataSet {
   DelvBasicDataSet(String name) {
     _name = name;
     _itemIds = new ArrayList<DelvItemId>();
+    _itemIdHash = new HashMap<String, Integer>();
     _attributes = new HashMap<String, DelvBasicAttribute>();
     _highlightId = "";
     _hoverId = "";
@@ -1776,6 +1791,7 @@ class DelvBasicDataSet implements DelvDataSet {
       _attributes.get(attr).clear();
     }
     _itemIds = new ArrayList<DelvItemId>();
+    _itemIdHash = new HashMap<String, Integer>();
   }
 
   void clearAttributes() {
@@ -1784,16 +1800,12 @@ class DelvBasicDataSet implements DelvDataSet {
 
   void addId(String id) {
     DelvItemId newId = new DelvItemId(id);
+    _itemIdHash.put(id, _itemIds.size());
     _itemIds.add(newId);
   }
 
   boolean hasId(String id) {
-    for (DelvItemId item : _itemIds) {
-      if (id.equals(item.name)) {
-        return true;
-      }
-    }
-    return false;
+    return (_itemIdHash.get(id) != null);
   }
 
   String[] getSelectedIds() {
@@ -1836,7 +1848,9 @@ class DelvBasicDataSet implements DelvDataSet {
     for (String attr : _attributes.keySet()) {
       _attributes.get(attr).removeId(id);
     }
+    // TODO not sure that this remove works from itemIds
     _itemIds.remove(id);
+    _itemIdHash.remove(id);
   }
 
   void setItem(String attr, String id, String item) {
@@ -2115,19 +2129,40 @@ class DelvBasicData implements DelvData {
     return _data.get(dataset).getItemAsFloatArray(attribute, identifier);
   }
 
+  // TODO put these null checks in for all gets of datasets
   String getHighlightedId(String dataset) {
-    return _data.get(dataset).getHighlightedId();
+    DelvBasicDataSet ds = _data.get(dataset);
+    if (null == ds) {
+      return "";
+    } else {
+      return ds.getHighlightedId();
+    }
   }
 
   String getHoveredId(String dataset) {
-    return _data.get(dataset).getHoveredId();
+    DelvBasicDataSet ds = _data.get(dataset);
+    if (null == ds) {
+      return "";
+    } else {
+      return ds.getHoveredId();
+    }
   }
 
   String getHighlightedCategory(String dataset, String attribute) {
-    return _data.get(dataset).getHighlightedCategory(attribute);
+    DelvBasicDataSet ds = _data.get(dataset);
+    if (null == ds) {
+      return "";
+    } else {
+      return ds.getHighlightedCategory(attribute);
+    }
   }
   String getHoveredCategory(String dataset, String attribute) {
-    return _data.get(dataset).getHoveredCategory(attribute);
+    DelvBasicDataSet ds = _data.get(dataset);
+    if (null == ds) {
+      return "";
+    } else {
+      return ds.getHoveredCategory(attribute);
+    }
   }
 
   DelvDataSet addDataSet(String dataset) {

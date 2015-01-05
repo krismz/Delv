@@ -30,20 +30,20 @@ function init() {
 	dataCanvasId = id;
 	// temp hack to try programming data interface in processing
         Processing.loadSketchFromSources(canvas,
-					 ["./Globals.pde",
-						"./Delv.pde",
-					  "./InSiteData.pde"]);
+					 ["Globals.pde",
+						"Delv.pde",
+					  "InSiteData.pde"]);
 	setTimeout(finishLoadingData, 50);
 	    
     } else {
 	var sketch = new delv.processingSketch(canvas,
-						["./Globals.pde",
-						 "./Attribute.pde",
-						 "./Delv.pde",
-						 "./BasicRegion.pde", // currently only needed for the RegionView
-						 "./DropDown.pde", // currently only needed for the ColorLegendWithDropdown
-						 "./ColorPickerLegend.pde", // currently only needed for the ColorLegendWithDropdown
-						 "./"+id+".pde"],
+						["Globals.pde",
+						 "Attribute.pde",
+						 "Delv.pde",
+						 "BasicRegion.pde", // currently only needed for the RegionView
+						 "DropDown.pde", // currently only needed for the ColorLegendWithDropdown
+						 "ColorPickerLegend.pde", // currently only needed for the ColorLegendWithDropdown
+						 ""+id+".pde"],
 						id+"View",
 						initProcessingSketch);
     }     
@@ -101,7 +101,7 @@ function readRegionFiles(files) {
       regionPromises[j] = readRegionFile(files[j]);
     }
     $.when.apply($, regionPromises)
-     .done(function (responses) { delv.reloadData(); });
+      .done(function (responses) { delv.reloadData(); });
   }
 }
 

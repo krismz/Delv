@@ -19,7 +19,7 @@ Support
 =======
 
 ========
-Examples
+:doc:`Examples <examples>`
 ========
 
 .. todo::
