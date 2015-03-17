@@ -64,6 +64,7 @@ interface DelvData {
 
   DelvDataSet addDataSet(String dataset);
   DelvDataSet getDataSet(String dataset);
+  boolean hasDataSet(String dataset);
   void removeDataSet(String dataset);
 
   void updateCategoryVisibility(String invoker, String dataset, String attribute, String selection);
@@ -78,6 +79,7 @@ interface DelvData {
   void setItem(String dataset, String attribute, String identifier, String item);
   void setFloatItem(String dataset, String attribute, String identifier, Float item);
   void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
+  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item);
 
   Boolean hasAttribute(String dataset, String attribute);
   String[] getAttributes(String dataset);
@@ -86,14 +88,17 @@ interface DelvData {
   String[][] getAllCategoryColors(String dataset, String attribute);
   String[][] getVisibleCategoryColors(String dataset, String attribute);
   String[] getItemColor(String dataset, String attribute, String identifier);
+  String[][] getAllItemColors(String dataset, String attribute);
   String[] getAllItems(String dataset, String attribute);
   // TODO Float, float, Double or double here?
   Float[] getAllItemsAsFloat(String dataset, String attribute);
   float[][] getAllItemsAsFloatArray(String dataset, String attribute);
+  String[][] getAllItemsAsStringArray(String dataset, String attribute);
   String[] getAllIds(String dataset, String attribute);
   String getItem(String dataset, String attribute, String identifier);
   Float getItemAsFloat(String dataset, String attribute, String identifier);
   float[] getItemAsFloatArray(String dataset, String attribute, String identifier);
+  String[] getItemAsStringArray(String dataset, String attribute, String identifier);
   String getHighlightedId(String dataset);
   String getHoveredId(String dataset);
   String getHighlightedCategory(String dataset, String attribute);
@@ -121,21 +126,25 @@ interface DelvDataSet {
   void setItem(String attr, String id, String item);
   void setFloatItem(String attr, String id, Float item);
   void setFloatArrayItem(String attr, String id, float[] item);
+  void setStringArrayItem(String attr, String id, String[] item);
 
   String[] getAllCategories(String attr);
   String[] getVisibleCategories(String attr);
   String[][] getAllCategoryColors(String attr);
   String[][] getVisibleCategoryColors(String attr);
   String[] getItemColor(String attr, String id);
+  String[][] getAllItemColors(String attr);
   String getHighlightedCategory(String attr);
   String getHoveredCategory(String attr);
 
   String[] getAllItems(String attr);
   Float[] getAllItemsAsFloat(String attr);
   float[][] getAllItemsAsFloatArray(String attr);
+  String[][] getAllItemsAsStringArray(String attr);
   String getItem(String attr, String id);
   Float getItemAsFloat(String attr, String id);
   float[] getItemAsFloatArray(String attr, String id);
+  String[] getItemAsStringArray(String attr, String id);
   String[] getAllIds(String attr);
 
   void updateCategoryVisibility(String attr, String cat);
@@ -155,13 +164,16 @@ interface DelvAttribute {
   void setItem(String id, String item);
   void setFloatItem(String id, Float item);
   void setFloatArrayItem(String id, float[] item);
+  void setStringArrayItem(String id, String[] item);
 
   String getItem(String id);
   Float getItemAsFloat(String id);
   float[] getItemAsFloatArray(String id);
+  String[] getItemAsStringArray(String id);
   String[] getAllItems();
   Float[] getAllItemsAsFloat();
   float[][] getAllItemsAsFloatArray();
+  String[][] getAllItemsAsStringArray();
 
   void removeId(String id);
 
@@ -241,26 +253,28 @@ class DelvImpl implements Delv {
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
     //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
-    for (String key: signalHandlers.get(signal).keySet()) {
-      // since we don't have entrySet yet, do the following instead:
-      // view = views.get(entry.getKey());
-      DelvView view = views.get(key);
-      try {
+    if (signalHandlers.containsKey(signal)) {
+      for (String key: signalHandlers.get(signal).keySet()) {
         // since we don't have entrySet yet, do the following instead:
-        //Method m = view.getClass().getMethod(entry.getValue(), params);
-        Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
-        m.invoke(view, args);
-      } catch (IllegalArgumentException e) {
-        e.printStackTrace();
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      } catch (InvocationTargetException e) {
-        e.getTargetException().printStackTrace();
-      } catch (NoSuchMethodException nsme) {
-        System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
-                         "in the class " + view.getClass().getName());
-      } catch (Exception e) {
-        e.printStackTrace();
+        // view = views.get(entry.getKey());
+        DelvView view = views.get(key);
+        try {
+          // since we don't have entrySet yet, do the following instead:
+          //Method m = view.getClass().getMethod(entry.getValue(), params);
+          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          m.invoke(view, args);
+        } catch (IllegalArgumentException e) {
+          e.printStackTrace();
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+        } catch (InvocationTargetException e) {
+          e.getTargetException().printStackTrace();
+        } catch (NoSuchMethodException nsme) {
+          System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
+                             "in the class " + view.getClass().getName());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
   }
@@ -284,27 +298,29 @@ class DelvImpl implements Delv {
     args[2] = attributes;
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
-    //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
-    for (String key: signalHandlers.get(signal).keySet()) {
-      // since we don't have entrySet yet, do the following instead:
-      // view = views.get(entry.getKey());
-      DelvView view = views.get(key);
-      try {
+    if (signalHandlers.containsKey(signal)) {
+      //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
+      for (String key: signalHandlers.get(signal).keySet()) {
         // since we don't have entrySet yet, do the following instead:
-        //Method m = view.getClass().getMethod(entry.getValue(), params);
-        Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
-        m.invoke(view, args);
-      } catch (IllegalArgumentException e) {
-        e.printStackTrace();
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      } catch (InvocationTargetException e) {
-        e.getTargetException().printStackTrace();
-      } catch (NoSuchMethodException nsme) {
-        System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
-                         "in the class " + view.getClass().getName());
-      } catch (Exception e) {
-        e.printStackTrace();
+        // view = views.get(entry.getKey());
+        DelvView view = views.get(key);
+        try {
+          // since we don't have entrySet yet, do the following instead:
+          //Method m = view.getClass().getMethod(entry.getValue(), params);
+          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          m.invoke(view, args);
+        } catch (IllegalArgumentException e) {
+          e.printStackTrace();
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+        } catch (InvocationTargetException e) {
+          e.getTargetException().printStackTrace();
+        } catch (NoSuchMethodException nsme) {
+          System.err.println("There is no public " + signalHandlers.get(signal).get(key) + "() method " +
+                             "in the class " + view.getClass().getName());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
   }
@@ -1409,11 +1425,12 @@ class DelvContinuousRange implements DelvRange {
 
 // implement AttributeType enum as a straight class since processing.js doesn't like enums.  Need the public static final class incantation to allow for static final members in an inner class
 public static final class AttributeType {
-    public static final String[] _types = new String[] { "UNSTRUCTURED", "CATEGORICAL", "CONTINUOUS", "FLOAT_ARRAY" };
+  public static final String[] _types = new String[] { "UNSTRUCTURED", "CATEGORICAL", "CATEGORICAL_LIST", "CONTINUOUS", "FLOAT_ARRAY" };
     public static final AttributeType UNSTRUCTURED = new AttributeType(_types[0]);
     public static final AttributeType CATEGORICAL = new AttributeType(_types[1]);
-    public static final AttributeType CONTINUOUS = new AttributeType(_types[2]);
-    public static final AttributeType FLOAT_ARRAY = new AttributeType(_types[3]);
+    public static final AttributeType CATEGORICAL_LIST = new AttributeType(_types[2]);
+    public static final AttributeType CONTINUOUS = new AttributeType(_types[3]);
+    public static final AttributeType FLOAT_ARRAY = new AttributeType(_types[4]);
 
     String _val;
 
@@ -1454,8 +1471,11 @@ class DelvBasicAttribute implements DelvAttribute {
   // TODO should decide a better name and probably store as double
   // And really this is a horrible hack.  Storage should be based on Attribute type, create some actual classes here
   //TreeMap<String, Float[] > _floatArrayItems;
+  // float array is to more efficiently store a long list of items
+  // whereas string array is to store an array of strings for each item
   HashMap<String, Integer> _floatArrayMap;
   float[][] _floatArrayItems;
+  HashMap<String, String[]> _stringArrayItems;
   HashMap<String, Float>  _floatItems;
   AttributeType _type;
   // TODO color map
@@ -1471,6 +1491,7 @@ class DelvBasicAttribute implements DelvAttribute {
     _items = new HashMap<String, String>((int)Math.ceil(100000/.75)); // 75% of required capacity
     _floatArrayMap = new HashMap<String, Integer>((int)Math.ceil(100000/.75));
     _floatArrayItems = new float[0][];
+    _stringArrayItems = new HashMap<String, String[]>();
     _floatItems = new HashMap<String, Float>((int)Math.ceil(100000/.75));
     _type = type;
     _colorMap = color_map;
@@ -1484,6 +1505,7 @@ class DelvBasicAttribute implements DelvAttribute {
     _items = new HashMap<String, String>((int)Math.ceil(100000/.75));
     _floatArrayMap = new HashMap<String, Integer>((int)Math.ceil(100000/.75));
     _floatArrayItems = new float[0][];
+    _stringArrayItems = new HashMap<String, String[]>();
     _floatItems = new HashMap<String, Float>((int)Math.ceil(100000/.75));
   }
 
@@ -1499,6 +1521,9 @@ class DelvBasicAttribute implements DelvAttribute {
     } else if (_type.equals(AttributeType.FLOAT_ARRAY)) {
       // TODO fix this
       println("Cannot set a FLOAT_ARRAY from String");
+    } else if (_type.equals(AttributeType.CATEGORICAL_LIST)) {
+      // TODO fix this
+      println("Cannot set a CATEGORICAL_LIST from String");
     }
   }
   void setFloatItem(String id, Float item) {
@@ -1522,6 +1547,16 @@ class DelvBasicAttribute implements DelvAttribute {
       idx = _floatArrayMap.get(id);
       }
       _floatArrayItems[idx] = item;
+    }
+  }
+
+  void setStringArrayItem(String id, String[] item) {
+    if (_type.equals(AttributeType.CATEGORICAL_LIST)) {
+      _stringArrayItems.put(id, item);
+      for (int ii = 0; ii < item.length; ii++) {
+        ((DelvCategoricalRange)_fullRange).addCategory(item[ii]);
+        ((DelvCategoricalRange)_visibleRange).addCategory(item[ii]);
+      }
     }
   }
 
@@ -1571,6 +1606,20 @@ class DelvBasicAttribute implements DelvAttribute {
     }
   }
 
+  String[] getItemAsStringArray(String id) {
+    if (_type.equals(AttributeType.CATEGORICAL_LIST)) {
+      return _stringArrayItems.get(id);
+    } else if (_type.equals(AttributeType.CATEGORICAL)) {
+      // TODO split item into elements separated by , or just return item
+      // in a 1-element array?
+      String[] item_array = new String[1];
+      item_array[0] = _items.get(id);
+      return item_array;
+    } else {
+      return new String[0];
+    }
+  }
+
   String[] getAllItems() {
     if (_type.equals(AttributeType.CONTINUOUS)) {
       String[] items = new String [_floatItems.size()];
@@ -1612,7 +1661,7 @@ class DelvBasicAttribute implements DelvAttribute {
     if (_type.equals(AttributeType.FLOAT_ARRAY)) {
       return _floatArrayItems;
       // TODO does this make sense for any other type?
-    } else if (_type.equals(AttributeType.CATEGORICAL)) {
+    } else if (_type.equals(AttributeType.CONTINUOUS)) {
       float[][] items = new float[_items.size()][];
       int cnt = 0;
       for (String item : _items.values()) {
@@ -1628,10 +1677,33 @@ class DelvBasicAttribute implements DelvAttribute {
     return (new float[0][0]);
   }
 
+  String[][] getAllItemsAsStringArray() {
+    // TODO Warning!!! all getAllItems* methods in Attributes are dangerous because they don't return values in a consistent order!!!  Use care when calling this method directly or even get rid of it entirely or reimplement it to return a guaranteed order.
+    if (_type.equals(AttributeType.CATEGORICAL_LIST)) {
+      String[][] items = new String[_stringArrayItems.size()][];
+      int cnt = 0;
+      for (String[] item: _stringArrayItems.values()) {
+        items[cnt++] = item;
+      }
+      return items;
+    } else if (_type.equals(AttributeType.CATEGORICAL)) {
+      String[][] items = new String[_items.size()][];
+      int cnt = 0;
+      for (String item : _items.values()) {
+        String[] val = new String[1];
+        val[0] = item;
+        items[cnt++] = val;
+      }
+      return (items);
+    }
+    return (new String[0][0]);
+  }
+
   void removeId(String id) {
     // TODO need error handling here if id is not found in the map
     _items.remove(id);
     _floatItems.remove(id);
+    _stringArrayItems.remove(id);
     if (_type.equals(AttributeType.FLOAT_ARRAY)) {
       Integer idx = _floatArrayMap.get(id);
       int old_size = _floatArrayItems.length;
@@ -1871,7 +1943,12 @@ class DelvBasicDataSet implements DelvDataSet {
     }
     _attributes.get(attr).setFloatArrayItem(id, item);
   }
-
+  void setStringArrayItem(String attr, String id, String[] item) {
+    if (!hasId(id)) {
+      addId(id);
+    }
+    _attributes.get(attr).setStringArrayItem(id, item);
+  }
   void addAttribute(DelvBasicAttribute attr) {
     _attributes.put(attr._name, attr);
   }
@@ -1899,9 +1976,20 @@ class DelvBasicDataSet implements DelvDataSet {
   String[][] getVisibleCategoryColors(String attr) {
     return _attributes.get(attr).getVisibleCategoryColors();
   }
+
   String[] getItemColor(String attr, String id) {
     return _attributes.get(attr).getItemColor(id);
   }
+
+  String[][] getAllItemColors(String attr) {
+    int numItems = _itemIds.size();
+    String[][] colors = new String[numItems][];
+    for (int i = 0; i < numItems; i++) {
+      colors[i] = _attributes.get(attr).getItemColor(_itemIds.get(i).name);
+    }
+    return colors;
+  }
+
   String getHighlightedCategory(String attr) {
     return _attributes.get(attr).getHighlightedCategory();
   }
@@ -1933,15 +2021,34 @@ class DelvBasicDataSet implements DelvDataSet {
     }
     return items;
   }
+  String[][] getAllItemsAsStringArray(String attr) {
+    int numItems = _itemIds.size();
+    String[][] items = new String[numItems][];
+    for (int i = 0; i < numItems; i++) {
+      items[i] = _attributes.get(attr).getItemAsStringArray(_itemIds.get(i).name);
+    }
+    return items;
+  }
 
   String getItem(String attr, String id) {
-    return _attributes.get(attr).getItem(id);
+    String item = "";
+    try {
+      item = _attributes.get(attr).getItem(id);
+    } catch (NullPointerException e) {
+      _delvIF.log("Caught exception trying to get item " + id + " from attribute " + attr + " for dataset " + _name);
+      e.printStackTrace();
+    }
+    return item;
+    //return _attributes.get(attr).getItem(id);
   }
   Float getItemAsFloat(String attr, String id) {
     return _attributes.get(attr).getItemAsFloat(id);
   }
   float[] getItemAsFloatArray(String attr, String id) {
     return _attributes.get(attr).getItemAsFloatArray(id);
+  }
+  String[] getItemAsStringArray(String attr, String id) {
+    return _attributes.get(attr).getItemAsStringArray(id);
   }
 
   String[] getAllIds(String attr) {
@@ -2078,6 +2185,9 @@ class DelvBasicData implements DelvData {
   void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item) {
     _data.get(dataset).setFloatArrayItem(attribute, identifier, item);
   }
+  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item) {
+    _data.get(dataset).setStringArrayItem(attribute, identifier, item);
+  }
 
   Boolean hasAttribute(String dataset, String attribute) {
     return _data.get(dataset).hasAttribute(attribute);
@@ -2104,7 +2214,10 @@ class DelvBasicData implements DelvData {
   String[] getItemColor(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemColor(attribute, identifier);
   }
-
+  String[][] getAllItemColors(String dataset, String attribute) {
+    return _data.get(dataset).getAllItemColors(attribute);
+  }
+  
   String[] getAllItems(String dataset, String attribute) {
     return _data.get(dataset).getAllItems(attribute);
   }
@@ -2113,6 +2226,9 @@ class DelvBasicData implements DelvData {
   }
   float[][] getAllItemsAsFloatArray(String dataset, String attribute) {
     return _data.get(dataset).getAllItemsAsFloatArray(attribute);
+  }
+  String[][] getAllItemsAsStringArray(String dataset, String attribute) {
+    return _data.get(dataset).getAllItemsAsStringArray(attribute);
   }
 
   String[] getAllIds(String dataset, String attribute) {
@@ -2128,7 +2244,10 @@ class DelvBasicData implements DelvData {
   float[] getItemAsFloatArray(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemAsFloatArray(attribute, identifier);
   }
-
+  String[] getItemAsStringArray(String dataset, String attribute, String identifier) {
+    return _data.get(dataset).getItemAsStringArray(attribute, identifier);
+  }
+  
   // TODO put these null checks in for all gets of datasets
   String getHighlightedId(String dataset) {
     DelvBasicDataSet ds = _data.get(dataset);
@@ -2173,6 +2292,10 @@ class DelvBasicData implements DelvData {
 
   DelvDataSet getDataSet(String dataset) {
     return _data.get(dataset);
+  }
+
+  boolean hasDataSet(String dataset) {
+    return _data.containsKey(dataset);
   }
 
   void removeDataSet(String dataset) {
