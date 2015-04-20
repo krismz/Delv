@@ -207,18 +207,18 @@ interface DelvColorMap {
 //         BEGIN IMPLEMENTATIONS         //
 ///////////////////////////////////////////
 
-class DelvImpl implements Delv {
+public class DelvImpl implements Delv {
   HashMap<String, DelvData> dataIFs;
   HashMap<String, DelvView> views;
   HashMap< String, HashMap<String, String> > signalHandlers;
 
-  DelvImpl() {
+  public DelvImpl() {
     dataIFs = new HashMap<String, DelvData>();
     views = new HashMap<String, DelvView>();
     signalHandlers = new HashMap< String, HashMap<String, String> >();
   }
 
-  DelvImpl(DelvData dataInt) {
+  public DelvImpl(DelvData dataInt) {
     dataIFs = new HashMap<String, DelvData>();
     dataIFs.put(dataInt.getName(), dataInt);
     views = new HashMap<String, DelvView>();
@@ -658,6 +658,8 @@ public class DelvBasicView implements DelvView {
   public void mouseMoved() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseMovedInView(mouseX - _origin[0], mouseY - _origin[1]);
+    else
+      mouseOutOfView();
   }
   public void mouseOut() {
     mouseOutOfView();
@@ -665,23 +667,33 @@ public class DelvBasicView implements DelvView {
   public void mouseClicked() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseClickedInView(mouseX - _origin[0], mouseY - _origin[1]);
+    else
+      mouseOutOfView();
   }
   public void mousePressed() {
     // TODO better to press mouseButton in directly?
     if ( mouseCapture(mouseX, mouseY) )
       mousePressedInView(mouseX - _origin[0], mouseY - _origin[1], mouseButton == RIGHT);
+    else
+      mouseOutOfView();
   }
   public void mouseReleased() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseReleasedInView(mouseX - _origin[0], mouseY - _origin[1]);
+    else
+      mouseOutOfView();
   }
   public void mouseDragged() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseDraggedInView(mouseX - _origin[0], mouseY - _origin[1]);
+    else
+      mouseOutOfView();
   }
   public void mouseScrolled() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseScrolledInView(_p.mouseScroll);
+    else
+      mouseOutOfView();
   }
   public void movieEvent(MovieIF m) {}
   // * * * Render the view (default just sets the background of the view) * * * //
@@ -824,6 +836,11 @@ class DelvCompositeView extends DelvBasicView {
   DelvCompositeView(String name) { this(name, new int[2], 100, 100); }
 
   DelvCompositeView addView(DelvBasicView view) {
+    // Set background to transparent here, view can override later if desired
+    // TODO document this elsewhere
+    color c = view.getBackgroundColor();
+    c = color(red(c), green(c), blue(c), 0);
+    view.setBackgroundColor(c);
     _views.add(view);
     return this;
   }
@@ -875,6 +892,7 @@ class DelvCompositeView extends DelvBasicView {
   }
 
   void reloadData(String source) {
+    super.reloadData(source);
     for (DelvBasicView view: _views) {
       view.reloadData(source);
     }
@@ -894,13 +912,19 @@ class DelvCompositeView extends DelvBasicView {
     }
   }
 
-  void render(){
-    for (DelvBasicView view: _views) {
-      view.render();
-    }
+  void basicDraw(){
+    super.draw();
+  }
+
+  void draw(){
+   super.draw();
+   for (DelvBasicView view: _views) {
+     view.draw();
+   }
   }
 
   void setup(){
+    super.setup();
     for (DelvBasicView view: _views) {
       view.setup();
     }
@@ -914,37 +938,44 @@ class DelvCompositeView extends DelvBasicView {
     draw();
   }
   void mouseMoved() {
+    super.mouseMoved();
     for (DelvBasicView view : _views) {
       view.mouseMoved();
     }
   }
   void mouseClicked() {
+    super.mouseClicked();
     for (DelvBasicView view : _views) {
       view.mouseClicked();
     }
   }
   void mousePressed() {
+    super.mousePressed();
     // TODO better to press mouseButton in directly?
     for (DelvBasicView view : _views) {
       view.mousePressed();
     }
   }
   void mouseReleased() {
+    super.mouseReleased();
     for (DelvBasicView view : _views) {
       view.mouseReleased();
     }
   }
   void mouseDragged() {
+    super.mouseDragged();
     for (DelvBasicView view : _views) {
       view.mouseDragged();
     }
   }
   void mouseScrolled() {
+    super.mouseScrolled();
     for (DelvBasicView view : _views) {
       view.mouseScrolled();
     }
   }
   void movieEvent(MovieIF m) {
+    super.movieEvent(m);
     for (DelvBasicView view : _views) {
       view.movieEvent(m);
     }
@@ -2035,7 +2066,7 @@ class DelvBasicDataSet implements DelvDataSet {
     try {
       item = _attributes.get(attr).getItem(id);
     } catch (NullPointerException e) {
-      _delvIF.log("Caught exception trying to get item " + id + " from attribute " + attr + " for dataset " + _name);
+      //_delvIF.log("Caught exception trying to get item " + id + " from attribute " + attr + " for dataset " + _name);
       e.printStackTrace();
     }
     return item;
