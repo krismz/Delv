@@ -12,7 +12,7 @@ function init() {
   for (var j = 0; j < d3Array.length; j++) {
     var id = d3Array[j].getAttribute("id");
     var svgElem = d3Array[j];
-    console.log("loading script: " + "./" + id + ".js");
+    console.log("loading script: " + "" + id + ".js");
     var chart = new delv.d3Chart(id, "./"+id+".js", "d3WrapperNS."+id+"_view", init_view_instance);
   }
 
@@ -37,32 +37,30 @@ function init() {
   // may need to catch the document-level mouse released event and forward it on to all views
   // otherwise when mouse is moved back into that view, the view will be behaving as if the mouse is still pressed
 
-  if (typeof(dataIF) === "undefined") {
-    // dataCanvasId = "d3DemoData"
-    // var canvas = document.createElement('canvas');
-    // canvas.id     = dataCanvasId;
-    // canvas.width  = 0;
-    // canvas.height = 0;
-    // canvas.style.zIndex   = 8;
-    // document.body.appendChild(canvas);
 
-    // Processing.loadSketchFromSources(dataCanvasId,
-		// 			 ["./Globals.pde",
-		// 				"./Delv.pde",
-		// 			  "./d3DemoData.pde"]);
-	  // setTimeout(finishLoadingData, 50);
+  console.log("Initializing dataIF");
+  // To use data from pyqt, go to the else branch of the following commented-out if statement
+  // The following uses a javascript data interface
+  //if (typeof(dataIF) === "undefined") {
+    console.log("dataIF undefined, so creating from d3_demo_data");
     dataIF = new d3WrapperNS.d3_demo_data("d3Demo");
-    dataIF.load_data();
-    delv.giveDataIFToViews("d3Demo");
-    delv.reloadData("d3Demo");
+    dataIF.load_data(finishLoadingJSData);
     
-  } else {
-    delv.addDataIF(dataIF);
-  }
+  // } else {
+  //   console.log("dataIF exists, so just adding it");
+  //   delv.addDataIF(dataIF);
+  // }
 
   resizeAll();
 }
 
+function finishLoadingJSData() {
+    console.log("finishLoadingJSData called");
+    delv.giveDataIFToViews("d3Demo");
+    delv.reloadData("d3Demo");
+}
+
+  
 function finishLoadingData() {
   p = Processing.getInstanceById(dataCanvasId);
   try {

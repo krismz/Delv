@@ -16,14 +16,17 @@ d3WrapperNS.d3_demo_data = function ( name ) {
   newObj.setDelvIF(delv);
   delv.addDataIF(newObj);
 
-  newObj.load_data = function() {
-    this.load_from_file("./test_data/flare.json");
+  newObj.load_data = function(when_finished) {
+    delv.log("Loading data from file: " + "test_data/flare.json");
+    this.load_from_file("test_data/flare.json", when_finished);
   };
 
-  newObj.load_from_file = function(filename) {
+  newObj.load_from_file = function(filename, when_finished) {
     d3.json(filename, 
             function(error, json) {
+              delv.log("load_from_file, error: " + error);
               d3WrapperNS.convert_to_nodes_links(json, name);
+              when_finished();
             });
   };
   return newObj;
