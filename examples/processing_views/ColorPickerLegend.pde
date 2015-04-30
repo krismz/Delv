@@ -9,7 +9,7 @@
 //              View             //
 ///////////////////////////////////
 
-class ColorPickerLegendView extends DelvCategoryView {
+public class ColorPickerLegendView extends DelvCategoryView {
   int _color_picker_w, _color_picker_h;
   int[] _color_picker_origin;
   int _item_legend_w, _item_legend_h;
@@ -26,11 +26,11 @@ class ColorPickerLegendView extends DelvCategoryView {
   boolean _item_rolled_over;
   String _rolled_over_item;
 
-  ColorPickerLegendView() {
+  public ColorPickerLegendView() {
     this("ColorPickerLegend");
   }
 
-  ColorPickerLegendView(String name) {
+  public ColorPickerLegendView(String name) {
     super(name);
     _mx = _my = 0;
     _color_picker_origin = new int[2];
@@ -45,7 +45,10 @@ class ColorPickerLegendView extends DelvCategoryView {
     _item_legend_w = 2*FEATURE_LEGEND_BORDER_W + FEATURE_LEGEND_BOX_W + FEATURE_LEGEND_BOX_OFFSET;
     _item_legend_w = 100;
 
+    _item_legend_origin[0] = 0;
     _item_legend_origin[1] = FEATURE_LEGEND_TEXT_OFFSET;
+    _color_picker_origin[0] = _item_legend_origin[0] + FEATURE_LEGEND_BORDER_W;
+    _color_picker_origin[1] = _item_legend_origin[1] + LEGEND_COLOR_PICKER_OFFSET;
 
     // set the color picker height and width (assume 1 row of color boxes and then test
     _color_picker_h = COLOR_PICKER_BOX_W + COLOR_PICKER_BUTTON_OFFSET + CLEAR_BUTTON_H;
@@ -65,10 +68,10 @@ class ColorPickerLegendView extends DelvCategoryView {
 
   }
 
-  String dataAttr() {
+  public String dataAttr() {
     return cat1Attr();
   }
-  ColorPickerLegendView dataAttr(String attr) {
+  public ColorPickerLegendView dataAttr(String attr) {
     cat1Attr(attr);
     colorAttr(attr);
     return this;
@@ -78,7 +81,6 @@ class ColorPickerLegendView extends DelvCategoryView {
     //_visibleCat1Colors = new color[_visibleCat1.length];
     // clearColors();
     computeLegendParameters();
-    redraw();
   }
 
   // void clearColors() {
@@ -101,7 +103,6 @@ class ColorPickerLegendView extends DelvCategoryView {
   void hoveredCatUpdated() {
     _item_rolled_over = true;
     _rolled_over_item = _hoverCat;
-    redraw();
   }
 
   // this will need to be called when the number of visible items change
@@ -117,7 +118,7 @@ class ColorPickerLegendView extends DelvCategoryView {
     _color_picker_origin[1] = _item_legend_origin[1] + _item_legend_h + LEGEND_COLOR_PICKER_OFFSET;
   }
 
-  void render() {
+  public void render() {
     //
     // render the color picker
     //
@@ -184,11 +185,9 @@ class ColorPickerLegendView extends DelvCategoryView {
     String item;
     textAlign( LEFT, CENTER );
     strokeWeight( 1 );
-
     for ( int i = 0; i < _visibleCat1.length; i++ )
     {
       item = _visibleCat1[i];
-
       if ( _legend_item_color_selected && (_selected_legend_item_color == i) ) fill( DEFAULT_COLOR );
       else fill( _visibleCat1Colors[i] );
       if ( _rolled_over_item.equals(item) ) stroke( COLOR_PICKER_SELECTED_LINE_COLOR );
@@ -235,15 +234,9 @@ class ColorPickerLegendView extends DelvCategoryView {
 
   }
 
-  void setup() {
+  public void setup() {
     _w = 20;
     _h = 20;
-  }
-
-  void resize(int w, int h) {
-    _item_legend_origin[0] = 0;
-    _color_picker_origin[0] = _item_legend_origin[0]+FEATURE_LEGEND_BORDER_W;
-    super.resize(w, h);
   }
 
   boolean overItemLegend( int mx, int my )
@@ -396,6 +389,11 @@ class ColorPickerLegendView extends DelvCategoryView {
     return false;
   }
 
+  public void mouseOutOfView() {
+    _item_rolled_over = false;
+    _rolled_over_item = "";
+  }
+  
   void mouseMovedInView( int mx, int my )
   {
     _item_rolled_over = false;
@@ -408,7 +406,6 @@ class ColorPickerLegendView extends DelvCategoryView {
          (my >= _item_legend_origin[1]) && (my <= _item_legend_origin[1]+_item_legend_h) ) {
       overItemLegend( mx-_item_legend_origin[0], my-_item_legend_origin[1] );
     }
-    draw();
   }
 
   void mousePressedInView( int mx, int my, boolean rightPressed )
@@ -421,13 +418,11 @@ class ColorPickerLegendView extends DelvCategoryView {
          (my >= (_item_legend_origin[1]-FEATURE_LEGEND_TEXT_OFFSET)) &&
          (my <= _item_legend_origin[1]+_item_legend_h) ) {
       itemLegendPressed( mx-_item_legend_origin[0], my-_item_legend_origin[1], rightPressed );
-      draw();
     }
 
     else if ( (mx >= _color_picker_origin[0]) && (mx <= _color_picker_origin[0]+_color_picker_w) &&
               (my >= _color_picker_origin[1]) && (my <= _color_picker_origin[1]+_color_picker_h) ) {
       colorPickerPressed( mx-_color_picker_origin[0], my-_color_picker_origin[1] );
-      draw();
     }
 
   }
@@ -465,7 +460,6 @@ class ColorPickerLegendView extends DelvCategoryView {
     }
     _color_selected = _legend_item_color_selected = _clear_button_selected = false;
 
-    draw();
   }
 
   void mouseDraggedInView( int mx, int my )
@@ -477,7 +471,6 @@ class ColorPickerLegendView extends DelvCategoryView {
     if ( (mx >= _item_legend_origin[0]) && (mx <= _item_legend_origin[0]+_item_legend_w) &&
     (my >= _item_legend_origin[1]) && (my <= _item_legend_origin[1]+_item_legend_h) ) {
       overItemLegend( mx-_item_legend_origin[0], my-_item_legend_origin[1] );
-      draw();
     }
   }
 

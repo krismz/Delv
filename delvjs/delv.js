@@ -317,7 +317,7 @@ var Processing = Processing || {};
 	        eval(callConstructor);
           delv.log("constructed processing sketch view for " + canvasId + " with call: " + callConstructor);
 	      } catch (e) {
-	        delv.log("initializing processing instance " + canvasId + " failed.  Try again later");
+	        delv.log("initializing processing instance " + canvasId + " failed (" + e + ").  Try again later");
 	        sketchLoaded = false;
 	      }
 	      if ((typeof(p) !== "undefined") &&
@@ -335,6 +335,7 @@ var Processing = Processing || {};
 	        p.resize = p._view.resize;
 	        p.setup = p._view.setup;
 	        p.draw = p._view.draw;
+          p.redraw=p._view.redraw;
 	        p.mouseMoved = p._view.mouseMoved;
 	        p.mouseOut = p._view.mouseOut;
 	        p.mouseDragged = p._view.mouseDragged;

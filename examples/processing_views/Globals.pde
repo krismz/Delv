@@ -49,13 +49,13 @@ public static int _render_region_height;
 
 // Fonts
 // TODO these font names aren't great, change when eliminating Globals.pde
-public PFont _pixel_font_8 = createFont( "PFTempestaSeven", 9, false );
-public PFont _pixel_font_8b = createFont( "PFTempestaSeven-Bold", 10, false );
-public PFont _verdana_font_12 = createFont( "Verdana", 12, true );
-public PFont _verdana_font_16 = createFont( "Verdana", 16, true );
-public PFont _verdana_font_30 = createFont( "Verdana", 30, true );
-public int _pixel_font_8_height = 8;
-public int _verdana_font_12_height = 12;
+public final PFont _pixel_font_8 = createFont( "PFTempestaSeven", 9, false );
+public final PFont _pixel_font_8b = createFont( "PFTempestaSeven-Bold", 10, false );
+public final PFont _verdana_font_12 = createFont( "Verdana", 12, true );
+public final PFont _verdana_font_16 = createFont( "Verdana", 16, true );
+public final PFont _verdana_font_30 = createFont( "Verdana", 30, true );
+public static final int _pixel_font_8_height = 8;
+public static final int _verdana_font_12_height = 12;
 
 // Flags
 public static int _region_alignment;
@@ -198,8 +198,8 @@ public static final int NUM_COND_VARS = 1;
 public final color DEBUG_COLOR = color(193, 8, 8);
 
 // BELOW are from Miriah's version of InSite
-float _global_min_v = 0.0;
-String _region_label, _type_label;
+public float _global_min_v = 0.0;
+public String _region_label, _type_label;
 public static final int REGION_TAG_OFFSET = 4;
 public static final int FEATURE_ABOVE_HEIGHT = 30;
 public final color REGION_TAG_TEXT_COLOR = color( 100 );

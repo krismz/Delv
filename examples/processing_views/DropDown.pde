@@ -9,7 +9,7 @@
 //              View             //
 ///////////////////////////////////
 
-class DropDownView extends DelvCategoryView {
+public class DropDownView extends DelvCategoryView {
   boolean is_dropped_down;
   boolean dropdown_is_rolled_over; // hover
   boolean dropdown_is_highlighted; // highlighted
@@ -20,11 +20,11 @@ class DropDownView extends DelvCategoryView {
   int dropdown_min_width;
   int dropbox_max_width;
 
-  DropDownView() {
+  public DropDownView() {
     this("DropDown");
   }
 
-  DropDownView(String name) {
+  public DropDownView(String name) {
     super(name);
     is_dropped_down = false;
     dropdown_is_rolled_over = false;
@@ -34,30 +34,30 @@ class DropDownView extends DelvCategoryView {
     rolled_over_dropdown = 0;
     cats_selected = new boolean[0];
     textFont( _verdana_font_12 );
-    dropdown_min_width = (int)textWidth(_label) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
+    dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
     dropbox_max_width = MIN_INT;
   }
 
-  boolean isDroppedDown() {
+  public boolean isDroppedDown() {
     return is_dropped_down;
   }
 
-  void labelUpdated() {
-    dropdown_min_width = (int)textWidth(_label) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
+  public void labelUpdated() {
+    dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
   }
 
-  void cat1Updated() {
+  public void cat1Updated() {
     cats_selected = new boolean[_cat1.length];
     dropbox_max_width = MIN_INT;
     textFont( _verdana_font_12 );
     for (int i = 0; i < _cat1.length; ++i) {
       cats_selected[i] = true;
-      dropbox_max_width = max( dropbox_max_width, (int)textWidth( _cat1[i] ) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET);
+      dropbox_max_width = max( dropbox_max_width, (int)(textWidth( _cat1[i] )) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET);
     }
     resize();
   }
 
-  void visibleCat1Updated() {
+  public void visibleCat1Updated() {
     for (int i = 0; i < _cat1.length; ++i) {
       cats_selected[i] = false;
       for (int j = 0; j < _visibleCat1.length; ++j) {
@@ -68,7 +68,7 @@ class DropDownView extends DelvCategoryView {
     }
   }
 
-  void render() {
+  public void render() {
     int x = DROPBOX_BORDER + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET;
     int y = DROPBOX_BORDER;
 
@@ -133,6 +133,9 @@ class DropDownView extends DelvCategoryView {
 
         if ( cats_selected[i] )
         {
+          // TODO avoid these calls to smooth/noSmooth?
+          // Right now, the fonts don't work in Java applet w/ opengl renderer unless smooth/nosmooth is called
+          // so much that smoothing is disabled
           smooth();
           line( x+DROPBOX_RADIO_BUTTON_W/4, y-DROPBOX_RADIO_BUTTON_W/2, x+DROPBOX_RADIO_BUTTON_W/2, y );
           line( x+DROPBOX_RADIO_BUTTON_W/2, y, x+DROPBOX_RADIO_BUTTON_W, y-DROPBOX_RADIO_BUTTON_W );
@@ -165,7 +168,11 @@ class DropDownView extends DelvCategoryView {
     return selection;
   }
 
-  void mouseMovedInView( int mx, int my ) {
+  public void mouseOutOfView() {
+    dropdown_is_rolled_over = false;
+  }
+
+  public void mouseMovedInView( int mx, int my ) {
     dropdown_is_rolled_over = false;
     String hover_id = "";
     int selection = getChoiceUnderMouse(mx, my);
@@ -178,7 +185,7 @@ class DropDownView extends DelvCategoryView {
     hoveredCat(hover_id);
   }
 
-  void mousePressedInView( int mx, int my, boolean rightPressed )
+  public void mousePressedInView( int mx, int my, boolean rightPressed )
   {
     boolean dropdown_is_toggled = false;
     dropdown_is_pressed = false;
@@ -219,14 +226,14 @@ class DropDownView extends DelvCategoryView {
     draw();
   }
 
-  void setup() {
+  public void setup() {
     _w = dropdown_min_width;
     _h = 2*DROPBOX_BORDER + _cat1.length*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
     _h = _h * 2;
     resize(_w, _h);
   }
 
-  void resize() {
+  public void resize() {
     int w, h;
     if (dropbox_max_width <= dropdown_min_width) {
       w = dropdown_min_width;
@@ -234,11 +241,10 @@ class DropDownView extends DelvCategoryView {
       w = dropbox_max_width + 2 * DROPBOX_BORDER;
     }
     h = 2*DROPBOX_BORDER + (_cat1.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
-
     resize(w, h * 2);
   }
 
-  void mouseReleasedInView(int mx, int my) {
+  public void mouseReleasedInView(int mx, int my) {
     if (dropdown_is_pressed) {
       cats_selected[pressed_dropdown] = ! cats_selected[pressed_dropdown];
       selectedCat(_cat1[pressed_dropdown]);

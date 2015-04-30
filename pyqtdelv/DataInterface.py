@@ -366,7 +366,7 @@ class D3DataInterface(DataInterface):
       # TODO make this path more configurable
       fullpath = os.path.split(os.path.abspath(__file__))[0]                                                          
       parentdir = os.path.split(fullpath)[0]                                                                          
-      data_path = os.path.join(parentdir, 'test_data')                                                                
+      data_path = os.path.join(parentdir, 'examples', 'test_data')                                                                
       lines = open(os.path.join(data_path,'flare.json')).readlines()  
       decoded_json = json.loads(''.join(lines))
       self.convertToNodesAndLinks(decoded_json)

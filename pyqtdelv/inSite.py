@@ -123,7 +123,9 @@ def runMain(svg, demo_type):
     if svg:
         win = MainWindow(QtCore.QUrl("file://%s" % svg), demo_type)
     else:
-        win = MainWindow(QtCore.QUrl("file:///Users/krismz/Software/SVGAnnotation/simple_link.svg"), demo_type)
+        #win = MainWindow(QtCore.QUrl("file:///Users/krismz/Software/SVGAnnotation/simple_link.svg"), demo_type)
+        win = MainWindow(QtCore.QUrl("file:///Users/krismz/Software/SVGAnnotation/mtcars_link.svg"), demo_type)
+        #win = MainWindow(QtCore.QUrl("file:///Users/krismz/Software/SVGAnnotation/usa_election.svg"), demo_type)
 
     win.show()
     sys.exit(app.exec_())

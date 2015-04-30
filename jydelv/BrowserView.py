@@ -78,7 +78,7 @@ class SnapSVGWebView(SVGWebView):
 
     def evaluateJavaScript(self, js):
         print "js: ", js
-        return self.frame.evaluateJavaScript(js)
+        return self.page().mainFrame().evaluateJavaScript(js)
 
     def getWidth(self):
         return self.frame.documentElement().attribute("width")

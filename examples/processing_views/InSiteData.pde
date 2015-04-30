@@ -5,26 +5,26 @@
 // License: New BSD 3-Clause (see accompanying LICENSE file for details)
 // ======================================================================
 
-class InSiteData extends DelvBasicData {
+public class InSiteData extends DelvBasicData {
   ArrayList _region_files;
   boolean _normalize_globally;
 
-  InSiteData(String name) {
+  public InSiteData(String name) {
     super(name);
     _normalize_globally = false;
     _global_min_v = 5.0;
   }
 
   // overridden functions
-  void loadData() {
+  public void loadData() {
     load_from_file("./test_data/config.txt");
   }
 
-  void clearRegionFiles() {
+  public void clearRegionFiles() {
     _region_files = new ArrayList();
 
     // set up datasets
-    color def_col = color( 210, 210, 210 );
+    color def_col = color_( 210 );
     removeDataSet("Regions");
     DelvDataSet ds = addDataSet("Regions");
     ds.addAttribute(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
@@ -46,11 +46,11 @@ class InSiteData extends DelvBasicData {
     ds.addAttribute(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
   }
 
-  void addRegionFile(String filename) {
+  public void addRegionFile(String filename) {
     _region_files.add(filename);
   }
 
-  void updateConfig(String filename) {
+  public void updateConfig(String filename) {
     String[] rows = loadStrings( filename );
 
     int counter = 0;
@@ -87,7 +87,7 @@ class InSiteData extends DelvBasicData {
 
   }
 
-  void updateRegions() {
+  public void updateRegions() {
 
     // read in the region files
     //_regions = new Region[region_files.size()];
@@ -120,21 +120,21 @@ class InSiteData extends DelvBasicData {
 
 
   // subclass-specific functions
-  void load_from_file(String filename) {
+  public void load_from_file(String filename) {
     clearRegionFiles();
     updateConfig(filename);
     updateRegions();
   }
 
 
-  void readRegionText( String txt) {
+  public void readRegionText( String txt) {
     String[] rows = splitTokens(txt, "\r\n");
     readRegionRows(rows);
   }
 //
 // REGION FILE
 //
-  void readRegionFile( String file )
+  public void readRegionFile( String file )
   {
     String[] rows = loadStrings( file );
     readRegionRows(rows);

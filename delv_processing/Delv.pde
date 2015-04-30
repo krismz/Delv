@@ -379,11 +379,12 @@ public class DelvBasicView implements DelvView {
   //  since _p == this in Processing
   // then always access mouseScroll through _p.mouseScroll
   int mouseScroll = 0;
-  DelvBasicView _p;
+  public DelvBasicView _p;
   int _w = 100;
   int _h = 100; // The width and height of the view
   int[] _origin;
   int _background_color;
+  boolean _drawBox;
   String[] _ids;
   String _hoverId;
   String[] _selectIds;
@@ -408,7 +409,8 @@ public class DelvBasicView implements DelvView {
     _origin = origin;
     _w = w;
     _h = h;
-    _background_color = color(255);
+    _background_color = color_(255);
+    _drawBox = true;
     _ids = new String[0];
     _hoverId = "";
     _selectIds = new String[0];
@@ -422,7 +424,10 @@ public class DelvBasicView implements DelvView {
   public DelvBasicView() { this("BasicView", new int[2], 100, 100); }
   public DelvBasicView(String name) { this(name, new int[2], 100, 100); }
 
-  public void bindDelv(Delv dlv) { _delvIF = dlv; }
+  public void bindDelv(Delv dlv) {
+    _delvIF = dlv;
+    connectSignals();
+  }
 
   public DelvView dataIF(String dataIFName) {
     _dataIF = _delvIF.getDataIF(dataIFName);
@@ -518,7 +523,7 @@ public class DelvBasicView implements DelvView {
   public void label(String aLabel) {
     _label = aLabel;
     labelUpdated();
-    draw();
+    //redraw();
   }
 
   // * * * Set the origin * * * //
@@ -541,12 +546,16 @@ public class DelvBasicView implements DelvView {
     return this;
   }
 
+  public void drawBox(boolean doDraw) {
+    _drawBox = doDraw;
+  }
+
   // * * * Get/Set the ids * * * //
   public String[] getIds() { return _ids; }
   public DelvBasicView setIds(String[] ids) {
     _ids = ids;
     idsUpdated();
-    draw();
+    //redraw();
     return this;
   }
   public String getId(int idx) {
@@ -563,7 +572,7 @@ public class DelvBasicView implements DelvView {
       }
     }
     highlightedIdUpdated();
-    draw();
+    //redraw();
   }
   public void setHoveredId(String id) {
     // TODO actually pick a better data structure and algorithm
@@ -576,7 +585,7 @@ public class DelvBasicView implements DelvView {
       }
     }
     hoveredIdUpdated();
-    draw();
+    //redraw();
   }
   public void setSelectedIds(String[] ids) {
     // TODO actually pick a better data structure and algorithm
@@ -619,16 +628,22 @@ public class DelvBasicView implements DelvView {
     highlightedIdx(false, -1, doDraw);
   }
 
-  // * * * draw translates to the origin * * * //
-  public void draw() {
-    // Translate & render view
-    pushMatrix();
-    translate( _origin[0], _origin[1] );
+  public void renderBox() {
     // Render the box around the view
     noStroke();
     fill( _background_color );
     rect(0, 0, _w, _h);
     noFill();
+  }
+
+  // * * * draw translates to the origin * * * //
+  public void draw() {
+    // Translate & render view
+    pushMatrix();
+    translate( _origin[0], _origin[1] );
+    if (_drawBox) {
+      renderBox();
+    }
     render();
     popMatrix();
   }
@@ -660,6 +675,7 @@ public class DelvBasicView implements DelvView {
       mouseMovedInView(mouseX - _origin[0], mouseY - _origin[1]);
     else
       mouseOutOfView();
+    draw();
   }
   public void mouseOut() {
     mouseOutOfView();
@@ -669,31 +685,36 @@ public class DelvBasicView implements DelvView {
       mouseClickedInView(mouseX - _origin[0], mouseY - _origin[1]);
     else
       mouseOutOfView();
-  }
+    draw();
+ }
   public void mousePressed() {
     // TODO better to press mouseButton in directly?
     if ( mouseCapture(mouseX, mouseY) )
       mousePressedInView(mouseX - _origin[0], mouseY - _origin[1], mouseButton == RIGHT);
     else
       mouseOutOfView();
+    draw();
   }
   public void mouseReleased() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseReleasedInView(mouseX - _origin[0], mouseY - _origin[1]);
     else
       mouseOutOfView();
+    draw();
   }
   public void mouseDragged() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseDraggedInView(mouseX - _origin[0], mouseY - _origin[1]);
     else
       mouseOutOfView();
+    draw();
   }
   public void mouseScrolled() {
     if ( mouseCapture(mouseX, mouseY) )
       mouseScrolledInView(_p.mouseScroll);
     else
       mouseOutOfView();
+    draw();
   }
   public void movieEvent(MovieIF m) {}
   // * * * Render the view (default just sets the background of the view) * * * //
@@ -725,7 +746,7 @@ public class DelvBasicView implements DelvView {
       _hoverId = id;
       _dataIF.updateHoveredId(_name, _datasetName, id);
       if (doDraw) {
-        draw();
+        //redraw();
       }
     }
   }
@@ -777,7 +798,7 @@ public class DelvBasicView implements DelvView {
       _highlightId = id;
       _dataIF.updateHighlightedId(_name, _datasetName, id);
       if (doDraw) {
-        draw();
+        //redraw();
       }
     }
   }
@@ -805,12 +826,12 @@ public class DelvBasicView implements DelvView {
       // NOTE: May also want to add a highlightColor, hoverColor, selectionColor
       // to the dataIF and have a way to update and get these colors.  Make these colors also part of the base view class.
       String[] colorStr = new String[3];
-      colorStr[0] = "" + red(c);
-      colorStr[1] = "" + green(c);
-      colorStr[2] = "" + blue(c);
+      colorStr[0] = "" + red_(c);
+      colorStr[1] = "" + green_(c);
+      colorStr[2] = "" + blue_(c);
       _dataIF.updateCategoryColor(_name, _datasetName, _colorAttr, _colorCat, colorStr);
       if (doDraw) {
-        draw();
+        //redraw();
       }
     }
   }
@@ -828,24 +849,25 @@ class DelvCompositeView extends DelvBasicView {
   ArrayList<DelvBasicView> _views;
 
        // * * * Constructors * * * //
-  DelvCompositeView(String name, int [] origin, int w, int h){
+  public DelvCompositeView(String name, int [] origin, int w, int h){
     super(name, origin, w, h);
     _views = new ArrayList<DelvBasicView>();
   }
-  DelvCompositeView() { this("CompositeView", new int[2], 100, 100); }
-  DelvCompositeView(String name) { this(name, new int[2], 100, 100); }
+  public DelvCompositeView() { this("CompositeView", new int[2], 100, 100); }
+  public DelvCompositeView(String name) { this(name, new int[2], 100, 100); }
 
-  DelvCompositeView addView(DelvBasicView view) {
+  public DelvCompositeView addView(DelvBasicView view) {
     // Set background to transparent here, view can override later if desired
     // TODO document this elsewhere
-    color c = view.getBackgroundColor();
-    c = color(red(c), green(c), blue(c), 0);
-    view.setBackgroundColor(c);
+    //color c = view.getBackgroundColor();
+    //c = color_(red_(c), green_(c), blue_(c), 0);
+    //view.setBackgroundColor(c);
+    view.drawBox(false);
     _views.add(view);
     return this;
   }
 
-  void bindDelv(Delv dlv) {
+  public void bindDelv(Delv dlv) {
     for (DelvBasicView view: _views) {
       dlv.addView(view, view.name());
       view.bindDelv(dlv);
@@ -853,7 +875,7 @@ class DelvCompositeView extends DelvBasicView {
     _delvIF = dlv;
   }
 
-  DelvBasicView dataIF(String dataIFName) {
+  public DelvBasicView dataIF(String dataIFName) {
     for (DelvBasicView view: _views) {
       view.dataIF(dataIFName);
     }
@@ -869,7 +891,7 @@ class DelvCompositeView extends DelvBasicView {
     return this;
   }
 
-  DelvBasicView colorAttr(String attr) {
+  public DelvBasicView colorAttr(String attr) {
     _colorAttr = attr;
     for (DelvBasicView view: _views) {
       view.colorAttr(attr);
@@ -885,100 +907,100 @@ class DelvCompositeView extends DelvBasicView {
     labelUpdated();
   }
 
-  void connectSignals() {
-    for (DelvBasicView view: _views) {
-      view.connectSignals();
-    }
-  }
-
-  void reloadData(String source) {
-    super.reloadData(source);
+  public void reloadData(String source) {
     for (DelvBasicView view: _views) {
       view.reloadData(source);
     }
+    super.reloadData(source);
   }
 
   // * * * Set the origin * * * //
-  void setOrigin(int [] origin){
+  public void setOrigin(int [] origin){
     super.setOrigin(origin);
     for (DelvBasicView view: _views) {
       view.setOrigin(origin);
     }
   }
-  void setOrigin(int x, int y){
+  public void setOrigin(int x, int y){
     super.setOrigin(x, y);
     for (DelvBasicView view: _views) {
       view.setOrigin(x, y);
     }
   }
 
-  void basicDraw(){
+  public void basicDraw(){
     super.draw();
   }
 
-  void draw(){
-   super.draw();
-   for (DelvBasicView view: _views) {
-     view.draw();
-   }
+  public void draw(){
+    super.draw();
+    for (DelvBasicView view: _views) {
+      view.draw();
+    }
   }
 
-  void setup(){
+  public void setup(){
     super.setup();
     for (DelvBasicView view: _views) {
       view.setup();
     }
   }
 
-  void resize(int w, int h) {
+  public void resize(int w, int h) {
     super.resize(w, h);
     for (DelvBasicView view: _views) {
       view.resize(w, h);
     }
-    draw();
+    //redraw();
   }
-  void mouseMoved() {
-    super.mouseMoved();
+  public void mouseMoved() {
     for (DelvBasicView view : _views) {
       view.mouseMoved();
     }
+    super.mouseMoved();
   }
-  void mouseClicked() {
-    super.mouseClicked();
+  public void mouseClicked() {
     for (DelvBasicView view : _views) {
       view.mouseClicked();
     }
+    super.mouseClicked();
   }
-  void mousePressed() {
-    super.mousePressed();
+  public void mousePressed() {
     // TODO better to press mouseButton in directly?
     for (DelvBasicView view : _views) {
       view.mousePressed();
     }
+    super.mousePressed();
   }
-  void mouseReleased() {
-    super.mouseReleased();
+  public void mouseReleased() {
     for (DelvBasicView view : _views) {
       view.mouseReleased();
     }
+    super.mouseReleased();
   }
-  void mouseDragged() {
-    super.mouseDragged();
+  public void mouseDragged() {
     for (DelvBasicView view : _views) {
       view.mouseDragged();
     }
+    super.mouseDragged();
   }
-  void mouseScrolled() {
-    super.mouseScrolled();
+  public void mouseScrolled() {
     for (DelvBasicView view : _views) {
       view.mouseScrolled();
     }
+    super.mouseScrolled();
   }
-  void movieEvent(MovieIF m) {
-    super.movieEvent(m);
+  public void mouseOutOfView() {
+    for (DelvBasicView view : _views) {
+      view.mouseOutOfView();
+    }
+  }
+
+  public void movieEvent(MovieIF m) {
     for (DelvBasicView view : _views) {
       view.movieEvent(m);
     }
+    super.movieEvent(m);
   }
 
 } // end class DelvCompositeView
@@ -991,7 +1013,7 @@ class DelvCompositeView extends DelvBasicView {
 // Since it inherits from DelvBasicView, it also
 // has access to the colorAttr
 
-class DelvCategoryView extends DelvBasicView {
+public class DelvCategoryView extends DelvBasicView {
   String _cat1Attr;
   String[] _cat1;
   String[] _visibleCat1;
@@ -1001,39 +1023,40 @@ class DelvCategoryView extends DelvBasicView {
   String _hoverCat;
   String _highlightCat;
   
-  DelvCategoryView() {
+  public DelvCategoryView() {
     this("DelvCategory");
   }
 
-  DelvCategoryView(String name) {
+  public DelvCategoryView(String name) {
     super(name);
     _cat1 = new String[0];
     _visibleCat1 = new String[0];
+    _visibleCat1Colors = new color[0];
     _selectCat = "";
     _hoverCat = "";
     _highlightCat = "";
   }
 
-  String cat1Attr() {
+  public String cat1Attr() {
     return _cat1Attr;
   }
-  DelvCategoryView cat1Attr(String attr) {
+  public DelvCategoryView cat1Attr(String attr) {
     _cat1Attr = attr;
     return this;
   }
 
-  void setCat1(String[] cats) {
+  public void setCat1(String[] cats) {
     _cat1 = cats;
     cat1Updated();
-    draw();
+    //redraw();
   }
-  void setVisibleCat1(String[] cats) {
+  public void setVisibleCat1(String[] cats) {
     _visibleCat1 = cats;
     visibleCat1Updated();
-    draw();
+    //redraw();
   }
 
-  void reloadData(String source) {
+  public void reloadData(String source) {
     if (_delvIF == null) {
       return;
     }
@@ -1042,26 +1065,26 @@ class DelvCategoryView extends DelvBasicView {
       String[] cats;
       cats = _dataIF.getAllCategories(_datasetName, _cat1Attr);
       setCat1(cats);
-      updateColors();
       updateVisibility();
     }
     super.reloadData(source);
   }
 
-  void updateVisibility() {
+  public void updateVisibility() {
     String[] selections;
     selections = _dataIF.getVisibleCategories(_datasetName, _cat1Attr);
     setVisibleCat1(selections);
+    updateColors();
   }
 
-  void updateColors() {
+  public void updateColors() {
     if (!_colorAttr.equals("")) {
       String[][] colorStrs;
       colorStrs = _dataIF.getAllCategoryColors(_datasetName, _colorAttr);
       _cat1Colors = new color[colorStrs.length];
       for (int i = 0; i < colorStrs.length; i++) {
         String[] cStr = colorStrs[i];
-        color c = color(int(cStr[0]), int(cStr[1]), int(cStr[2]));
+        color c = color_(int(cStr[0]), int(cStr[1]), int(cStr[2]));
         _cat1Colors[i] = c;
       }
       cat1ColorsUpdated();
@@ -1070,14 +1093,14 @@ class DelvCategoryView extends DelvBasicView {
       _visibleCat1Colors = new color[colorStrs.length];
       for (int i = 0; i < colorStrs.length; i++) {
         String[] cStr = colorStrs[i];
-        color c = color(int(cStr[0]), int(cStr[1]), int(cStr[2]));
+        color c = color_(int(cStr[0]), int(cStr[1]), int(cStr[2]));
         _visibleCat1Colors[i] = c;
       }
       visibleCat1ColorsUpdated();
     }
   }
 
-  void connectSignals() {
+  public void connectSignals() {
     if (_delvIF == null) {
       return;
     }
@@ -1089,7 +1112,7 @@ class DelvCategoryView extends DelvBasicView {
     _delvIF.connectToSignal("categoryColorsChanged", _name, "onCategoryColorsChanged");
   }
 
- void onCategoryVisibilityChanged(String invoker, String dataset, String attribute) {
+ public void onCategoryVisibilityChanged(String invoker, String dataset, String attribute) {
     if (invoker.equals(_name)) {
       _delvIF.log(_name + ".onCategoryVisibilityChanged(" + dataset + ", " + attribute + ") triggered by self");
     } else {
@@ -1099,7 +1122,7 @@ class DelvCategoryView extends DelvBasicView {
       }
     }
   }
-  void onHoveredIdChanged(String invoker, String dataset, String identifier) {
+  public void onHoveredIdChanged(String invoker, String dataset, String identifier) {
     if (invoker.equals(_name)) {
       _delvIF.log(_name+".onHoveredIdChanged(" + dataset + ", " + identifier + ") triggered by self");
     } else {
@@ -1110,7 +1133,7 @@ class DelvCategoryView extends DelvBasicView {
       }
     }
   }
-  void onHoveredCategoryChanged(String invoker, String dataset, String attribute) {
+  public void onHoveredCategoryChanged(String invoker, String dataset, String attribute) {
     if (invoker.equals(_name)) {
       _delvIF.log(_name+".onHoveredCategoryChanged(" + dataset + ", " + attribute + ") triggered by self");
     } else {
@@ -1121,7 +1144,7 @@ class DelvCategoryView extends DelvBasicView {
       }
     }
   }
-  void onHighlightedCategoryChanged(String invoker, String dataset, String attribute) {
+  public void onHighlightedCategoryChanged(String invoker, String dataset, String attribute) {
     if (invoker.equals(_name)) {
       _delvIF.log(_name + ".onHighlightedCategoryChanged(" + dataset + ", " + attribute + ") triggered by self");
     } else {
@@ -1133,7 +1156,7 @@ class DelvCategoryView extends DelvBasicView {
     }
   }
 
-  void onCategoryColorsChanged(String invoker, String dataset, String attribute) {
+  public void onCategoryColorsChanged(String invoker, String dataset, String attribute) {
     if (!invoker.equals(_name) &&
         dataset.equals(_datasetName) &&
         attribute.equals(_cat1Attr)) {
@@ -1154,7 +1177,7 @@ class DelvCategoryView extends DelvBasicView {
     // TODO can category selection mean something else besides visibility?
     _dataIF.updateCategoryVisibility(_name, _datasetName, _cat1Attr, cat);
     if (doDraw) {
-      draw();
+      //redraw();
     }
     // }
   }
@@ -1224,7 +1247,7 @@ class Delv1DView extends DelvBasicView {
   void setDim1(String[] dim) {
     _dim1 = dim;
     dim1Updated();
-    draw();
+    //redraw();
   }
 
   void reloadData(String source) {
@@ -1277,7 +1300,7 @@ class Delv2DView extends Delv1DView {
   void setDim2(String[] dim) {
     _dim2 = dim;
     dim2Updated();
-    draw();
+    //redraw();
   }
 
   void reloadData(String source) {
@@ -1802,9 +1825,9 @@ class DelvBasicAttribute implements DelvAttribute {
     String[][] colors = new String[cats.length][3];
     for (int i = 0; i < cats.length; i++) {
       color c = _colorMap.getColor(cats[i]);
-      colors[i][0] = "" + red(c);
-      colors[i][1] = "" + green(c);
-      colors[i][2] = "" + blue(c);
+      colors[i][0] = "" + red_(c);
+      colors[i][1] = "" + green_(c);
+      colors[i][2] = "" + blue_(c);
     }
     return colors;
   }
@@ -1814,9 +1837,9 @@ class DelvBasicAttribute implements DelvAttribute {
     String[][] colors = new String[cats.length][3];
     for (int i = 0; i < cats.length; i++) {
       color c = _colorMap.getColor(cats[i]);
-      colors[i][0] = "" + red(c);
-      colors[i][1] = "" + green(c);
-      colors[i][2] = "" + blue(c);
+      colors[i][0] = "" + red_(c);
+      colors[i][1] = "" + green_(c);
+      colors[i][2] = "" + blue_(c);
     }
     return colors;
   }
@@ -1825,15 +1848,15 @@ class DelvBasicAttribute implements DelvAttribute {
     color c = _colorMap.getColor(getItem(id));
 
     String[] colorStr = new String[3];
-    colorStr[0] = "" + red(c);
-    colorStr[1] = "" + green(c);
-    colorStr[2] = "" + blue(c);
+    colorStr[0] = "" + red_(c);
+    colorStr[1] = "" + green_(c);
+    colorStr[2] = "" + blue_(c);
     return colorStr;
   }
 
   void setCategoryColor(String cat, String[] rgbColor) {
     if (_type.equals(AttributeType.CATEGORICAL)) {
-      _colorMap.setColor(cat, color(parseInt(rgbColor[0]), parseInt(rgbColor[1]), parseInt(rgbColor[2])));
+      _colorMap.setColor(cat, color_(parseInt(rgbColor[0]), parseInt(rgbColor[1]), parseInt(rgbColor[2])));
     }
   }
 
@@ -2149,138 +2172,138 @@ class DelvBasicDataSet implements DelvDataSet {
 
 } // end class DelvBasicDataSet
 
-class DelvBasicData implements DelvData {
+public class DelvBasicData implements DelvData {
   String _name;
   Delv _delvIF;
   HashMap <String, DelvBasicDataSet> _data;
 
-  DelvBasicData() {
+  public DelvBasicData() {
     _name = "BasicData";
     _data = new HashMap<String, DelvBasicDataSet>();
   }
-  DelvBasicData(String name) {
+  public DelvBasicData(String name) {
     _name = name;
     _data = new HashMap<String, DelvBasicDataSet>();
   }
 
-  void setName(String name) {
+  public void setName(String name) {
     _name = name;
   }
-  String getName() {
+  public String getName() {
     return _name;
   }
 
   // TODO should data interface and delv interface be so tightly coupled? (each with a reference to the other?)
-  void setDelvIF(Delv dlv) {
+  public void setDelvIF(Delv dlv) {
     _delvIF = dlv;
   }
-  void updateCategoryVisibility(String invoker, String dataset, String attribute, String category) {
+  public void updateCategoryVisibility(String invoker, String dataset, String attribute, String category) {
     _data.get(dataset).updateCategoryVisibility(attribute, category);
     _delvIF.emitSignal("categoryVisibilityChanged",invoker, dataset, attribute);
   }
-  void updateCategoryColor(String invoker, String dataset, String attribute, String category, String[] rgbColor) {
+  public void updateCategoryColor(String invoker, String dataset, String attribute, String category, String[] rgbColor) {
     _data.get(dataset).updateCategoryColor(attribute, category, rgbColor);
     _delvIF.emitSignal("categoryColorsChanged", invoker, dataset, attribute);
   }
-  void updateHighlightedCategory(String invoker, String dataset, String attribute, String category) {
+  public void updateHighlightedCategory(String invoker, String dataset, String attribute, String category) {
     _data.get(dataset).updateHighlightedCategory(attribute, category);
     _delvIF.emitSignal("highlightedCategoryChanged",invoker, dataset, attribute);
   }
-  void updateHoveredCategory(String invoker, String dataset, String attribute, String category) {
+  public void updateHoveredCategory(String invoker, String dataset, String attribute, String category) {
     _data.get(dataset).updateHoveredCategory(attribute, category);
     _delvIF.emitSignal("hoveredCategoryChanged",invoker, dataset, attribute);
   }
-  void updateHighlightedId(String invoker, String dataset, String id) {
+  public void updateHighlightedId(String invoker, String dataset, String id) {
     _data.get(dataset).updateHighlightedId(id);
     _delvIF.emitSignal("highlightedIdChanged",invoker, dataset, id);
   }
-  void updateHoveredId(String invoker, String dataset, String id) {
+  public void updateHoveredId(String invoker, String dataset, String id) {
     _data.get(dataset).updateHoveredId(id);
     _delvIF.emitSignal("hoveredIdChanged",invoker, dataset, id);
   }
-  void updateSelectedIds(String invoker, String dataset, String[] ids) {
+  public void updateSelectedIds(String invoker, String dataset, String[] ids) {
     _data.get(dataset).updateSelectedIds(ids);
     _delvIF.emitSignal("selectedIdsChanged",invoker, dataset, ids);
   }
 
-  void clearItems(String dataset) {
+  public void clearItems(String dataset) {
     _data.get(dataset).clearItems();
   }
 
-  void setItem(String dataset, String attribute, String identifier, String item) {
+  public void setItem(String dataset, String attribute, String identifier, String item) {
     _data.get(dataset).setItem(attribute, identifier, item);
   }
-  void setFloatItem(String dataset, String attribute, String identifier, Float item) {
+  public void setFloatItem(String dataset, String attribute, String identifier, Float item) {
     _data.get(dataset).setFloatItem(attribute, identifier, item);
   }
-  void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item) {
+  public void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item) {
     _data.get(dataset).setFloatArrayItem(attribute, identifier, item);
   }
-  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item) {
+  public void setStringArrayItem(String dataset, String attribute, String identifier, String[] item) {
     _data.get(dataset).setStringArrayItem(attribute, identifier, item);
   }
 
-  Boolean hasAttribute(String dataset, String attribute) {
+  public Boolean hasAttribute(String dataset, String attribute) {
     return _data.get(dataset).hasAttribute(attribute);
   }
 
-  String[] getAttributes(String dataset) {
+  public String[] getAttributes(String dataset) {
     return _data.get(dataset).getAttributes();
   }
 
-  String[] getVisibleCategories(String dataset, String attribute) {
+  public String[] getVisibleCategories(String dataset, String attribute) {
     return _data.get(dataset).getVisibleCategories(attribute);
   }
 
-  String[] getAllCategories(String dataset, String attribute) {
+  public String[] getAllCategories(String dataset, String attribute) {
     return _data.get(dataset).getAllCategories(attribute);
   }
 
-  String[][] getAllCategoryColors(String dataset, String attribute) {
+  public String[][] getAllCategoryColors(String dataset, String attribute) {
     return _data.get(dataset).getAllCategoryColors(attribute);
   }
-  String[][] getVisibleCategoryColors(String dataset, String attribute) {
+  public String[][] getVisibleCategoryColors(String dataset, String attribute) {
     return _data.get(dataset).getVisibleCategoryColors(attribute);
   }
-  String[] getItemColor(String dataset, String attribute, String identifier) {
+  public String[] getItemColor(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemColor(attribute, identifier);
   }
-  String[][] getAllItemColors(String dataset, String attribute) {
+  public String[][] getAllItemColors(String dataset, String attribute) {
     return _data.get(dataset).getAllItemColors(attribute);
   }
   
-  String[] getAllItems(String dataset, String attribute) {
+  public String[] getAllItems(String dataset, String attribute) {
     return _data.get(dataset).getAllItems(attribute);
   }
-  Float[] getAllItemsAsFloat(String dataset, String attribute) {
+  public Float[] getAllItemsAsFloat(String dataset, String attribute) {
     return _data.get(dataset).getAllItemsAsFloat(attribute);
   }
-  float[][] getAllItemsAsFloatArray(String dataset, String attribute) {
+  public float[][] getAllItemsAsFloatArray(String dataset, String attribute) {
     return _data.get(dataset).getAllItemsAsFloatArray(attribute);
   }
-  String[][] getAllItemsAsStringArray(String dataset, String attribute) {
+  public String[][] getAllItemsAsStringArray(String dataset, String attribute) {
     return _data.get(dataset).getAllItemsAsStringArray(attribute);
   }
 
-  String[] getAllIds(String dataset, String attribute) {
+  public String[] getAllIds(String dataset, String attribute) {
     return _data.get(dataset).getAllIds(attribute);
   }
 
-  String getItem(String dataset, String attribute, String identifier) {
+  public String getItem(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItem(attribute, identifier);
   }
-  Float getItemAsFloat(String dataset, String attribute, String identifier) {
+  public Float getItemAsFloat(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemAsFloat(attribute, identifier);
   }
-  float[] getItemAsFloatArray(String dataset, String attribute, String identifier) {
+  public float[] getItemAsFloatArray(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemAsFloatArray(attribute, identifier);
   }
-  String[] getItemAsStringArray(String dataset, String attribute, String identifier) {
+  public String[] getItemAsStringArray(String dataset, String attribute, String identifier) {
     return _data.get(dataset).getItemAsStringArray(attribute, identifier);
   }
   
   // TODO put these null checks in for all gets of datasets
-  String getHighlightedId(String dataset) {
+  public String getHighlightedId(String dataset) {
     DelvBasicDataSet ds = _data.get(dataset);
     if (null == ds) {
       return "";
@@ -2289,7 +2312,7 @@ class DelvBasicData implements DelvData {
     }
   }
 
-  String getHoveredId(String dataset) {
+  public String getHoveredId(String dataset) {
     DelvBasicDataSet ds = _data.get(dataset);
     if (null == ds) {
       return "";
@@ -2298,7 +2321,7 @@ class DelvBasicData implements DelvData {
     }
   }
 
-  String getHighlightedCategory(String dataset, String attribute) {
+  public String getHighlightedCategory(String dataset, String attribute) {
     DelvBasicDataSet ds = _data.get(dataset);
     if (null == ds) {
       return "";
@@ -2306,7 +2329,7 @@ class DelvBasicData implements DelvData {
       return ds.getHighlightedCategory(attribute);
     }
   }
-  String getHoveredCategory(String dataset, String attribute) {
+  public String getHoveredCategory(String dataset, String attribute) {
     DelvBasicDataSet ds = _data.get(dataset);
     if (null == ds) {
       return "";
@@ -2315,21 +2338,21 @@ class DelvBasicData implements DelvData {
     }
   }
 
-  DelvDataSet addDataSet(String dataset) {
+  public DelvDataSet addDataSet(String dataset) {
     DelvBasicDataSet ds = new DelvBasicDataSet(dataset);
     _data.put(dataset, ds);
     return ds;
   }
 
-  DelvDataSet getDataSet(String dataset) {
+  public DelvDataSet getDataSet(String dataset) {
     return _data.get(dataset);
   }
 
-  boolean hasDataSet(String dataset) {
+  public boolean hasDataSet(String dataset) {
     return _data.containsKey(dataset);
   }
 
-  void removeDataSet(String dataset) {
+  public void removeDataSet(String dataset) {
     _data.remove(dataset);
   }
 
@@ -2342,7 +2365,7 @@ class DelvDiscreteColorMap implements DelvColorMap {
   HashMap<String, Integer> _colors;
 
   DelvDiscreteColorMap() {
-    this( color( 220, 220, 220 ) );
+    this( color_( 220 ) );
   }
 
   DelvDiscreteColorMap(color default_color) {
@@ -2372,12 +2395,12 @@ class DelvDiscreteColorMap implements DelvColorMap {
 
   // way to visualize color map
   void drawToFile(String filename) {
-    background(255,255,255);
+    background(color_(255,255,255));
     //size(_colors.size() * 50, 50);
     noStroke();
     int i = 0;
     for (color c : _colors.values()) {
-      fill(red(c),green(c),blue(c));
+      fill(red_(c),green_(c),blue_(c));
       rect(i * 50, 0, 50, 50);
       i++;
     }
@@ -2438,7 +2461,7 @@ class DelvContinuousColorMap implements DelvColorMap {
   color _defaultColor;
 
   DelvContinuousColorMap() {
-    this( color( 220 ) );
+    this( color_( 220 ) );
   }
 
   DelvContinuousColorMap(color default_color) {
@@ -2592,7 +2615,7 @@ class DelvContinuousColorMap implements DelvColorMap {
     int i = 0;
     for (Float val : samps) {
       color c = getColor(""+val);
-      fill(red(c),green(c),blue(c));
+      fill(red_(c),green_(c),blue_(c));
       rect(i * 50, 0, 50, 50);
       i++;
     }
@@ -2603,6 +2626,7 @@ class DelvContinuousColorMap implements DelvColorMap {
 } //end class DelvContinuousColorMap
 
 // some helper color utilities
+
 float interp1(float start, float end, float value, float maximum) {
   return start + (end - start) * value / maximum;
 }
@@ -2687,14 +2711,54 @@ color lerp(color start, color end, float value) {
   // convert everything to HSV
   // interpolate
   // convert back to RGB
-  float[] start_hsv = rgb2hsv(red(start)/255.0,green(start)/255.0,blue(start)/255.0);
-  float[] end_hsv = rgb2hsv(red(end)/255.0,green(end)/255.0,blue(end)/255.0);
+  float[] start_hsv = rgb2hsv(red_(start)/255.0,green_(start)/255.0,blue_(start)/255.0);
+  float[] end_hsv = rgb2hsv(red_(end)/255.0,green_(end)/255.0,blue_(end)/255.0);
   float[] interp_hsv = interp3(start_hsv, end_hsv, value, 1);
   float[] interp_rgb = hsv2rgb(interp_hsv[0], interp_hsv[1], interp_hsv[2]);
-  color rgb = color( Math.round(interp_rgb[0] * 255),
-                     Math.round(interp_rgb[1] * 255),
-                     Math.round(interp_rgb[2] * 255) );
+  color rgb = color_( Math.round(interp_rgb[0] * 255),
+                      Math.round(interp_rgb[1] * 255),
+                      Math.round(interp_rgb[2] * 255) );
   return rgb;
+}
+
+// override Processing's color, red, green, blue, and alpha functions
+// in order to cooperate better in Java environment
+public int color_(int gray) {
+  return color_(gray, gray, gray, 255);
+}
+public int color_(int gray, int alpha) {
+  return color_(gray, gray, gray, alpha);
+}
+public int color_(int red, int green, int blue) {
+  return color_(red, green, blue, 255);
+}
+public int color_(int red, int green, int blue, int alpha) {
+  // from https://www.processing.org/reference/leftshift.html
+  int a = alpha;
+  int r = red;
+  int g = green;
+  int b = blue;
+  a = a << 24;
+  r = r << 16;
+  g = g << 8;
+  int argb = a | r | g | b;
+  return argb;
+}
+public float alpha_(int clr) {
+  int a = (clr >> 24) & 0xFF;
+  return a;
+}
+public float red_(int clr) {
+  int r = (clr >> 16) & 0xFF;
+  return r;
+}
+public float green_(int clr) {
+  int g = (clr >> 8) & 0xFF;
+  return g;
+}
+public float blue_(int clr) {
+  int b = clr & 0xFF;
+  return b;
 }
 
 // TODO create some default color functions here
@@ -2707,25 +2771,25 @@ interface DelvColorFun {
 
 class green_scale implements DelvColorFun {
   color getColor(float value) {
-    return lerp(color(0,0,0), color(0,255,0), value);
+    return lerp(color_(0,0,0), color_(0,255,0), value);
   }
 }
 
 class green_to_red implements DelvColorFun {
   color getColor(float value) {
-    return lerp(color(0,255,0), color(255,0,0), value);
+    return lerp(color_(0,255,0), color_(255,0,0), value);
   }
 }
 
 class red_to_blue implements DelvColorFun {
   color getColor(float value) {
-    return lerp(color(255,0,0), color(0,0,255), value);
+    return lerp(color_(255,0,0), color_(0,0,255), value);
   }
 }
 
 class brightgreen implements DelvColorFun {
   color getColor(float value) {
-    return color(0, 255, 0);
+    return color_(0, 255, 0);
   }
 }
 
@@ -2759,7 +2823,7 @@ class ColorMapWithCheckpoints implements DelvColorFun {
     // divide this range into equal pieces depending on number of self.colors
     int numIntervals = _colors.size() - 1;
     float interval = 1.0 / numIntervals;
-    color c = color(255,255,255);
+    color c = color_(255,255,255);
     for (int i = 0; i < numIntervals; ++i) {
       if (value < (i+1) * interval) {
         c = lerp(_colors.get(i), _colors.get(i+1), (value - (i)*interval) / interval);
@@ -2822,7 +2886,7 @@ DelvDiscreteColorMap create_discrete_map(String[] cats, color[] cols) {
 
 void testMaps() {
   DelvContinuousColorMap cmap1 = new DelvContinuousColorMap();
-  cmap1.setDefaultColor(color(130,130,130));
+  cmap1.setDefaultColor(color_(130,130,130));
   HalfOpenRange crange = new HalfOpenRange();
   crange.setUpper(.3);
   cmap1.setColor(crange, new green_scale());
@@ -2842,7 +2906,7 @@ void testMaps() {
 
   DelvContinuousColorMap cmap4 = new DelvContinuousColorMap();
   DelvColorFun checkpts = new ColorMapWithCheckpoints();
-  cmap4.setDefaultColor(color(130,130,130));
+  cmap4.setDefaultColor(color_(130,130,130));
   crange = new HalfOpenRange();
   crange.setLower(-10);
   crange.setUpper(20);

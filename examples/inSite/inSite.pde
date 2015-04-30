@@ -13,6 +13,7 @@ BarHeightView _barView;
 AlignmentView _alignView;
 
 void setup() {
+  //size(1400, 800,P3D);
   size(1400, 800);
   frameRate(10);
   //testRegion();
@@ -83,12 +84,6 @@ void testInsite() {
   _barView.setup();
   _alignView.setup();
 
-  _dropView.connectSignals();
-  _regionView.connectSignals();
-  _alignView.connectSignals();
-  _barView.connectSignals();
-  _colorLegendView.connectSignals();
-
   _dropView.reloadData("Processing.pde");
   _regionView.reloadData("Processing.pde");
   _alignView.reloadData("Processing.pde");
@@ -130,17 +125,17 @@ void testInsite() {
   draw();
 }
 
-class InSiteView extends DelvCompositeView {
+public class InSiteView extends DelvCompositeView {
   ColorLegendWithDropdownView _legendView;
   DropDownView _dropView;
   RegionView _regionView;
   BarHeightView _barView;
   AlignmentView _alignView;
 
-  InSiteView() {
+  public InSiteView() {
     this("InSite");
   }
-  InSiteView(String name) {
+  public InSiteView(String name) {
     super(name);
     _legendView = new ColorLegendWithDropdownView(name+"Legend");
     _dropView = new DropDownView(name+"DropDown");
@@ -154,7 +149,7 @@ class InSiteView extends DelvCompositeView {
     addView(_alignView);
   }
 
-  void reloadData(String source) {
+  public void reloadData(String source) {
     RegionDataset aboveDataset = _regionView.createDataset("Regions");
     aboveDataset.regionTypeAttr("Species")
                 .regionLengthAttr("totalLength")
@@ -194,7 +189,7 @@ class InSiteView extends DelvCompositeView {
 
   }
 
-  void resize(int w, int h) {
+  public void resize(int w, int h) {
     super.resize(w, h);
     float border = 0.025;
     float x = border * w;
@@ -241,14 +236,14 @@ class InSiteView extends DelvCompositeView {
 
   // TODO document difference between composite views where each view is drawn in an independent portion of screen
   // and composite views where the views overlap (and thus have to be careful about calling background())
-  void draw(){
+  public void draw(){
     super.draw();
     for (DelvBasicView view: _views) {
       view.draw();
     }
   }
 
-  void render() {}
+  public void render() {}
 
 } // end class InSiteView
 
@@ -339,7 +334,7 @@ void redraw() {
  }
 
 void testInsiteView() {
-  InSiteView insite_view = new InSiteView();
+  InSiteView insite_view = new InSiteView("TestInsiteView");
   _view = insite_view;
   InSiteData _dataIF = new InSiteData("inSite");
   _dataIF.loadData();
@@ -348,7 +343,6 @@ void testInsiteView() {
   insite_view.bindDelv(_delv);
   insite_view.dataIF("inSite");
   insite_view.setup();
-  insite_view.connectSignals();
   insite_view.reloadData("Processing.pde");
   insite_view.resize(1400, 800);
 }
