@@ -62,7 +62,7 @@ pth=${jri_path}
 jp=${delv_jp}
 #export JYTHONPATH=${JYTHONPATH}:${jp}
 # -J passes the following argument to the JVM instead of jython
-# -XstartOnFirstThread is for Mac to avoid:  "WARNING: Display must be created on main thread due to Cocoa restrictions."
+# -XstartOnFirstThread is for Mac and SWT to avoid:  "WARNING: Display must be created on main thread due to Cocoa restrictions."
 
-#$jython_bin -J-XstartOnFirstThread -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*
-$jython_bin -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*
+$jython_bin -J-XstartOnFirstThread -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*
+#$jython_bin -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*

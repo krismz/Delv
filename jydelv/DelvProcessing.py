@@ -25,18 +25,15 @@ class DelvP5AppletView(object):
       self.resizeView = True
       
     def setup(self):
-      self.size(200,400,self.OPENGL)
+      self.size(100,200,self.OPENGL)
 
     def resize(self, width, height):
-      print type(self).__mro__
       PApplet.resize(self,width,height)
       # TODO figure out how to handle resize in context of Swing signals etc
       self.w = width
       self.h = height
-      if self.resizeView and self.view is not None:
-        self.view.resize(self.w, self.h)
-      else:
-        print "resize called, but view not constructed yet"
+      if self.view is not None:
+        self.view.resize(self.w, self.h, False)
 
     def draw(self):
       self.view.draw()
@@ -101,7 +98,6 @@ def delvAppletFromP5Applet(appletConstructor, viewConstructorName, viewName=None
     viewName = viewConstructorName
     
   appClass = DelvMetaApplet(viewName + "AppletClass", (DelvP5AppletView, appletConstructor,), {})
-  print appClass
   applet = appClass(viewConstructorName, viewName)
   return applet
 

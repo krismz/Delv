@@ -230,7 +230,7 @@ public class DropDownView extends DelvCategoryView {
     _w = dropdown_min_width;
     _h = 2*DROPBOX_BORDER + _cat1.length*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
     _h = _h * 2;
-    resize(_w, _h);
+    resize(_w, _h, false);
   }
 
   public void resize() {
@@ -241,7 +241,7 @@ public class DropDownView extends DelvCategoryView {
       w = dropbox_max_width + 2 * DROPBOX_BORDER;
     }
     h = 2*DROPBOX_BORDER + (_cat1.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
-    resize(w, h * 2);
+    resize(w, h * 2, false);
   }
 
   public void mouseReleasedInView(int mx, int my) {

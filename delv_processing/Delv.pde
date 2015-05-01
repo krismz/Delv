@@ -41,7 +41,7 @@ interface DelvView {
   // TODO should resize be handled like other signals or treated specially?
   // for instance, should it be called sizeChanged?
   void resize(int w, int h);
-
+  void resize(int w, int h, boolean doDraw);
   // TODO undo this hack
   void onDataUpdated(String invoker, String dataset, String attribute);
   void onDataUpdated(String invoker, String dataset, String[] attributes);
@@ -659,6 +659,9 @@ public class DelvBasicView implements DelvView {
   }
 
   public void resize(int w, int h) {
+    resize(w, h, true);
+  }
+  public void resize(int w, int h, boolean doDraw) {
     if ((w != _w) || (h != _h)) {
       _w = w;
       _h = h;
@@ -666,7 +669,9 @@ public class DelvBasicView implements DelvView {
         // in processing.js, so call size
         size(_w, _h);
       } // if in Processing do not call size!
-      draw();
+      if (doDraw) {
+        draw();
+      }
     }
   }
 
@@ -952,6 +957,12 @@ class DelvCompositeView extends DelvBasicView {
       view.resize(w, h);
     }
     //redraw();
+  }
+  public void resize(int w, int h, boolean doDraw) {
+    super.resize(w, h, doDraw);
+    for (DelvBasicView view: _views) {
+      view.resize(w, h, doDraw);
+    }
   }
   public void mouseMoved() {
     for (DelvBasicView view : _views) {
@@ -2609,7 +2620,7 @@ class DelvContinuousColorMap implements DelvColorMap {
       samps.add(lb + i * (ub-lb) / numsamp);
     }
 
-    background(255,255,255);
+    background(color_(255,255,255));
     //size(numsamp, 50);
     noStroke();
     int i = 0;

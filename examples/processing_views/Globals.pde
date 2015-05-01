@@ -67,20 +67,20 @@ public static boolean _draw_color_legend_highlight;
 //
 // COLORS
 //
-public final color BACKGROUND_COLOR = color( 255 );
-public final color DEFAULT_COLOR = color( 210 );
-public final color LABEL_COLOR = color( 100 )/*#1F78B4*/;
-public final color HIGHLIGHT_LABEL_COLOR = color(25, 250, 250);
-public final color SELECT_LABEL_COLOR = color(185, 2, 17);
-public final color BARHEIGHT_SELECT_COLOR = color(193, 8, 8);
-public final color REGION_LINE_COLOR = color( 100 );
-public final color[] REGION_MAX_VALUE_BAND_COLORS = { color(235), color(235) };
-public final color REGION_MAX_VALUE_LINE_COLOR = color( 235 );
-public final color REGION_HALF_VALUE_LINE_COLOR = color( 255 );
-public final color SCALE_BAR_COLOR = color( 100 );
+public final color BACKGROUND_COLOR = color_( 255 );
+public final color DEFAULT_COLOR = color_( 210 );
+public final color LABEL_COLOR = color_( 100 )/*#1F78B4*/;
+public final color HIGHLIGHT_LABEL_COLOR = color_(25, 250, 250);
+public final color SELECT_LABEL_COLOR = color_(185, 2, 17);
+public final color BARHEIGHT_SELECT_COLOR = color_(193, 8, 8);
+public final color REGION_LINE_COLOR = color_( 100 );
+public final color[] REGION_MAX_VALUE_BAND_COLORS = { color_(235), color_(235) };
+public final color REGION_MAX_VALUE_LINE_COLOR = color_( 235 );
+public final color REGION_HALF_VALUE_LINE_COLOR = color_( 255 );
+public final color SCALE_BAR_COLOR = color_( 100 );
 
-public final color FEATURE_DEFAULT_COLOR = color( 210 );
-public final color FEATURE_CLEAR_COLOR = color( 1 );
+public final color FEATURE_DEFAULT_COLOR = color_( 210 );
+public final color FEATURE_CLEAR_COLOR = color_( 1 );
 public final color[] FEATURE_COLORS = { #1F78B4,   // blue
                                         #33A02C,   // green
                                         #E31A1C,   // red
@@ -94,31 +94,31 @@ public final color[] FEATURE_COLORS = { #1F78B4,   // blue
                                         #CAB2D6,   // lt purple
 					FEATURE_CLEAR_COLOR};  // clear all colors
 
-public final color FEATURE_HIGHLIGHT_COLOR = color(100);
-public final color CONDITIONING_LINE_COLOR = color( 100 );
+public final color FEATURE_HIGHLIGHT_COLOR = color_(100);
+public final color CONDITIONING_LINE_COLOR = color_( 100 );
 
-public final color ALIGNMENT_SELECTOR_LINE_COLOR = color( 100 );
-public final color ALIGNMENT_SELECTOR_FILL_COLOR = color( 255 );
-public final color ALIGNMENT_SELECTOR_SELECTED_FILL_COLOR = color( 220 );
+public final color ALIGNMENT_SELECTOR_LINE_COLOR = color_( 100 );
+public final color ALIGNMENT_SELECTOR_FILL_COLOR = color_( 255 );
+public final color ALIGNMENT_SELECTOR_SELECTED_FILL_COLOR = color_( 220 );
 
-public final color SCROLLBAR_LINE_COLOR = color(192);
-public final color SCROLLBAR_FILL_COLOR = color(150);
+public final color SCROLLBAR_LINE_COLOR = color_(192);
+public final color SCROLLBAR_FILL_COLOR = color_(150);
 
-public final color DROP_DOWN_FILL_COLOR = color( 100 )/*#A6CEE3*/;
+public final color DROP_DOWN_FILL_COLOR = color_( 100 )/*#A6CEE3*/;
 public final color DROP_DOWN_PRESSED_LINE_COLOR = #1F78B4;
-public final color DROPBOX_FILL_COLOR = color( 255 );
-public final color DROPBOX_LINE_COLOR = color( 100 )/*#1F78B4*/;
-public final color DROPBOX_TEXT_COLOR = color( 100 )/*#1F78B4*/;
+public final color DROPBOX_FILL_COLOR = color_( 255 );
+public final color DROPBOX_LINE_COLOR = color_( 100 )/*#1F78B4*/;
+public final color DROPBOX_TEXT_COLOR = color_( 100 )/*#1F78B4*/;
 
-public final color COLOR_PICKER_BUTTON_FILL_COLOR = color( 255 );
-public final color COLOR_PICKER_BUTTON_SELECTED_FILL_COLOR = color( 220 );
-public final color COLOR_PICKER_LINE_COLOR = color( 100 );
-public final color COLOR_PICKER_BUTTON_TEXT_COLOR = color( 100 );
-public final color COLOR_PICKER_SELECTED_LINE_COLOR = color( 0 );
+public final color COLOR_PICKER_BUTTON_FILL_COLOR = color_( 255 );
+public final color COLOR_PICKER_BUTTON_SELECTED_FILL_COLOR = color_( 220 );
+public final color COLOR_PICKER_LINE_COLOR = color_( 100 );
+public final color COLOR_PICKER_BUTTON_TEXT_COLOR = color_( 100 );
+public final color COLOR_PICKER_SELECTED_LINE_COLOR = color_( 0 );
 public final color HIGHLIGHTED_COLOR = #E31A1C;
-public final color SPATIAL_BOX_COLOR = color( 215 );
+public final color SPATIAL_BOX_COLOR = color_( 215 );
  
-public final color STRIKE_THROUGH_COLOR = color(196,47,47);
+public final color STRIKE_THROUGH_COLOR = color_(196,47,47);
 //
 // SIZES
 //
@@ -195,33 +195,33 @@ public static final int TEXT_OFFSET = 3;
 // KMZ HARD-CODED HACKS
 //
 public static final int NUM_COND_VARS = 1;
-public final color DEBUG_COLOR = color(193, 8, 8);
+public final color DEBUG_COLOR = color_(193, 8, 8);
 
 // BELOW are from Miriah's version of InSite
 public float _global_min_v = 0.0;
 public String _region_label, _type_label;
 public static final int REGION_TAG_OFFSET = 4;
 public static final int FEATURE_ABOVE_HEIGHT = 30;
-public final color REGION_TAG_TEXT_COLOR = color( 100 );
+public final color REGION_TAG_TEXT_COLOR = color_( 100 );
 public final color FEATURE_OUTLINE_COLOR = REGION_MAX_VALUE_BAND_COLORS[0];
 public static final int FEATURE_MIN_WIDTH = 2;
-public final color ROLLED_OVER_FEATURE_LINE_COLOR = color( 0 );
+public final color ROLLED_OVER_FEATURE_LINE_COLOR = color_( 0 );
 public static final int ROLLED_OVER_FEATURE_LINE_WEIGHT = 1;
-public final color FEATURE_LINE_COLOR = color( 175 );
+public final color FEATURE_LINE_COLOR = color_( 175 );
 public static final int FEATURE_LINE_WEIGHT = 1;
 public static final int FEATURE_BELOW_HEIGHT = 8;
-public final color ROLL_OVER_TEXT_BOX_COLOR = color( 255, 170 );
-public final color ROLL_OVER_TEXT_BOX_TEXT_COLOR = color( ROLLED_OVER_FEATURE_LINE_COLOR );
+public final color ROLL_OVER_TEXT_BOX_COLOR = color_( 255, 170 );
+public final color ROLL_OVER_TEXT_BOX_TEXT_COLOR = color_( ROLLED_OVER_FEATURE_LINE_COLOR );
 public static long _regions_max_len;
 public static final int REGION_TAG_VERT_OFFSET = 6;
-public final color REGION_VIEW_OUTLINE_COLOR = color( 220 );
-public final color SCROLL_BAR_HIGHLIGHT_COLOR = color( 0 );
+public final color REGION_VIEW_OUTLINE_COLOR = color_( 220 );
+public final color SCROLL_BAR_HIGHLIGHT_COLOR = color_( 0 );
 public static final int REGION_SCROLLBAR_OFFSET = 20;
 public static final int REGION_SCROLLBAR_W = 8;
 
-public final color FEATURE_LEGEND_LINE_COLOR = color( 200 );
-public final color FEATURE_LEGEND_TEXT_COLOR = color( 100 );
-public final color FEATURE_LEGEND_BOX_LINE_COLOR = color( 170 );
+public final color FEATURE_LEGEND_LINE_COLOR = color_( 200 );
+public final color FEATURE_LEGEND_TEXT_COLOR = color_( 100 );
+public final color FEATURE_LEGEND_BOX_LINE_COLOR = color_( 170 );
 
 public final color[] ITEM_COLOR = { #1F78B4,
                                     #33A02C,
