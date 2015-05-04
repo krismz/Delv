@@ -350,6 +350,7 @@ public class DelvImpl implements Delv {
      for (DelvView view : views.values()) {
        view.reloadData("Delv");
      }
+     draw();
   }
 
   void runInThread(Object obj, String name) {
@@ -864,10 +865,9 @@ class DelvCompositeView extends DelvBasicView {
   public DelvCompositeView addView(DelvBasicView view) {
     // Set background to transparent here, view can override later if desired
     // TODO document this elsewhere
-    //color c = view.getBackgroundColor();
-    //c = color_(red_(c), green_(c), blue_(c), 0);
-    //view.setBackgroundColor(c);
-    view.drawBox(false);
+    color c = view.getBackgroundColor();
+    c = color_(red_(c), green_(c), blue_(c), 0);
+    view.setBackgroundColor(c);
     _views.add(view);
     return this;
   }
@@ -1059,12 +1059,10 @@ public class DelvCategoryView extends DelvBasicView {
   public void setCat1(String[] cats) {
     _cat1 = cats;
     cat1Updated();
-    //redraw();
   }
   public void setVisibleCat1(String[] cats) {
     _visibleCat1 = cats;
     visibleCat1Updated();
-    //redraw();
   }
 
   public void reloadData(String source) {
@@ -2734,6 +2732,18 @@ color lerp(color start, color end, float value) {
 
 // override Processing's color, red, green, blue, and alpha functions
 // in order to cooperate better in Java environment
+public int color_(float gray) {
+  return color_(gray, gray, gray, 255);
+}
+public int color_(float gray, float alpha) {
+  return color_(gray, gray, gray, alpha);
+}
+public int color_(float red, float green, float blue) {
+  return color_(red, green, blue, 255);
+}
+public int color_(float red, float green, float blue, float alpha) {
+  return color(red, green, blue, alpha);
+}
 public int color_(int gray) {
   return color_(gray, gray, gray, 255);
 }
@@ -2744,6 +2754,22 @@ public int color_(int red, int green, int blue) {
   return color_(red, green, blue, 255);
 }
 public int color_(int red, int green, int blue, int alpha) {
+  return color(red, green, blue, alpha);
+}
+public int colorJ_(float red, float green, float blue, float alpha) {
+  if (alpha > 255) alpha = 255;
+  else if (alpha < 0) alpha = 0;
+  if (red > 255) red = 255;
+  else if (red < 0) red = 0;
+  if (green > 255) green = 255;
+  else if (green < 0) green = 0;
+  if (blue > 255) blue = 255;
+  else if (blue < 0) blue = 0;
+  return colorJ_((int)red, (int)green, (int)blue, (int)alpha);
+}
+public int colorJ_(int red, int green, int blue, int alpha) {
+  // use for Java versions of Delv
+  // doesn't work for Javascript though
   // from https://www.processing.org/reference/leftshift.html
   int a = alpha;
   int r = red;
@@ -2756,18 +2782,38 @@ public int color_(int red, int green, int blue, int alpha) {
   return argb;
 }
 public float alpha_(int clr) {
+  return alpha(clr);
+}
+public float alphaJ_(int clr) {
+  // use for Java versions of Delv
+  // doesn't work for Javascript though
   int a = (clr >> 24) & 0xFF;
   return a;
 }
 public float red_(int clr) {
+  return red(clr);
+}
+public float redJ_(int clr) {
+  // use for Java versions of Delv
+  // doesn't work for Javascript though
   int r = (clr >> 16) & 0xFF;
   return r;
 }
 public float green_(int clr) {
+  return green(clr);
+}
+public float greenJ_(int clr) {
+  // use for Java versions of Delv
+  // doesn't work for Javascript though
   int g = (clr >> 8) & 0xFF;
   return g;
 }
 public float blue_(int clr) {
+  return blue(clr);
+}
+public float blueJ_(int clr) {
+  // use for Java versions of Delv
+  // doesn't work for Javascript though
   int b = clr & 0xFF;
   return b;
 }

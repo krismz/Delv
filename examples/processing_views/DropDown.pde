@@ -35,7 +35,7 @@ public class DropDownView extends DelvCategoryView {
     cats_selected = new boolean[0];
     textFont( _verdana_font_12 );
     dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
-    dropbox_max_width = MIN_INT;
+    dropbox_max_width = dropdown_min_width;
   }
 
   public boolean isDroppedDown() {
@@ -48,11 +48,12 @@ public class DropDownView extends DelvCategoryView {
 
   public void cat1Updated() {
     cats_selected = new boolean[_cat1.length];
-    dropbox_max_width = MIN_INT;
-    textFont( _verdana_font_12 );
+    dropbox_max_width = 0;
+    int pad = 10;
+    textFont( _pixel_font_8b );
     for (int i = 0; i < _cat1.length; ++i) {
       cats_selected[i] = true;
-      dropbox_max_width = max( dropbox_max_width, (int)(textWidth( _cat1[i] )) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET);
+      dropbox_max_width = max( dropbox_max_width, (int)(textWidth( _cat1[i] )) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET + pad);
     }
     resize();
   }
@@ -226,22 +227,18 @@ public class DropDownView extends DelvCategoryView {
     draw();
   }
 
-  public void setup() {
-    _w = dropdown_min_width;
-    _h = 2*DROPBOX_BORDER + _cat1.length*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
-    _h = _h * 2;
+  public void resize() {
     resize(_w, _h, false);
   }
 
-  public void resize() {
-    int w, h;
+  public void resize(int w, int h, boolean doDraw) {
     if (dropbox_max_width <= dropdown_min_width) {
       w = dropdown_min_width;
     } else {
       w = dropbox_max_width + 2 * DROPBOX_BORDER;
     }
-    h = 2*DROPBOX_BORDER + (_cat1.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET);
-    resize(w, h * 2, false);
+    h = 2 * (2*DROPBOX_BORDER + (_cat1.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET));
+    super.resize(w, h, doDraw);
   }
 
   public void mouseReleasedInView(int mx, int my) {

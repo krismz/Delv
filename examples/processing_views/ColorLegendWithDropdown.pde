@@ -26,7 +26,6 @@ public class ColorLegendWithDropdownView extends DelvCompositeView {
     // TODO order is important here! (especially for rendering!!!)
     addView(_legend_view);
     addView(_dropdown_view);
-    _legend_view.setBackgroundColor(color_(255));
     _dataAttr = "";
   }
 

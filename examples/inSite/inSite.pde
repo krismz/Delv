@@ -243,8 +243,6 @@ public class InSiteView extends DelvCompositeView {
     }
   }
 
-  public void render() {}
-
 } // end class InSiteView
 
 

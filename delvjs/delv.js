@@ -20,6 +20,8 @@ var Processing = Processing || {};
   // private TODO is this available to extensions of delv in other files? Does it need to be?
   var views = {};
 
+  var p5s = {};
+
   var dataSources = {};
 
   // public
@@ -291,7 +293,7 @@ var Processing = Processing || {};
     
     // public functions
     this.resize = function ( w, h ) {
-      p.resize(w, h);
+      p.resize(w, h, true);
     };
 
     // internal functions
@@ -351,6 +353,7 @@ var Processing = Processing || {};
           p._view.name(canvasId);
 	        p._view.connectSignals();
 	        delv.addView(p._view, canvasId);
+          delv.addP5Instance(p, canvasId);
 	        loadCompleteCallback(p._view, canvasId);
 	      }
 	      else {
@@ -408,9 +411,15 @@ var Processing = Processing || {};
 
   delv.reloadData = function() {
     var view;
+    var p5;
     for (view in views) {
       if (views.hasOwnProperty(view)) {
         views[view].reloadData("delv.js");
+      }
+    }
+    for (p5 in p5s) {
+      if (p5s.hasOwnProperty(p5)) {
+        p5s[p5].draw();
       }
     }
   };
@@ -422,6 +431,11 @@ var Processing = Processing || {};
     return delv;
   };
 
+  delv.addP5Instance = function(p, id) {
+    p5s[id] = p;
+    return delv;
+  };
+  
   // a hacky function to deal with asychronicity between data load and view load
   delv.giveDataIFToViews = function (dataIFName) {
     var view;

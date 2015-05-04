@@ -108,6 +108,7 @@ if __name__ == "__main__":
   view.dataIF(data.getName())
   view.datasetName("Regions")
   view.dataAttr("motif_type")
+  view.label("TF")
   view.setup()
 
   applet.reloadData("cars app")
@@ -117,7 +118,6 @@ if __name__ == "__main__":
   while not shell.isDisposed():
     if not display.readAndDispatch():
       display.sleep()
-
   # do this if not using SWT
   #frame.pack()
   #frame.visible=1                  

@@ -73,6 +73,31 @@ class DelvP5AppletView(object):
     def reloadData(self, source):
       self.view.reloadData(source)
 
+    def color_(self, red, green=None, blue=None, alpha=None):
+      """Need to override color implementation for Java/Jython
+versions of Delv due to issues with color vs int in P5 and Java"""
+      if blue is None:
+        if green is None:
+          # one arg version: color(grey)
+          alpha = 255
+        else:
+          # two arg version: color(grey, alpha)
+          alpha = green
+        green = red
+        blue = red
+      if alpha is None:
+        alpha = 255
+      return self.colorJ_(red, green, blue, alpha)
+
+    def alpha_(self, clr):
+      return self.alphaJ_(clr)
+    def red_(self, clr):
+      return self.redJ_(clr)
+    def green_(self, clr):
+      return self.greenJ_(clr)
+    def blue_(self, clr):
+      return self.blueJ_(clr)
+      
 class DelvMetaApplet(type):
     def __new__(cls, name, bases, dct):
         dct['setup'] = DelvP5AppletView.setup
@@ -86,6 +111,11 @@ class DelvMetaApplet(type):
         dct['mouseReleased']=DelvP5AppletView.mouseReleased
         dct['mouseDragged']=DelvP5AppletView.mouseDragged
         dct['reloadData']=DelvP5AppletView.reloadData
+        dct['color_']=DelvP5AppletView.color_
+        dct['alpha_']=DelvP5AppletView.alpha_
+        dct['red_']=DelvP5AppletView.red_
+        dct['green_']=DelvP5AppletView.green_
+        dct['blue_']=DelvP5AppletView.blue_
         return type.__new__(cls, name, bases, dct)
     
     def __init__(cls, name, bases, dct):
