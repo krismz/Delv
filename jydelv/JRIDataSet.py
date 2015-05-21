@@ -6,6 +6,8 @@
 # ======================================================================
 
 # R attributes accessed via JRI
+# keep the data stored in R, and only pull it over on request
+
 
 import Attribute
 

@@ -44,7 +44,7 @@ if __name__ == "__main__":
   shell = Shell(display)
   # StackLayout, only one is active at a time, Fill vs Grid vs other?
   gl = GridLayout()
-  gl.numColumns = 1
+  gl.numColumns = 2
   shell.setLayout(gl)
 
   # WARNING!! The following Swing / AWT imports MUST happen AFTER
@@ -57,6 +57,8 @@ if __name__ == "__main__":
   # custom views etc
   from DelvProcessing import *
   import inSite
+  import org.rosuda.JRI.Rengine as Rengine
+  from JRI_ggplot import JRI_ggplot
   
   # Following from http://www.eclipse.org/articles/Article-Swing-SWT-Integration/
   # To reduce flicker on resize:
@@ -65,12 +67,25 @@ if __name__ == "__main__":
   UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())  
 
   browser = Browser(shell, SWT.RESIZE)
-  browser.setText("hello world!")
+  #browser.setText("hello world!")
+  # TODO get the url to lineup a better way
+  browser.setUrl('file:///Users/krismz/Software/delv/examples/java_cars/lineup.js/demo/index.html')
   bgd = GridData()
-  bgd.widthHint = 400
-  bgd.heightHint = 500
+  #bgd.widthHint = 1500
+  #bgd.heightHint = 1200
+  bgd.widthHint = 800
+  bgd.heightHint = 600
   browser.setLayoutData(bgd)
 
+  browser2 = Browser(shell, SWT.RESIZE)
+  jggplot = JRI_ggplot(None, Rengine(["--vanilla"], False, None))
+  browser2.setUrl(jggplot.qplot("mpg","cyl","mtcars"))
+  jgd = GridData()
+  jgd.widthHint = 504
+  jgd.heightHint = 504
+  browser2.setLayoutData(jgd)
+
+  
   composite = Composite(shell, SWT.EMBEDDED | SWT.RESIZE)
   # TODO keep this resize listener?
   #composite.addControlListener(CleanResizeListener())
