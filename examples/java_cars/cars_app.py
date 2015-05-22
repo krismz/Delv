@@ -70,24 +70,25 @@ if __name__ == "__main__":
   #browser.setText("hello world!")
   # TODO get the url to lineup a better way
   browser.setUrl('file:///Users/krismz/Software/delv/examples/java_cars/lineup.js/demo/index.html')
-  bgd = GridData()
-  bgd.widthHint = 1500
-  #bgd.heightHint = 1200
-  #bgd.widthHint = 1200
-  bgd.heightHint = 800
+  bgd = GridData(SWT.FILL, SWT.FILL, True, True)
+  #bgd.widthHint = 1500
+  ##bgd.heightHint = 1200
+  ##bgd.widthHint = 1200
+  #bgd.heightHint = 800
   bgd.horizontalSpan = 3
   browser.setLayoutData(bgd)
 
   browser2 = Browser(shell, SWT.RESIZE)
   browser2.setUrl('file:///Users/krismz/Software/delv/examples/java_cars/parallel_coords.html')
-  pgd = GridData()
-  pgd.widthHint = 804
-  pgd.heightHint = 504
+  pgd = GridData(SWT.FILL, SWT.FILL, True, False)
+  #pgd.widthHint = 804
+  #pgd.heightHint = 504
   browser2.setLayoutData(pgd)
 
   browser3 = Browser(shell, SWT.RESIZE)
   jggplot = JRI_ggplot(None, Rengine(["--vanilla"], False, None))
   browser3.setUrl(jggplot.qplot("mpg","cyl","mtcars"))
+  #jgd = GridData(SWT.FILL, SWT.FILL, True, True)
   jgd = GridData()
   jgd.widthHint = 504
   jgd.heightHint = 504
@@ -97,9 +98,11 @@ if __name__ == "__main__":
   composite = Composite(shell, SWT.EMBEDDED | SWT.RESIZE)
   # TODO keep this resize listener?
   #composite.addControlListener(CleanResizeListener())
+  #cgd = GridData(SWT.FILL, SWT.FILL, True, True)
   cgd = GridData()
-  cgd.widthHint = 300
-  cgd.heightHint = 200
+  cgd.widthHint = 100
+  #cgd.heightHint = 200
+  cgd.heightHint = 504
   composite.setLayoutData(cgd)
   frame = SWT_AWT.new_Frame(composite)
   # Do this instead if running without SWT
@@ -136,6 +139,7 @@ if __name__ == "__main__":
 
   applet.reloadData("cars app")
 
+  shell.setSize(1500,800)
   shell.pack()
   shell.open()
   while not shell.isDisposed():

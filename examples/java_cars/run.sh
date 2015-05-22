@@ -43,24 +43,24 @@ cjd="/Users/krismz/Software/Caleydo.app/plugins"
 caleydo_cp=`ls ${cjd}/*.jar | awk -v ORS=: '{ print $1 }' `
 
 # JRI
-#jrid="/Library/Frameworks/R.framework/Versions/3.0/Resources/library/rJava/jri"
-jrid="/opt/local/Library/Frameworks/R.framework/Versions/3.1/Resources/library/rJava/jri"
+jrid="/Library/Frameworks/R.framework/Versions/3.0/Resources/library/rJava/jri"
+#jrid="/opt/local/Library/Frameworks/R.framework/Versions/3.1/Resources/library/rJava/jri"
 jri_cp=${jrid}/JRI.jar:${jrid}/JRIEngine.jar:${jrid}/REngine.jar
 jri_path=${jrid}
 
 # JavaGD
 #jgdd="/Library/Frameworks/R.framework/Versions/3.0/Resources/library/JavaGD/java"
-jgdd="/opt/local/Library/Frameworks/R.framework/Versions/3.1/Resources/library/JavaGD/java"
-jgd_cp=${jgdd}/JavaGD.jar
-jgd_path=${jgdd}
+##jgdd="/opt/local/Library/Frameworks/R.framework/Versions/3.1/Resources/library/JavaGD/java"
+#jgd_cp=${jgdd}/JavaGD.jar
+#jgd_path=${jgdd}
 
 # R
-#rd='/Library/Frameworks/R.framework/Resources'
-rd='/opt/local/Library/Frameworks/R.framework/Resources'
+rd='/Library/Frameworks/R.framework/Resources'
+#rd='/opt/local/Library/Frameworks/R.framework/Resources'
 export R_HOME=${rd}
 
 #cp=${processing_cp}:${fiji_cp}:${fiji_plugins_cp}:${tmpd_cp}:${isd_cp}
-cp=${eclipse_cp}:${caleydo_cp}:${jri_cp}:${sketch_cp}:${jgd_cp}
+cp=${eclipse_cp}:${caleydo_cp}:${jri_cp}:${sketch_cp}
 export CLASSPATH=$cp
 
 jcp=${jython_cp}
