@@ -44,7 +44,7 @@ if __name__ == "__main__":
   shell = Shell(display)
   # StackLayout, only one is active at a time, Fill vs Grid vs other?
   gl = GridLayout()
-  gl.numColumns = 2
+  gl.numColumns = 3
   shell.setLayout(gl)
 
   # WARNING!! The following Swing / AWT imports MUST happen AFTER
@@ -71,19 +71,27 @@ if __name__ == "__main__":
   # TODO get the url to lineup a better way
   browser.setUrl('file:///Users/krismz/Software/delv/examples/java_cars/lineup.js/demo/index.html')
   bgd = GridData()
-  #bgd.widthHint = 1500
+  bgd.widthHint = 1500
   #bgd.heightHint = 1200
-  bgd.widthHint = 800
-  bgd.heightHint = 600
+  #bgd.widthHint = 1200
+  bgd.heightHint = 800
+  bgd.horizontalSpan = 3
   browser.setLayoutData(bgd)
 
   browser2 = Browser(shell, SWT.RESIZE)
+  browser2.setUrl('file:///Users/krismz/Software/delv/examples/java_cars/parallel_coords.html')
+  pgd = GridData()
+  pgd.widthHint = 804
+  pgd.heightHint = 504
+  browser2.setLayoutData(pgd)
+
+  browser3 = Browser(shell, SWT.RESIZE)
   jggplot = JRI_ggplot(None, Rengine(["--vanilla"], False, None))
-  browser2.setUrl(jggplot.qplot("mpg","cyl","mtcars"))
+  browser3.setUrl(jggplot.qplot("mpg","cyl","mtcars"))
   jgd = GridData()
   jgd.widthHint = 504
   jgd.heightHint = 504
-  browser2.setLayoutData(jgd)
+  browser3.setLayoutData(jgd)
 
   
   composite = Composite(shell, SWT.EMBEDDED | SWT.RESIZE)
