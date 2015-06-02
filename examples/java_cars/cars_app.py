@@ -122,19 +122,24 @@ if __name__ == "__main__":
     pass
 
   # TODO move some of following and some of above into DelvVis
-  data = dataFromP5Applet(applet, "InSiteData", "InSite")
+  #data = dataFromP5Applet(applet, "InSiteData", "InSite")
+  data = dataFromP5Applet(applet, "DelvCSVData", "P5Data")
   delv = delvFromP5Applet(applet, data)
   data.setDelvIF(delv) # TODO do this here or inside above method?
   # TODO who decides when to load the data?
+  data.newDataSetFromFile("test_data/cars.csv", "Cars")
   data.loadData()
     
   # Don't do this until after calling init above
   view = applet.getView()
   view.bindDelv(delv)
   view.dataIF(data.getName())
-  view.datasetName("Regions")
-  view.dataAttr("motif_type")
-  view.label("TF")
+  #view.datasetName("Regions")
+  #view.dataAttr("motif_type")
+  #view.label("TF")
+  view.datasetName("Cars")
+  view.dataAttr("cylinders")
+  view.label("Cyl")
   view.setup()
 
   applet.reloadData("cars app")

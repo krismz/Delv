@@ -9,6 +9,7 @@
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map.Entry;
+import java.util.Arrays;
 
 interface Delv {
   void log(String msg);
@@ -85,6 +86,7 @@ interface DelvData {
   String[] getAttributes(String dataset);
   String[] getAllCategories(String dataset, String attribute);
   String[] getVisibleCategories(String dataset, String attribute);
+  String[] getCategoryColor(String dataset, String attribute, String category);
   String[][] getAllCategoryColors(String dataset, String attribute);
   String[][] getVisibleCategoryColors(String dataset, String attribute);
   String[] getItemColor(String dataset, String attribute, String identifier);
@@ -130,6 +132,7 @@ interface DelvDataSet {
 
   String[] getAllCategories(String attr);
   String[] getVisibleCategories(String attr);
+  String[] getCategoryColor(String attr, String cat);
   String[][] getAllCategoryColors(String attr);
   String[][] getVisibleCategoryColors(String attr);
   String[] getItemColor(String attr, String id);
@@ -184,6 +187,7 @@ interface DelvAttribute {
   void toggleVisibility(String cat);
   String[] getAllCategories();
   String[] getVisibleCategories();
+  String[] getCategoryColor(String cat);
   String[][] getAllCategoryColors();
   String[][] getVisibleCategoryColors();
   String[] getItemColor(String id);
@@ -1033,7 +1037,8 @@ public class DelvCategoryView extends DelvBasicView {
   String _selectCat;
   String _hoverCat;
   String _highlightCat;
-  
+  boolean _doSort;
+
   public DelvCategoryView() {
     this("DelvCategory");
   }
@@ -1046,6 +1051,12 @@ public class DelvCategoryView extends DelvBasicView {
     _selectCat = "";
     _hoverCat = "";
     _highlightCat = "";
+    _doSort = true;
+  }
+
+  public DelvCategoryView doSort(boolean sort) {
+    _doSort = sort;
+    return this;
   }
 
   public String cat1Attr() {
@@ -1073,6 +1084,9 @@ public class DelvCategoryView extends DelvBasicView {
     if (!source.equals(_name)) {
       String[] cats;
       cats = _dataIF.getAllCategories(_datasetName, _cat1Attr);
+      if (_doSort) {
+        Arrays.sort(cats);
+      }
       setCat1(cats);
       updateVisibility();
     }
@@ -1082,27 +1096,29 @@ public class DelvCategoryView extends DelvBasicView {
   public void updateVisibility() {
     String[] selections;
     selections = _dataIF.getVisibleCategories(_datasetName, _cat1Attr);
+    if (_doSort) {
+      Arrays.sort(selections);
+    }
     setVisibleCat1(selections);
     updateColors();
   }
 
   public void updateColors() {
+    // assumes that all categories and visible categories have been set already
     if (!_colorAttr.equals("")) {
-      String[][] colorStrs;
-      colorStrs = _dataIF.getAllCategoryColors(_datasetName, _colorAttr);
-      _cat1Colors = new color[colorStrs.length];
-      for (int i = 0; i < colorStrs.length; i++) {
-        String[] cStr = colorStrs[i];
-        color c = color_(int(cStr[0]), int(cStr[1]), int(cStr[2]));
+      _cat1Colors = new color[_cat1.length];
+      String[] colorStr = new String[0];
+      for (int i = 0; i < _cat1.length; i++) {
+        colorStr = _dataIF.getCategoryColor(_datasetName, _colorAttr, _cat1[i]);
+        color c = color_(int(colorStr[0]), int(colorStr[1]), int(colorStr[2]));
         _cat1Colors[i] = c;
       }
       cat1ColorsUpdated();
 
-      colorStrs = _dataIF.getVisibleCategoryColors(_datasetName, _colorAttr);
-      _visibleCat1Colors = new color[colorStrs.length];
-      for (int i = 0; i < colorStrs.length; i++) {
-        String[] cStr = colorStrs[i];
-        color c = color_(int(cStr[0]), int(cStr[1]), int(cStr[2]));
+      _visibleCat1Colors = new color[_visibleCat1.length];
+      for (int i = 0; i < _visibleCat1.length; i++) {
+        colorStr = _dataIF.getCategoryColor(_datasetName, _colorAttr, _visibleCat1[i]);
+        color c = color_(int(colorStr[0]), int(colorStr[1]), int(colorStr[2]));
         _visibleCat1Colors[i] = c;
       }
       visibleCat1ColorsUpdated();
@@ -1829,26 +1845,29 @@ class DelvBasicAttribute implements DelvAttribute {
     }
   }
 
+  String[] getCategoryColor(String cat) {
+    String[] colorStr = new String[3];
+    color c = _colorMap.getColor(cat);
+    colorStr[0] = "" + red_(c);
+    colorStr[1] = "" + green_(c);
+    colorStr[2] = "" + blue_(c);
+    return colorStr;
+  }
+
   String[][] getAllCategoryColors() {
     String[] cats = getAllCategories();
-    String[][] colors = new String[cats.length][3];
+    String[][] colors = new String[cats.length][];
     for (int i = 0; i < cats.length; i++) {
-      color c = _colorMap.getColor(cats[i]);
-      colors[i][0] = "" + red_(c);
-      colors[i][1] = "" + green_(c);
-      colors[i][2] = "" + blue_(c);
+      colors[i] = getCategoryColor(cats[i]);
     }
     return colors;
   }
 
   String[][] getVisibleCategoryColors() {
     String[] cats = getVisibleCategories();
-    String[][] colors = new String[cats.length][3];
+    String[][] colors = new String[cats.length][];
     for (int i = 0; i < cats.length; i++) {
-      color c = _colorMap.getColor(cats[i]);
-      colors[i][0] = "" + red_(c);
-      colors[i][1] = "" + green_(c);
-      colors[i][2] = "" + blue_(c);
+      colors[i] = getCategoryColor(cats[i]);
     }
     return colors;
   }
@@ -2030,6 +2049,10 @@ class DelvBasicDataSet implements DelvDataSet {
 
   String[] getVisibleCategories(String attr) {
     return _attributes.get(attr).getVisibleCategories();
+  }
+
+  String[] getCategoryColor(String attr, String cat) {
+    return _attributes.get(attr).getCategoryColor(cat);
   }
 
   String[][] getAllCategoryColors(String attr) {
@@ -2268,6 +2291,10 @@ public class DelvBasicData implements DelvData {
     return _data.get(dataset).getAllCategories(attribute);
   }
 
+  public String[] getCategoryColor(String dataset, String attribute, String category) {
+    return _data.get(dataset).getCategoryColor(attribute, category);
+  }
+
   public String[][] getAllCategoryColors(String dataset, String attribute) {
     return _data.get(dataset).getAllCategoryColors(attribute);
   }
@@ -2366,6 +2393,165 @@ public class DelvBasicData implements DelvData {
   }
 
 } // end class DelvBasicData
+
+public class DelvCSVData extends DelvBasicData {
+  String _filename;
+  String _dataset;
+  String _old_dataset;
+  String _delim;
+  String _comment;
+
+  public DelvCSVData(String name) {
+    this("", "", name);
+  }
+
+  public DelvCSVData(String filename, String dataset, String name) {
+    super(name);
+    _filename = filename;
+    _dataset = dataset;
+    if (_filename.equals("")) {
+      _filename = "./test_data/cars.csv";
+    }
+    if (_dataset.equals("")) {
+      _dataset = "csv";
+    }
+    _old_dataset = _dataset;
+    _delim = ",";
+    _comment = "#";
+  }
+
+  public DelvData delim(String aDelim) {
+    _delim = aDelim;
+    return this;
+  }
+
+  public String delim() {
+    return _delim;
+  }
+
+  public DelvData comment(String aComment) {
+    _comment = aComment;
+    return this;
+  }
+
+  public String comment() {
+    return _comment;
+  }
+
+  public DelvData newDataSetFromFile(String filename, String dataset) {
+    _old_dataset = _dataset;
+    _dataset = dataset;
+    _filename = filename;
+    return this;
+  }
+
+  public void loadData() {
+    load_from_file(_filename);
+  }
+
+  public void load_from_file(String filename) {
+    clearData();
+    createDataset();
+    populateDataset();
+  }
+
+  public void clearData() {
+    removeDataSet(_old_dataset);
+  }
+
+  public void createDataset() {
+    // set up dataset
+    color def_col = color_( 210 );
+    DelvDataSet ds = addDataSet(_dataset);
+    // read in the first 50 rows and count the number of unique values for each column whose data can be transformed into a float or int.  If more than 12 unique values in each column, then consider that column to be CONTINUOUS.  Otherwise it's CATEGORICAL
+
+    BufferedReader reader = createReader(_filename);
+    String line;
+    String[] header = new String[0];
+    HashMap<Float, Float>[] attrs = new HashMap[0]; // TODO float vs double(parseDouble available?), also HashSets not in Processing.js
+    int numcols = 0;
+    int maxlines = 50;
+    for (int lineno = 0; lineno < maxlines; lineno++) {
+      try {
+        line = reader.readLine();
+      } catch (IOException e) {
+        e.printStackTrace();
+        line = null;
+      }
+      if (line == null) {
+        break;
+      } else {
+        String[] cols = split( line, _delim); // TODO TAB too?
+        if (lineno == 0) {
+          // TODO ALWAYS assume header?  Yes, otherwise need another way to specify attribute names.
+          header = cols;
+          numcols = header.length;
+          attrs = new HashMap[numcols];
+          for (int ii=0; ii < numcols; ii++) {
+            attrs[ii] = new HashMap<Float, Float>();
+          }
+        } else {
+          if (cols.length != numcols) {
+            // TODO invalid row, ignore for now
+            _delvIF.log("Invalid row, expected " + numcols + " columns, found " + cols.length + " instead for row " + lineno + ": " + line);
+          } else {
+            // valid row, do some figuring
+            for (int ii = 0; ii < numcols; ii++) {
+              // first check if it's a float or not, only put it in the set if it is convertible to a number
+              Float val = parseFloat(cols[ii]);
+              if (!(Float.isNaN(val))) {
+                attrs[ii].put(val,val);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (int ii = 0; ii < numcols; ii++) {
+      // now choose CONTINUOUS if length of attrs[ii] > 12
+      if (attrs[ii].size() > 12) {
+        _delvIF.log("Adding CONTINUOUS attribute " + header[ii].trim());
+        ds.addAttribute(new DelvBasicAttribute(header[ii].trim(), AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+      } else {
+        _delvIF.log("Adding CATEGORICAL attribute " + header[ii].trim());
+        ds.addAttribute(new DelvBasicAttribute(header[ii].trim(), AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+      }
+    }
+  }
+
+  public void populateDataset( ) {
+    String[] rows = loadStrings( _filename );
+    int counter = 0;
+    String[] cols;
+    String[] header = new String[0];
+
+    String name = "";
+    String totLength = "";
+    String pheno = "";
+    while ( counter < rows.length )
+    {
+      cols = split( rows[counter++], _delim); // TODO TAB too?
+
+      if ( cols.length == 0 ) {
+        continue;
+      } else if ( cols[0].trim().substring(0,_comment.length()).equals(_comment) ) {
+        continue;
+      } else if (counter == 1) {
+        header = cols;
+      } else {
+        DelvDataSet ds = _data.get(_dataset);
+        String id = ds.getNextId();
+
+        ds.addId(id);
+        for (int ii = 0; ii < header.length; ii++) {
+          ds.setItem(header[ii].trim(), id, cols[ii].trim());
+        }
+      }
+    }
+  }
+
+} // end class DelvCSVData
 
 // DelvColorMap implementations
 

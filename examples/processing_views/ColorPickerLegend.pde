@@ -101,8 +101,7 @@ public class ColorPickerLegendView extends DelvCategoryView {
   // }
 
   void hoveredCatUpdated() {
-    _item_rolled_over = true;
-    _rolled_over_item = _hoverCat;
+    //_rolled_over_item = _hoverCat;
   }
 
   // this will need to be called when the number of visible items change
@@ -190,11 +189,11 @@ public class ColorPickerLegendView extends DelvCategoryView {
       item = _visibleCat1[i];
       if ( _legend_item_color_selected && (_selected_legend_item_color == i) ) fill( DEFAULT_COLOR );
       else fill( _visibleCat1Colors[i] );
-      if ( _rolled_over_item.equals(item) ) stroke( COLOR_PICKER_SELECTED_LINE_COLOR );
+      if ( _rolled_over_item.equals(item) || _hoverCat.equals(item) ) stroke( COLOR_PICKER_SELECTED_LINE_COLOR );
       else noStroke();
       rect( x, y, FEATURE_LEGEND_BOX_W, FEATURE_LEGEND_BOX_H );
 
-      if ( _rolled_over_item.equals(item) )
+      if ( _rolled_over_item.equals(item) || _hoverCat.equals(item) )
       {
         textFont( _pixel_font_8b );
         fill( COLOR_PICKER_SELECTED_LINE_COLOR );
@@ -261,6 +260,8 @@ public class ColorPickerLegendView extends DelvCategoryView {
 
       y += FEATURE_LEGEND_BOX_OFFSET+FEATURE_LEGEND_BOX_H;
     }
+    hoveredCat("", false);
+    hoveredCatUpdated();
 
     return false;
   }
@@ -390,6 +391,10 @@ public class ColorPickerLegendView extends DelvCategoryView {
   }
 
   public void mouseOutOfView() {
+    if (_item_rolled_over) {
+      hoveredCat("", false);
+      hoveredCatUpdated();
+    }
     _item_rolled_over = false;
     _rolled_over_item = "";
   }
