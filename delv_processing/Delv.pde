@@ -9,7 +9,6 @@
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map.Entry;
-import java.util.Arrays;
 
 interface Delv {
   void log(String msg);
@@ -1085,7 +1084,7 @@ public class DelvCategoryView extends DelvBasicView {
       String[] cats;
       cats = _dataIF.getAllCategories(_datasetName, _cat1Attr);
       if (_doSort) {
-        Arrays.sort(cats);
+        cats = sort(cats);
       }
       setCat1(cats);
       updateVisibility();
@@ -1097,7 +1096,7 @@ public class DelvCategoryView extends DelvBasicView {
     String[] selections;
     selections = _dataIF.getVisibleCategories(_datasetName, _cat1Attr);
     if (_doSort) {
-      Arrays.sort(selections);
+      selections = sort(selections);
     }
     setVisibleCat1(selections);
     updateColors();
