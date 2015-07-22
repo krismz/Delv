@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/1999/xhtml"
+   xml:lang="en"   
+   lang="en">
+  <head>
+    <title>Vega Crossfilter</title>
+   <script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
+   <!-- <script src="http://vega.github.io/vega/lib/d3.v3.min.js"></script> -->
+   <!-- <script src="./delvjs/d3.v3.js"></script> -->
+   <script src="http://d3js.org/d3.v3.min.js"></script>
+   <!-- <script src="http://vega.github.io/vega/lib/d3.geo.projection.min.js"></script> -->
+   <!-- <script src="http://vega.github.io/vega/lib/topojson.js"></script> -->
+   <script src="http://vega.github.io/vega/vega.js"></script>
+<!-- Add jquery-json to allow JSON stringify -->
+<!-- <script type="text/ecmascript" id="jquery-json.script" src="./delvjs/jquery.json-2.3.js"></script> -->
+<!-- <script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script> -->
+<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
+<script type="text/ecmascript" id="demo_data.script" src="./vega_crossfilter_data.js"></script>
+<script type="text/ecmascript" id="demo.script" src="./vega_crossfilter.js"></script>
+  </head>
+  <body onload="init()" onresize="resizeAll()">
+    <div id="VegaCrossfilterApp"
+         style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:100%;position:absolute">
+    <div id="TimeOfDay"
+      style="overflow:hidden;zindex:1;top:0%;left:0;width:33%;height:50%;position:absolute"></div>     
+    <div id="Delay"
+      style="overflow:hidden;zindex:1;top:0%;left:33%;width:33%;height:50%;position:absolute"></div>     
+    <div id="Distance"
+      style="overflow:hidden;zindex:1;top:0%;left:66%;width:33%;height:50%;position:absolute"></div>     
+    <div id="Date"
+      style="overflow:hidden;zindex:1;top:50%;left:0;width:99%;height:50%;position:absolute"></div>     
+    </div>
+  </body>
+</html>

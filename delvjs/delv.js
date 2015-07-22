@@ -1,6 +1,6 @@
 // jslint directives
 /*jslint browser: true, unparam: true, evil: true */
-/*globals delv, Processing, $, d3, undefined */
+/*globals delv, Processing, $, d3, vg, undefined */
 
 // ======================================================================
 // Copyright (c) 2013, Scientific Computing and Imaging Institute,
@@ -10,12 +10,13 @@
 // ======================================================================
 
 // Assumes that processing has already been loaded
-// TODO this hack is for d3 only apps that don't need processing
+// TODO this hack is for apps that don't need processing or vega
 var Processing = Processing || {};
+var vg = vg || {};
 
 // using the Self-Executing Anonymous Function pattern as described at:
 // http://enterprisejquery.com/2010/10/how-good-c-habits-can-encourage-bad-javascript-habits-part-1/
-(function( delv, Processing, $, undefined ) {
+(function( delv, Processing, $, vg, undefined ) {
 
   // private TODO is this available to extensions of delv in other files? Does it need to be?
   var views = {};
@@ -254,9 +255,64 @@ var Processing = Processing || {};
     return newObj;
   }; // end delv.d3HierarchyView
 
+  // turn obj into a vega view
+  delv.vegaView = function(elem, vgSpec) {
+    var newObj = new delv.view();
+    newObj._name = elem;
+    newObj.elem = elem;
+    newObj.spec = vgSpec;
+    newObj.chart;
+
+    finishSpecLoad = function(chart, view) {
+      view.chart = chart({el:"#"+view.elem});
+      view.addListeners();
+      view.chart.update();
+    }
+
+    newObj.parseSpec = function() {
+      var view = this;
+      vg.parse.spec(this.spec, function (chart) {
+        finishSpecLoad(chart, view);
+      });
+    }
+
+    newObj.updateSignal = function(signal, val, doParse) {
+      if (typeof(this.chart) !== "undefined") {
+        this.chart.signal(signal, val);
+      } else {
+        var sigs = this.spec["signals"];
+        for (var ii = 0; ii < sigs.length; ii++) {
+          if (sigs[ii]["name"] === signal) {
+            sigs[ii]["init"] = val;
+          }
+        }
+        if (doParse) {
+          this.parseSpec();
+        }
+      }
+    }
+
+    newObj.updateDomain = function(scale, domain, doParse) {
+      // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
+      var scales = this.spec["marks"][0]["scales"];
+      for (var ii = 0; ii < scales.length; ii++) {
+        if (scales[ii]["name"] === scale) {
+          scales[ii]["domain"] = domain;
+        }
+      }
+      if (doParse) {
+        this.parseSpec();
+      }
+    }
+
+    newObj.addListeners = function() {}
+
+    return newObj;
+  }; // end delv.vegaView
+
   delv.d3Chart = function (elementId, script, viewConstructor, loadCompleteCallback) {
     var elemId = elementId;
-    var chartLoaded;
+    var chartLoaded = false;
 
     function initChart(script, viewConstructor, loadCompleteCallback) {
       chartLoaded = false;
@@ -286,6 +342,46 @@ var Processing = Processing || {};
 
   };
 
+  delv.vegaChart = function (elementId, viewsrc, script, constructor, loadCompleteCallback) {
+    var elemId = elementId;
+    var chartLoaded = false;
+    function initChart(elemId, viewsrc, script, constructor, loadCompleteCallback) {
+      chartLoaded = false;
+      $.getScript(viewsrc, loadSpec);
+    }
+    initChart(elemId, viewsrc, script, constructor, loadCompleteCallback);
+
+    function loadSpec(vg_src, textStatus, jqxhr) {
+      // TODO use different json reader than D3's?
+      d3.json(script, function(error, json) {
+        delv.log("read in json, error: " + error);
+        finishChartInit(json, constructor);
+      });
+    }
+      
+    function finishChartInit(json, constructor) {
+      // TODO call chart update here or in loadCompleteCallback or elsewhere?
+      chartLoaded = true;
+      // Now wrap the chart into a Delv view
+      var view;
+      var callConstructor = "view = new " + constructor + "(elemId, json)";
+      try {
+        eval(callConstructor);
+      } catch (e) {
+        delv.log("initializing vega chart for " + elemId + " failed while trying to call\n" + callConstructor + "\n.  Error: " + e);
+        chartLoaded = false;
+      }
+      if (typeof(view) === "undefined") {
+        chartLoaded = false;
+      }
+      if (chartLoaded) {
+        view.connectSignals();
+        delv.addView(view, elemId);
+        loadCompleteCallback(view, elemId);
+      }
+    }
+  };
+  
   delv.processingSketch = function ( canvas, sketchList, viewConstructor, loadCompleteCallback ) {
     var canvasId;
     var sketchLoaded;
@@ -769,6 +865,55 @@ var Processing = Processing || {};
     this.hasId = function(dataset, id) {
       return data[dataset].hasId(id);
     };
+
+    this.setVisibleMin = function(dataset, attr, val) {
+      try {
+        data[dataset].setVisibleMin(attr, val);
+      } catch (e) {
+        delvIF.log("setVisibleMin received exception: " + e);
+      }
+    };
+    this.setVisibleMax = function(dataset, attr, val) {
+      try {
+        data[dataset].getVisibleMax(attr, val);
+      } catch (e) {
+        delvIF.log("setVisibleMax received exception: " + e);
+      }
+    };
+    this.getVisibleMin = function(dataset, attr) {
+      try {
+        return data[dataset].getVisibleMin(attr);
+      } catch (e) {
+        delvIF.log("getVisibleMin received exception: " + e);
+        return {};
+      }
+    };
+    this.getVisibleMax = function(dataset, attr) {
+      try {
+        return data[dataset].getVisibleMax(attr);
+      } catch (e) {
+        delvIF.log("getVisibleMax received exception: " + e);
+        return {};
+      }
+    };
+    this.getMin = function(dataset, attr) {
+      try {
+        return data[dataset].getMin(attr);
+      } catch (e) {
+        delvIF.log("getMin received exception: " + e);
+        return {};
+      }
+    };
+    this.getMax = function(dataset, attr) {
+      try {
+        return data[dataset].getMax(attr);
+      } catch (e) {
+        delvIF.log("getMax received exception: " + e);
+        return {};
+      }
+    };
+
+
   }; // end delv.data
 
   delv.dataSet = function(name) {
@@ -976,8 +1121,28 @@ var Processing = Processing || {};
       hoveredId = id;
     };
 
+    this.setVisibleMin = function(attr, val) {
+      attributes[attr].setVisibleMin(val);
+    };
+    this.setVisibleMax = function(attr, val) {
+      attributes[attr].setVisibleMax(val);
+    };
+    this.getVisibleMin = function(attr) {
+      return attributes[attr].getVisibleMin();
+    };
+    this.getVisibleMax = function(attr) {
+      return attributes[attr].getVisibleMax();
+    };
+    this.getMin = function(attr) {
+      return attributes[attr].getMin();
+    };
+    this.getMax = function(attr) {
+      return attributes[attr].getMax();
+    };
+
   }; // end delv.dataSet
 
+  // TODO add a datatype for date / time?
   delv.AttributeType = {
     UNSTRUCTURED: {name: "UNSTRUCTURED"},
     CATEGORICAL: {name: "CATEGORICAL"},
@@ -1266,6 +1431,25 @@ var Processing = Processing || {};
         // TODO fix this, UNSTRUCTURED data is always visible for now
         return true;
       }
+    };
+
+    this.setVisibleMin = function(val) {
+      visibleRange.setMin(val);
+    };
+    this.setVisibleMax = function(val) {
+      visibleRange.setMax(val);
+    };
+    this.getVisibleMin = function() {
+      return visibleRange.getMin();
+    };
+    this.getVisibleMax = function() {
+      return visibleRange.getMax();
+    };
+    this.getMin = function() {
+      return fullRange.getMin();
+    };
+    this.getMax = function() {
+      return fullRange.getMax();
     };
     
   }; // end delv.attribute
@@ -1949,5 +2133,5 @@ var Processing = Processing || {};
 // }
 
 
-} ( window.delv = window.delv || {}, Processing, jQuery ) ); // end of delv declaration
+} ( window.delv = window.delv || {}, Processing, jQuery, vg ) ); // end of delv declaration
 

@@ -1,0 +1,159 @@
+{
+  "width": 500,
+  "height": 200,
+  "padding": "strict",
+
+  "data": [
+    {
+      "name": "table",
+      "values": [{"x":10,"y":50},
+      {"x":2,"y":20},
+      {"x":3,"y":40},
+      {"x":4,"y":30},
+      {"x":5,"y":60},
+      {"x":6,"y":10}]
+    }
+  ],
+  
+  "signals": [
+    {
+      "name": "scope",
+      "init": {"width": 0},
+      "streams": [
+        {"type": "mousedown", "expr": "eventGroup()"}
+      ]
+    },
+    {
+      "name": "xStart",
+      "init": -1,
+      "streams": [{
+        "type": "@xGroup:mousedown", 
+        "expr": "eventX(scope)",
+        "scale": {"scope": "scope", "name": "x", "invert": true}
+      }]
+    },
+    {
+      "name": "xEnd",
+      "init": -1,
+      "streams": [{
+        "type": "@xGroup:mousedown, [@xGroup:mousedown, window:mouseup] > window:mousemove",
+        "expr": "clamp(eventX(scope), 0, scope.width)",
+        "scale": {"scope": "scope", "name": "x", "invert": true}
+      }]
+    },
+    {"name": "xLowClamp", "init": 0},
+    {"name": "xHighClamp", "init": 24},
+    {"name": "minX", "expr": "max(min(xStart, xEnd), xLowClamp)"},
+    {"name": "maxX", "expr": "min(max(xStart, xEnd), xHighClamp)"},
+    {"name": "title", "init": "Bar Chart"}
+  ],
+
+  "predicates": [
+    {
+      "name": "xEqual",
+      "type": "==",
+      "operands": [{"signal": "xStart"}, {"signal": "xEnd"}]
+    },
+    {
+      "name": "xRange",
+      "type": "in",
+      "item": {"arg": "x"},
+      "range": [{"signal": "xStart"}, {"signal": "xEnd"}]
+    },
+    {
+      "name": "xBrush",
+      "type": "or",
+      "operands": [{"predicate": "xEqual"}, {"predicate": "xRange"}]
+    }
+  ],
+
+  "marks": [
+    {
+      "name": "xGroup",
+      "type": "group",
+
+      "properties": {
+        "update": {
+          "x": {"value": 0},
+          "width": {"value": 250},
+          "y": {"value": 0},
+          "height": {"value": 100},
+          "fill": {"value": "#fff"}
+        }
+      },
+
+      "scales": [
+        {
+          "name": "x",
+          "type": "linear",
+          "range": "width",
+          "domain": {"data": "table", "field": "x"}
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "range": "height",
+          "domain": {"data": "table", "field": "y"}
+        }
+      ],
+
+      "axes": [{"type": "x", "scale": "x"}],
+
+      "marks": [
+        {
+          "type": "rect",
+          "from": {"data": "table"},
+          "properties": {
+            "update": {
+              "x": {"scale": "x", "field": "x"},
+              "width": {"value": 9.5},
+              "y": {"scale": "y", "field": "y"},
+              "y2": {"scale": "y", "value": 0},
+              "fill": {
+                "rule": [
+                  {
+                    "predicate": {"name": "xBrush", "x": {"field": "x"}},
+                    "value": "steelblue"
+                  },
+                  {"value": "#bbb"}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "properties": {
+            "enter": {
+              "x": {"value": 0},
+              "y": {"value": -10},
+              "text": {"value": ""},
+              "fill": {"value": "black"},
+              "fontSize": {"value": 14},
+              "fontWeight": {"value": "bold"}
+            },
+            "update": {
+              "text": {"signal": "title"}
+            }
+          }
+        },
+
+        {
+          "type": "rect",
+          "properties": {
+            "enter": {
+              "fill": {"value": "grey"},
+              "fillOpacity": {"value": 0.2}
+            },
+            "update": {
+              "x": {"scale": "x", "signal": "xStart"},
+              "x2": {"scale": "x", "signal": "xEnd"},
+              "y": {"value": 0},
+              "y2": {"field": {"group": "height"}}
+            }
+          }
+        }
+      ]
+    }
+  ]  
+}
