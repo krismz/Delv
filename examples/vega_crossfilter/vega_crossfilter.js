@@ -42,32 +42,35 @@ function init_view_instance(view, elemId) {
       .setXAttr("bin")
       .setYAttr("count_delay")
       .setTitle("Time of Day", false)
-      .setXDomain([0, 24], false);
+      .setXDomain([0, 24], false)
+      .renderSVG();
     
   } else if (elemId == "Delay") {
     view.setDatasetName("delay")
       .setXAttr("bin")
       .setYAttr("count_delay")
       .setTitle("Delay (min.)", false)
-      .setXDomain([-60, 140], false);
+      .setXDomain([-60, 140], false)
+      .renderSVG();
     
   } else if (elemId == "Distance") {
     view.setDatasetName("distance")
       .setXAttr("bin")
       .setYAttr("count_delay")
       .setTitle("Distance (mi.)", false)
-      .setXDomain([0, 2000], false);
+      .setXDomain([0, 2000], false)
+      .renderSVG();
 
   } else if (elemId == "Date") {
     view.setDatasetName("date")
       .setXAttr("day")
       .setYAttr("count_delay")
       .setTitle("Date", false)
-      .setXDomain(["datetime('Jan 1 2001')", "datetime('Mar 31 2001')"]);
+      .setXDomain(["datetime('Jan 1 2001')", "datetime('Mar 31 2001')"])
+      .xIsDate(true)
+      .renderSVG();
 
   }
-  //delv.log("init_view_instance reloadData");
-  //view.reloadData("vega_crossfilter.js");
   delv.log("init_view_instance resizeAll");
   resizeAll();
 }

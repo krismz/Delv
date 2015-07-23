@@ -1,6 +1,6 @@
 {
-  "width": 500,
-  "height": 200,
+  "width": 390,
+  "height": 160,
   "padding": "strict",
 
   "data": [
@@ -45,7 +45,8 @@
     {"name": "xHighClamp", "init": 24},
     {"name": "minX", "expr": "max(min(xStart, xEnd), xLowClamp)"},
     {"name": "maxX", "expr": "min(max(xStart, xEnd), xHighClamp)"},
-    {"name": "title", "init": "Bar Chart"}
+    {"name": "title", "init": "Bar Chart"},
+    {"name": "titlePos", "init": 0}
   ],
 
   "predicates": [
@@ -66,28 +67,13 @@
       "operands": [{"predicate": "xEqual"}, {"predicate": "xRange"}]
     }
   ],
-
-  "marks": [
-    {
-      "name": "xGroup",
-      "type": "group",
-
-      "properties": {
-        "update": {
-          "x": {"value": 0},
-          "width": {"value": 250},
-          "y": {"value": 0},
-          "height": {"value": 100},
-          "fill": {"value": "#fff"}
-        }
-      },
-
-      "scales": [
+"scales": [
         {
           "name": "x",
           "type": "linear",
           "range": "width",
-          "domain": {"data": "table", "field": "x"}
+          "domain": {"data": "table", "field": "x"},
+          "nice": true
         },
         {
           "name": "y",
@@ -99,6 +85,22 @@
 
       "axes": [{"type": "x", "scale": "x"}],
 
+  "marks": [
+    {
+      "name": "xGroup",
+      "type": "group",
+
+      "properties": {
+        "update": {
+          "x": {"value": 0},
+          "width": {"value": 390},
+          "y": {"value": 0},
+          "height": {"value": 100},
+          "fill": {"value": "#fff"}
+        }
+      },
+
+      
       "marks": [
         {
           "type": "rect",
@@ -127,12 +129,13 @@
             "enter": {
               "x": {"value": 0},
               "y": {"value": -10},
-              "text": {"value": ""},
+              "text": {"signal": "title"},
               "fill": {"value": "black"},
               "fontSize": {"value": 14},
               "fontWeight": {"value": "bold"}
             },
             "update": {
+              "x": {"value": 0},
               "text": {"signal": "title"}
             }
           }
@@ -142,7 +145,7 @@
           "type": "rect",
           "properties": {
             "enter": {
-              "fill": {"value": "grey"},
+              "fill": {"value": "black"},
               "fillOpacity": {"value": 0.2}
             },
             "update": {

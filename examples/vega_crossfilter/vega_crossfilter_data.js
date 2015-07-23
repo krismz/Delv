@@ -32,7 +32,7 @@ vgWrapperNS.convert_to_dataIF = function( chart, name ) {
   ds.addAttribute( new delv.attribute("origin", delv.AttributeType.UNSTRUCTURED, new delv.colorMap(def_color), new delv.dataRange()) );
   ds.addAttribute( new delv.attribute("destination", delv.AttributeType.UNSTRUCTURED, new delv.colorMap(def_color), new delv.dataRange()) );
   ds.addAttribute( new delv.attribute("date", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
-  ds.addAttribute( new delv.attribute("day", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+  ds.addAttribute( new delv.attribute("day", delv.AttributeType.UNSTRUCTURED, new delv.colorMap(def_color), new delv.dataRange()) );
   ds.addAttribute( new delv.attribute("hour", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
   ds.addAttribute( new delv.attribute("delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
   ds.addAttribute( new delv.attribute("distance", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
@@ -91,7 +91,7 @@ vgWrapperNS.convert_to_dataIF = function( chart, name ) {
   }
 
   ds = dataIF.addDataSet("date");
-  ds.addAttribute( new delv.attribute("day", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+  ds.addAttribute( new delv.attribute("day", delv.AttributeType.UNSTRUCTURED, new delv.colorMap(def_color), new delv.dataRange()) );
   ds.addAttribute( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
 
   values =  dataIF.chart.data("date").values();

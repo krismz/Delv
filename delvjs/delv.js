@@ -262,11 +262,12 @@ var vg = vg || {};
     newObj.elem = elem;
     newObj.spec = vgSpec;
     newObj.chart;
+    newObj._renderer = "canvas";
 
     finishSpecLoad = function(chart, view) {
       view.chart = chart({el:"#"+view.elem});
       view.addListeners();
-      view.chart.update();
+      view.chart.renderer(view._renderer).update();
     }
 
     newObj.parseSpec = function() {
@@ -276,9 +277,32 @@ var vg = vg || {};
       });
     }
 
+    newObj.renderSVG = function() {
+      this._renderer = "svg";
+      return this;
+    }
+
+    newObj.renderCanvas = function() {
+      this._renderer = "canvas";
+      return this;
+    }
+
     newObj.updateSignal = function(signal, val, doParse) {
       if (typeof(this.chart) !== "undefined") {
         this.chart.signal(signal, val);
+      } else if (typeof(val) === typeof({})) {
+        var sigs = this.spec["signals"];
+        for (var ii = 0; ii < sigs.length; ii++) {
+          if (sigs[ii]["name"] === signal) {
+            for (var k in val) {
+              sigs[ii][k] = val[k];
+            }
+          }
+        }
+        if (doParse) {
+          this.parseSpec();
+        }
+        
       } else {
         var sigs = this.spec["signals"];
         for (var ii = 0; ii < sigs.length; ii++) {
@@ -292,12 +316,38 @@ var vg = vg || {};
       }
     }
 
+    newObj.updateScaleType = function(scale, scaletype, doParse) {
+      // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
+      var scales = this.spec["scales"];
+      for (var ii = 0; ii < scales.length; ii++) {
+        if (scales[ii]["name"] === scale) {
+          scales[ii]["type"] = scaletype;
+        }
+      }
+      if (doParse) {
+        this.parseSpec();
+      }
+    }
+    
     newObj.updateDomain = function(scale, domain, doParse) {
       // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
-      var scales = this.spec["marks"][0]["scales"];
+      var scales = this.spec["scales"];
       for (var ii = 0; ii < scales.length; ii++) {
         if (scales[ii]["name"] === scale) {
           scales[ii]["domain"] = domain;
+        }
+      }
+      if (doParse) {
+        this.parseSpec();
+      }
+    }
+
+    newObj.updateRange = function(scale, range, doParse) {
+      // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
+      var scales = this.spec["scales"];
+      for (var ii = 0; ii < scales.length; ii++) {
+        if (scales[ii]["name"] === scale) {
+          scales[ii]["range"] = range;
         }
       }
       if (doParse) {
