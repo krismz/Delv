@@ -827,6 +827,14 @@ var vg = vg || {};
       }
     };
 
+    this.getSelectedItems = function(dataset, attr) {
+      if (data.hasOwnProperty(dataset)) {
+        return data[dataset].getSelectedItems(attr);
+      } else {
+        return [];
+      }
+    };
+
     this.getItem = function(dataset, attr, id) {
       if (data.hasOwnProperty(dataset)) {
         return data[dataset].getItem(attr, id);
@@ -1119,6 +1127,19 @@ var vg = vg || {};
       return attributes[attr].getAllIdsAndItems();
     };
 
+    this.getSelectedItems = function(attr) {
+      var items=[];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selected) {
+          items[items.length] = attributes[attr].getItem(id.name);
+        }
+      }
+      return items;
+    };
+    
     this.getItem = function(attr, id) {
       return attributes[attr].getItem(id);
     };
