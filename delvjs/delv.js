@@ -318,7 +318,7 @@ var vg = vg || {};
 
     newObj.updateScaleType = function(scale, scaletype, doParse) {
       // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
-      var scales = this.spec["scales"];
+      var scales = this.spec["marks"][0]["scales"];
       for (var ii = 0; ii < scales.length; ii++) {
         if (scales[ii]["name"] === scale) {
           scales[ii]["type"] = scaletype;
@@ -331,7 +331,7 @@ var vg = vg || {};
     
     newObj.updateDomain = function(scale, domain, doParse) {
       // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
-      var scales = this.spec["scales"];
+      var scales = this.spec["marks"][0]["scales"];
       for (var ii = 0; ii < scales.length; ii++) {
         if (scales[ii]["name"] === scale) {
           scales[ii]["domain"] = domain;
@@ -344,7 +344,7 @@ var vg = vg || {};
 
     newObj.updateRange = function(scale, range, doParse) {
       // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
-      var scales = this.spec["scales"];
+      var scales = this.spec["marks"][0]["scales"];
       for (var ii = 0; ii < scales.length; ii++) {
         if (scales[ii]["name"] === scale) {
           scales[ii]["range"] = range;
@@ -978,6 +978,18 @@ var vg = vg || {};
       itemIds[itemIds.length] = newId;
     };
 
+    this.clearItems = function() {
+      for (attr in attributes) {
+        if (attributes.hasOwnProperty(attr)) {
+          attributes[attr].clear();
+        }
+      }
+      itemIds = [];
+    };
+    this.clearAttributes = function() {
+      attributes={};
+    };
+    
     this.getSelectedIds = function() {
       var ids = [];
       var i;
@@ -1212,6 +1224,13 @@ var vg = vg || {};
     var hoverCategory = "";
     this.name = attr_name;
 
+    this.clear = function() {
+      items = {};
+      floatItems = {};
+      floatArrayItems = [];
+      floatArrayMap = {};
+    };
+    
     this.setItem = function(id, item) {
       var val;
       if (type === delv.AttributeType.CATEGORICAL) {
