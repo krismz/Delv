@@ -1186,9 +1186,13 @@ var vg = vg || {};
     this.updateSelectedIds = function(ids) {
       var i;
       var id;
+      var obj = {};
+      for (i = 0; i < ids.length; i++) {
+        obj[ids[i]] = true;
+      }
       for (i = 0; i < itemIds.length; i++) {
         id = itemIds[i];
-        if (ids.hasOwnProperty(id.name)) {
+        if (obj.hasOwnProperty(id.name)) {
           itemIds[i].selected = true;
         } else {
           itemIds[i].selected = false;
