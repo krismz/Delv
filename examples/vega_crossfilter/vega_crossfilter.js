@@ -66,7 +66,7 @@ function init_view_instance(view, elemId) {
       .setXAttr("day")
       .setYAttr("count_delay")
       .setTitle("Date", false)
-      .setXDomain(["datetime('Jan 1 2001')", "datetime('Mar 31 2001')"])
+      .setXDomain(["datetime('Jan 1 2001')", "datetime('Mar 31 2001')"], false)
       .xIsDate(true)
       .renderSVG();
 

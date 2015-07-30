@@ -20,7 +20,7 @@
       "name": "times",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "(minDay == maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay))"},
+        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay))"},
         {
           "type": "bin",
           "field": "hour",
@@ -39,7 +39,7 @@
       "name": "delay",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "(minDay == maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
+        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
         {
           "type": "bin",
           "field": "delay",
@@ -59,7 +59,7 @@
       "name": "distance",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "(minDay == maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
+        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
         {
           "type": "bin",
           "field": "distance",
@@ -91,14 +91,14 @@
   ],
   
   "signals": [
-    {"name": "minTime", "value": 0},
-    {"name": "maxTime", "value": 24},
-    {"name": "minDelay", "value": -60},
-    {"name": "maxDelay", "value": 140},
-    {"name": "minDist", "value": 0},
-    {"name": "maxDist", "value": 2000},
-    {"name": "minDay", "expr": "datetime('Jan 1 2001')"},
-    {"name": "maxDay", "expr": "datetime('Mar 31 2001')"}
+    {"name": "minTime", "init": -1},
+    {"name": "maxTime", "init": -1},
+    {"name": "minDelay", "init": -1},
+    {"name": "maxDelay", "init": -1},
+    {"name": "minDist", "init": -1},
+    {"name": "maxDist", "init": -1},
+    {"name": "minDay", "init":{"expr": "datetime('1/1/2001')"}},
+    {"name": "maxDay", "init":{"expr": "datetime('3/31/2001')"}}
   ],
   
   "marks": [

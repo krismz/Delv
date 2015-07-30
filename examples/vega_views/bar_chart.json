@@ -51,8 +51,13 @@
 
   "predicates": [
     {
-      "name": "xEqual",
-      "type": "==",
+      "name": "xLess",
+      "type": "<=",
+      "operands": [{"signal": "xStart"}, {"signal": "xEnd"}]
+    },
+    {
+      "name": "xMore",
+      "type": ">=",
       "operands": [{"signal": "xStart"}, {"signal": "xEnd"}]
     },
     {
@@ -62,12 +67,33 @@
       "range": [{"signal": "xStart"}, {"signal": "xEnd"}]
     },
     {
+      "name": "xEqual",
+      "type": "and",
+      "operands": [{"predicate": "xLess"}, {"predicate": "xMore"}]
+    },
+    {
       "name": "xBrush",
       "type": "or",
       "operands": [{"predicate": "xEqual"}, {"predicate": "xRange"}]
     }
   ],
-"scales": [
+
+  "marks": [
+    {
+      "name": "xGroup",
+      "type": "group",
+
+      "properties": {
+        "update": {
+          "x": {"value": 0},
+          "width": {"field": {"group": "width"}},
+          "y": {"value": 0},
+          "height": {"field": {"group": "height"}}, 
+          "fill": {"value": "#fff"}
+        }
+      },
+
+      "scales": [
         {
           "name": "x",
           "type": "linear",
@@ -84,22 +110,6 @@
       ],
 
       "axes": [{"type": "x", "scale": "x"}],
-
-  "marks": [
-    {
-      "name": "xGroup",
-      "type": "group",
-
-      "properties": {
-        "update": {
-          "x": {"value": 0},
-          "width": {"value": 390},
-          "y": {"value": 0},
-          "height": {"value": 100},
-          "fill": {"value": "#fff"}
-        }
-      },
-
       
       "marks": [
         {

@@ -288,9 +288,7 @@ var vg = vg || {};
     }
 
     newObj.updateSignal = function(signal, val, doParse) {
-      if (typeof(this.chart) !== "undefined") {
-        this.chart.signal(signal, val);
-      } else if (typeof(val) === typeof({})) {
+      if (typeof(val) === typeof({})) {
         var sigs = this.spec["signals"];
         for (var ii = 0; ii < sigs.length; ii++) {
           if (sigs[ii]["name"] === signal) {
@@ -316,12 +314,12 @@ var vg = vg || {};
       }
     }
 
-    newObj.updateScaleType = function(scale, scaletype, doParse) {
+    newObj.updateScale = function(scale, key, value, doParse) {
       // TODO updates top-level scales only.  For more specific use, probably need to override on case-by-case basis
       var scales = this.spec["marks"][0]["scales"];
       for (var ii = 0; ii < scales.length; ii++) {
         if (scales[ii]["name"] === scale) {
-          scales[ii]["type"] = scaletype;
+          scales[ii][key] = value;
         }
       }
       if (doParse) {
@@ -522,17 +520,23 @@ var vg = vg || {};
   }
   init();
 
-  debounce = function(fn, timeout) {
-    var timeoutID = -1;
-    return function() {
-      if (timeoutID > -1) {
-	window.clearTimeout(timeoutID);
-      }
-      timeoutID = window.setTimeout(fn, timeout);
-    };
+  // from http://davidwalsh.name/javascript-debounce-function
+  delv.debounce = function (func, wait, immediate) {
+	  var timeout;
+	  return function() {
+		  var context = this, args = arguments;
+		  var later = function() {
+			  timeout = null;
+			  if (!immediate) func.apply(context, args);
+		  };
+		  var callNow = immediate && !timeout;
+		  clearTimeout(timeout);
+		  timeout = setTimeout(later, wait);
+		  if (callNow) func.apply(context, args);
+	  };
   };
 
-  var debounced_resize =  debounce(function() { do_resize();}, 75);
+  var debounced_resize =  delv.debounce(function() { do_resize();}, 75, false);
 
   delv.resizeAll = function() {
     debounced_resize();
@@ -575,6 +579,14 @@ var vg = vg || {};
     delv.log("typeof view: " + typeof(view));
     views[id] = view;
     return delv;
+  };
+
+  delv.getView = function(name) {
+    if (views.hasOwnProperty(name)) {
+      return views[name];
+    } else {
+      return {};
+    }
   };
 
   delv.addP5Instance = function(p, id) {
@@ -648,10 +660,6 @@ var vg = vg || {};
     }
   };
 
-  delv.emitSignal = function(signal, invoker, dataset, attribute) {
-    delv.handleSignal(signal, invoker, dataset, attribute);
-  };
-
   delv.handleSignal = function(signal, invoker, dataset, attribute) {
     var key;
     var view;
@@ -682,6 +690,14 @@ var vg = vg || {};
     } catch (e) {
       delv.log("unrecognized signal " + signal + ": " + e);
     }
+  };
+
+  delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 100, false);
+
+  delv.emitSignal = function(signal, invoker, dataset, attribute) {
+    // TODO, debounce here is not ideal, really want to think about more appropriate location
+    //delv.handleSignal(signal, invoker, dataset, attribute);
+    delv.debouncedHandleSignal(signal, invoker, dataset, attribute);
   };
 
   delv.exception = function(message) {
@@ -733,6 +749,14 @@ var vg = vg || {};
       }
     };
 
+    this.getDataSet = function(name) {
+      if (data.hasOwnProperty(name)) {
+        return data[name];
+      } else {
+        return {};
+      }
+    }
+    
     this.updateSelectedIds = function(invoker, dataset, ids) {
       try {
         data[dataset].updateSelectedIds(ids);
@@ -794,7 +818,28 @@ var vg = vg || {};
       data[dataset].updateCategoryColor(attr, cat, color);
       delvIF.emitSignal('categoryColorsChanged', invoker, dataset, attr);
     }
-  }
+  };
+
+    this.updateVisibleMin = function(invoker, dataset, attr, val) {
+      try {
+        if (data.hasOwnProperty(dataset)) {
+          data[dataset].updateVisibleMin(attr, val);
+          delvIF.emitSignal('dataVisibilityChanged', invoker, dataset, attr);
+        }
+      } catch (e) {
+        delvIF.log("updateVisibleMin received exception: " + e);
+      }
+    };
+    this.updateVisibleMax = function(invoker, dataset, attr, val) {
+      try {
+        if (data.hasOwnProperty(dataset)) {
+          data[dataset].updateVisibleMax(attr, val);
+          delvIF.emitSignal('dataVisibilityChanged', invoker, dataset, attr);
+        }
+      } catch (e) {
+        delvIF.log("updateVisibleMax received exception: " + e);
+      }
+    };
 
     this.setItem = function(dataset, attr, id, item) {
       if (data.hasOwnProperty(dataset)) {
@@ -924,20 +969,6 @@ var vg = vg || {};
       return data[dataset].hasId(id);
     };
 
-    this.setVisibleMin = function(dataset, attr, val) {
-      try {
-        data[dataset].setVisibleMin(attr, val);
-      } catch (e) {
-        delvIF.log("setVisibleMin received exception: " + e);
-      }
-    };
-    this.setVisibleMax = function(dataset, attr, val) {
-      try {
-        data[dataset].getVisibleMax(attr, val);
-      } catch (e) {
-        delvIF.log("setVisibleMax received exception: " + e);
-      }
-    };
     this.getVisibleMin = function(dataset, attr) {
       try {
         return data[dataset].getVisibleMin(attr);
@@ -1208,11 +1239,11 @@ var vg = vg || {};
       hoveredId = id;
     };
 
-    this.setVisibleMin = function(attr, val) {
-      attributes[attr].setVisibleMin(val);
+    this.updateVisibleMin = function(attr, val) {
+      attributes[attr].updateVisibleMin(val);
     };
-    this.setVisibleMax = function(attr, val) {
-      attributes[attr].setVisibleMax(val);
+    this.updateVisibleMax = function(attr, val) {
+      attributes[attr].updateVisibleMax(val);
     };
     this.getVisibleMin = function(attr) {
       return attributes[attr].getVisibleMin();
@@ -1233,7 +1264,8 @@ var vg = vg || {};
   delv.AttributeType = {
     UNSTRUCTURED: {name: "UNSTRUCTURED"},
     CATEGORICAL: {name: "CATEGORICAL"},
-    CONTINUOUS: {name: "CONTINUOUS"}
+    CONTINUOUS: {name: "CONTINUOUS"},
+    DATETIME: {name: "DATETIME"}
   }; 
 
   delv.attribute = function(attr_name, attr_type, color_map, data_range) {
@@ -1254,6 +1286,9 @@ var vg = vg || {};
       floatItems = {};
       floatArrayItems = [];
       floatArrayMap = {};
+      // TODO add these range interfaces to Processing implementation as well
+      fullRange.clear();
+      visibleRange.clear();
     };
     
     this.setItem = function(id, item) {
@@ -1262,13 +1297,25 @@ var vg = vg || {};
         items[id] = item;
         fullRange.addCategory(item);
         visibleRange.addCategory(item);
+      } else if (type === delv.AttributeType.DATETIME) {
+        // TODO decide how best to store it, this is storing 2!!! copies
+        if (typeof(item) === "number") {
+          val = new Date(item);
+        } else {
+          val = new Date(Date.parse(item));
+        }
+        floatItems[id] = val;
+        items[id] = item;
+        visibleRange.update(val);
+        fullRange.update(val);
       } else if (type === delv.AttributeType.CONTINUOUS) {
         val = parseFloat(item);
         floatItems[id] = val;
+        visibleRange.update(val);
         fullRange.update(val);
       } else if (type === delv.AttributeType.FLOAT_ARRAY) {
-      // TODO fix this
-      delv.log("Cannot set a FLOAT_ARRAY from String");
+        // TODO fix this
+        delv.log("Cannot set a FLOAT_ARRAY from String");
       } else {
         items[id] = "" + item;
         // TODO handle fullRange / visibleRange for unstructured data
@@ -1309,6 +1356,9 @@ var vg = vg || {};
 
     this.getItemAsFloat = function(id) {
       if (type === delv.AttributeType.CONTINUOUS) {
+        return floatItems[id];
+      } else if (type === delv.AttributeType.DATETIME) {
+        // TODO do this here? or separate getItemAsDate 
         return floatItems[id];
       } else if (type === delv.AttributeType.CATEGORICAL) {
         if (items.hasOwnProperty(id)) {
@@ -1373,7 +1423,8 @@ var vg = vg || {};
     this.getAllItemsAsFloat = function() {
       var its;
       var item;
-      if (type === delv.AttributeType.CONTINUOUS) {
+      if (type === delv.AttributeType.CONTINUOUS ||
+          type === delv.AttributeType.DATETIME) {
         its = [];
         for (item in floatItems) {
           if (floatItems.hasOwnProperty(item)) {
@@ -1501,6 +1552,12 @@ var vg = vg || {};
     this.updateVisibility = function(item) {
       if (type === delv.AttributeType.CONTINUOUS) {
         visibleRange.update(parseFloat(item));
+      } else if (type === delv.AttributeType.DATETIME) {
+        if (typeof(item) === "number") {
+          visibleRange.update(new Date(item));
+        } else {
+          visibleRange.update(new Date(Date.parse(item)));
+        }
       }
     };
 
@@ -1521,17 +1578,38 @@ var vg = vg || {};
       return visibleRange.isCategoryVisible(items[id]);
       } else if (type === delv.AttributeType.CONTINUOUS) {
         return visibleRange.isInRange(floatItems[id]);
+      } else if (type === delv.AttributeType.DATETIME) {
+        // TODO note this requires datetimes stored in float items
+        return visibleRange.isInRange(floatItems[id]);
       } else {
         // TODO fix this, UNSTRUCTURED data is always visible for now
         return true;
       }
     };
 
-    this.setVisibleMin = function(val) {
-      visibleRange.setMin(val);
+    this.updateVisibleMin = function(val) {
+      if (type === delv.AttributeType.CONTINUOUS) {
+        visibleRange.setMin(parseFloat(val));
+      } else if (type === delv.AttributeType.DATETIME) {
+        if (typeof(val) === "number") {
+          visibleRange.setMin(new Date(val));
+        } else {
+          visibleRange.setMin(new Date(Date.parse(val)));
+        }
+      }
+      //visibleRange.setMin(val);
     };
-    this.setVisibleMax = function(val) {
-      visibleRange.setMax(val);
+    this.updateVisibleMax = function(val) {
+      if (type === delv.AttributeType.CONTINUOUS) {
+        visibleRange.setMax(parseFloat(val));
+      } else if (type === delv.AttributeType.DATETIME) {
+        if (typeof(val) === "number") {
+          visibleRange.setMax(new Date(val));
+        } else {
+          visibleRange.setMax(new Date(Date.parse(val)));
+        }
+      }
+      //visibleRange.setMax(val);
     };
     this.getVisibleMin = function() {
       return visibleRange.getMin();
@@ -1567,6 +1645,11 @@ var vg = vg || {};
     var categories = [];
     var visible = {};
 
+    this.clear = function() {
+      var categories = [];
+      var visible = {};
+    };
+    
     this.addCategory = function(cat) {
       var found = false;
       var i;
@@ -1621,45 +1704,51 @@ var vg = vg || {};
     };
   }; // end delv.dataRange
 
-  delv.continuousRange = function() {
-    var min;
-    var max;
-    var _hasMin = false;
-    var _hasMax = false;
 
+  delv.continuousRange = function() {
+    this.min;
+    this.max;
+    this._hasMin = false;
+    this._hasMax = false;
+
+    this.clear = function() {
+      this._hasMin = false;
+      this._hasMax = false;
+    };
+    
     this.hasMin = function() {
-      return _hasMin;
+      return this._hasMin;
     };
     this.hasMax = function() {
-      return _hasMax;
+      return this._hasMax;
     };
 
     this.getMin = function() {
-      return min;
+      return this.min;
     };
     this.getMax = function() {
-      return max;
+      return this.max;
     };
 
     this.setMin = function(val) {
-      min = val;
-      _hasMin = true;
+      this.min = val;
+      this._hasMin = true;
     };
     this.setMax = function(val) {
-      max = val;
-      _hasMax = true;
+      this.max = val;
+      this._hasMax = true;
     };
 
     this.updateMin = function(val) {
-      if (!_hasMin || val < min) {
-        min = val;
-        _hasMin = true;
+      if (!this._hasMin || val < this.min) {
+        this.min = val;
+        this._hasMin = true;
       }
     };
     this.updateMax = function(val) {
-      if (!_hasMax || val < max) {
-        max = val;
-        _hasMax = true;
+      if (!this._hasMax || val > this.max) {
+        this.max = val;
+        this._hasMax = true;
       }
     };
 
@@ -1669,16 +1758,16 @@ var vg = vg || {};
     };
 
     this.isInRange = function(val) {
-      if (!_hasMin) {
-        if (!_hasMax) {
+      if (!this._hasMin) {
+        if (!this._hasMax) {
           return true;
         } else {
-          return (val <= max);
+          return (val <= this.max);
         }
-      } else if (!_hasMax) {
-        return (min <= val);
+      } else if (!this._hasMax) {
+        return (this.min <= val);
       } else {
-        return (min <= val && val <= max);
+        return (this.min <= val && val <= this.max);
       }
     };
 
