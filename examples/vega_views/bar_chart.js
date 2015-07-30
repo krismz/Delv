@@ -41,15 +41,28 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
     return this;
   };
   newObj.updateStartEnd = function(val, doParse) {
-    if (typeof(this.xStart) === "undefined") {
-      this.updateSignal("xStart", {"init":{"expr": val}}, doParse);
+    if (this._xIsDate) {
+      if (typeof(this.xStart) === "undefined") {
+        this.updateSignal("xStart", {"init":{"expr": val}}, doParse);
+      } else {
+        this.updateSignal("xStart", {"init":{"expr": "datetime('"+this.xStart+"')"}}, doParse);
+      }
+      if (typeof(this.xEnd) === "undefined") {
+        this.updateSignal("xEnd", {"init":{"expr": val}}, doParse);
+      } else {
+        this.updateSignal("xEnd", {"init":{"expr":  "datetime('"+this.xEnd+"')"}}, doParse);
+      }
     } else {
-      this.updateSignal("xStart", {"init":{"expr": "datetime('"+this.xStart+"')"}}, doParse);
-    }
-    if (typeof(this.xEnd) === "undefined") {
-      this.updateSignal("xEnd", {"init":{"expr": val}}, doParse);
-    } else {
-      this.updateSignal("xEnd", {"init":{"expr":  "datetime('"+this.xEnd+"')"}}, doParse);
+            if (typeof(this.xStart) === "undefined") {
+        this.updateSignal("xStart", {"init": val}, doParse);
+      } else {
+        this.updateSignal("xStart", {"init": this.xStart}, doParse);
+      }
+      if (typeof(this.xEnd) === "undefined") {
+        this.updateSignal("xEnd", {"init": val}, doParse);
+      } else {
+        this.updateSignal("xEnd", {"init": this.xEnd}, doParse);
+      }
     }
   };
   newObj.getXDomain = function() {
@@ -82,8 +95,7 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
     } else {
       this.updateSignal("xLowClamp", {"init":this._xDomain[0]}, false);
       this.updateSignal("xHighClamp", {"init":this._xDomain[1]}, false);
-      this.updateSignal("xStart", {"init": this.xStart}, false);
-      this.updateSignal("xEnd", {"init": this.xEnd}, false);
+      this.updateStartEnd(this._xDomain[0], false);
       this.updateDomain("x", this._xDomain, false);
     }
 

@@ -161,14 +161,14 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
     }
 
     if (dataset === "times") {
-      dataIF.chart.signal("minTime", ""+vMin);
-      dataIF.chart.signal("maxTime", ""+vMax);
+      dataIF.chart.signal("minTime", vMin);
+      dataIF.chart.signal("maxTime", vMax);
     } else if (dataset === "delay") {
-      dataIF.chart.signal("minDelay", ""+vMin);
-      dataIF.chart.signal("maxDelay", ""+vMax);
+      dataIF.chart.signal("minDelay", vMin);
+      dataIF.chart.signal("maxDelay", vMax);
     } else if (dataset === "distance") {
-      dataIF.chart.signal("minDist", ""+vMin);
-      dataIF.chart.signal("maxDist", ""+vMax);
+      dataIF.chart.signal("minDist", vMin);
+      dataIF.chart.signal("maxDist", vMax);
     } else if (dataset === "date") {
       dataIF.chart.signal("minDay", new Date(vMin));
       dataIF.chart.signal("maxDay", new Date(vMax));
