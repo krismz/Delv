@@ -24,15 +24,25 @@
   </head>
   <body onload="init()" onresize="resizeAll()">
     <div id="VegaCrossfilterApp"
-         style="zindex:1;top:0;left:0;width:1200px;height:330px;position:absolute">
-    <div id="TimeOfDay"
-      style="zindex:1;top:0;left:0;width:400px;height:165px;position:absolute"></div>     
-    <div id="Delay"
-      style="zindex:1;top:0;left:400px;width:400px;height:165px;position:absolute"></div>     
-    <div id="Distance"
-      style="zindex:1;top:0;left:800px;width:400px;height:165px;position:absolute"></div>     
-    <div id="Date"
-      style="zindex:1;top:165px;left:0;width:1200px;height:165px;position:absolute"></div>     
+         style="zindex:1;top:0;left:0;width:100%;height:100%;position:absolute">
+    <!-- Need to wrap the divs into a parent container for resize right now.  For Vega, this isn't -->
+      <!-- necessary, but for D3 and Processing it is.  Look into a better way to handle this -->
+    <div id="TimeOfDayContainer"
+      style="zindex:1;top:0;left:0;width:33%;height:50%;position:absolute">
+        <div id="TimeOfDay"> </div>
+    </div>     
+    <div id="DelayContainer"
+      style="zindex:1;top:0;left:33%;width:33%;height:50%;position:absolute">
+      <div id="Delay"> </div>
+    </div>     
+    <div id="DistanceContainer"
+      style="zindex:1;top:0;left:66%;width:33%;height:50%;position:absolute">
+    <div id="Distance"> </div>
+</div>     
+    <div id="DateContainer"
+      style="zindex:1;top:50%;left:0;width:100%;height:50%;position:absolute">
+    <div id="Date" ></div>
+</div>     
     </div>
   </body>
 </html>

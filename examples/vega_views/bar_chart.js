@@ -97,11 +97,17 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
     for (var ii=0; ii < this.idAll.length; ii++) {
       vals[ii] = { "x": this.xAll[ii], "y": this.yAll[ii] };
     }
-    this.spec["data"][0]["values"] = vals;
+
     if (this._xIsDate) {
       this.spec["data"][0]["format"] = { "type": "json",
                                          "parse": {"x": "date"} };
+      // TODO undo this hack, was getting the following errors for empty date tables:
+      // TypeError: Cannot read property 'getFullYear' of undefined
+      if (vals.length == 0) {
+        vals[0] = { "x": "1/1/2001", "y": 0 };
+      }
     }
+    this.spec["data"][0]["values"] = vals;
     this.mixinSpec();
     this.parseSpec();
   };

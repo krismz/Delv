@@ -263,11 +263,18 @@ var vg = vg || {};
     newObj.spec = vgSpec;
     newObj.chart;
     newObj._renderer = "canvas";
+    newObj._h;
+    newObj._w;
 
     finishSpecLoad = function(chart, view) {
       view.chart = chart({el:"#"+view.elem});
-      view.addListeners();
-      view.chart.renderer(view._renderer).update();
+      try {
+        view.addListeners();
+        view.chart.renderer(view._renderer).update();
+        view.updateChartSize();
+      } catch (e) {
+        delv.log("Caught error (" + e + ") while loading vega spec for " + view._name + " view");
+      }
     }
 
     newObj.parseSpec = function() {
@@ -287,6 +294,19 @@ var vg = vg || {};
       return this;
     }
 
+    newObj.resize = function(w, h) {
+      this._w = w;
+      this._h = h;
+      this.updateChartSize();
+    }
+
+    newObj.updateChartSize = function() {
+      if ((typeof(this._w) !== "undefined") && (typeof(this._h) !== "undefined") &&
+          (typeof(this.chart) !== "undefined")) {
+        this.chart.width(this._w).height(this._h).update();
+      }
+    };
+    
     newObj.updateSignal = function(signal, val, doParse) {
       if (typeof(val) === typeof({})) {
         var sigs = this.spec["signals"];
