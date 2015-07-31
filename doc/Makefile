@@ -48,8 +48,13 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+# WARNING! make clean will mess up any git-new-workdir multiple branch magic!
+# Use make clean_html instead!
 clean:
 	rm -rf $(BUILDDIR)/*
+
+clean_html:
+	rm -rf $(BUILDDIR)/html/*
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -61,6 +66,7 @@ html:
 	@echo
 	@echo "Building inSite"
 	cp -r ../examples/inSite $(BUILDDIR)/html/inSite
+	rm -rf $(BUILDDIR)/html/inSite/application.macosx
 	@echo
 	@echo "Building simple_views"
 	cp -r ../examples/simple_views $(BUILDDIR)/html/simple_views
