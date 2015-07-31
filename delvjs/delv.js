@@ -712,7 +712,7 @@ var vg = vg || {};
     }
   };
 
-  delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 100, false);
+  delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 200, false);
 
   delv.emitSignal = function(signal, invoker, dataset, attribute) {
     // TODO, debounce here is not ideal, really want to think about more appropriate location
