@@ -1,0 +1,19 @@
+REGION_LABEL: reg-regions
+TYPE_LABEL: TF
+
+NORMALIZATION: per_tf
+GLOBAL_MIN_VALUE: 5.0
+
+REGION: ./test_data/dmel.csv
+REGION: ./test_data/dsim.csv
+REGION: ./test_data/dsec.csv
+REGION: ./test_data/dyak.csv
+REGION: ./test_data/dpse.csv
+REGION: ./test_data/dper.csv
+
+
+
+
+
+
+

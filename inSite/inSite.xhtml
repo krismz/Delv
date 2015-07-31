@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/1999/xhtml"
+   xml:lang="en"   
+   lang="en">
+<head>
+<title>InSite</title>
+<script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
+<script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script>
+<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
+<script type="text/ecmascript" id="insite.script" src="./inSite.js"></script>
+</head>
+<body onload="init()" onresize="delv.resizeAll()">
+<div
+  id="inSite"
+  style="overflow:hidden;zindex:1;top:0;left:0;width:100%;height:100%;position:absolute">  
+<div
+  id="FileInputs"
+  style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:100%;height:7%;position:absolute">
+  <table style="padding-bottom: 10px">
+    <tr>
+      <td style="padding-left: 10px"> <label for="region_files">Region files: </label> </td>
+      <td style="padding-left: 10px"> <input type="file" id="region_files" name="region_files[]" multiple="multiple"/>
+        <output id="region_files_list"></output> </td>
+    </tr>
+  </table>  
+</div>
+<div
+  id="DropDownContainer"
+   style="overflow:hidden;zindex:3;top:9.5%;left:2.5%;width:8%;height:88%;position:absolute">
+   <canvas
+   id="DropDown"/>
+  </div>
+<div
+  id="RegionContainer"
+   style="overflow:hidden;zindex:3;top:9.5%;left:10.5%;width:75%;height:88%;position:absolute">
+   <canvas
+   id="Region"/>
+</div>
+<div
+  id="legendDiv"
+  style="overflow:hidden;zindex:1;top:9.5%;left:85.5%;width:12%;height:88%;position:absolute">
+  <!-- because the following divs have height less than 95% (height of -->
+  <!-- all the other divs), they need to be wrapped within a div that -->
+  <!-- has the same width as themselves and the same height as the -->
+  <!-- other divs -->
+  <div
+    id ="AlignmentContainer"
+    style="overflow:hidden;zindex:1;top:0px;left:0px;width:100%;height:45px;position:absolute">
+    <canvas
+    id="Alignment"/>
+</div>
+  <div
+    id ="BarHeightContainer"
+    style="overflow:hidden;zindex:1;top:45px;left:0px;width:100%;height:85px;position:absolute">
+    <canvas
+    id="BarHeight"/>
+</div>
+  <div
+    id="ColorLegendWithDropdownContainer"
+    style="overflow:hidden;zindex:3;top:150px;left:0px;width:100%;height:100%;position:absolute">
+    <canvas
+    id="ColorLegendWithDropdown"/>
+  </div>
+  <div
+    id="DataInterfaceContainer">
+    <canvas
+    id="DataInterface"/>
+    </div>
+</div>
+</div>
+</body>
+</html>

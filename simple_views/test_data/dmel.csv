@@ -1,0 +1,30 @@
+#NAME: dmel
+#START: 0
+#LENGTH: 1566
+##class,start,length,motif_type, strength
+binding_site,1025,7,tll,8.93
+binding_site,21,8,hb,9.92
+binding_site,413,8,hb,9.95
+binding_site,425,8,hb,9.75
+binding_site,486,8,hb,11.28
+binding_site,526,8,hb,10.81
+binding_site,702,8,hb,11.28
+binding_site,1119,8,hb,9.92
+binding_site,100,10,cad,8.44
+binding_site,200,10,cad,8.28
+binding_site,409,10,cad,8.91
+binding_site,469,10,cad,8.72
+binding_site,488,10,cad,9.98
+binding_site,679,10,cad,8.58
+binding_site,704,10,cad,8.06
+binding_site,1028,10,cad,9.05
+binding_site,617,14,hkb,9.85
+binding_site,1262,14,hkb,10.66
+binding_site,542,10,Kr,11.51
+binding_site,550,10,Kr,8.96
+binding_site,759,10,Kr,11.51
+binding_site,796,10,Kr,13.09
+binding_site,871,10,Kr,13.40
+binding_site,937,10,Kr,13.31
+binding_site,1179,8,bcd,9.60
+binding_site,1499,8,bcd,9.39

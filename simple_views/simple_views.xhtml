@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/1999/xhtml"
+   xml:lang="en"   
+   lang="en">
+<head>
+<title>Simple View</title>
+<script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
+<!-- Add jquery-json to allow JSON stringify -->
+<script type="text/ecmascript" id="jquery-json.script" src="./delvjs/jquery.json-2.3.js"></script>
+<script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script>
+<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
+<script type="text/ecmascript" id="insite.script" src="./simple_views.js"></script>
+</head>
+<body onload="init()" onresize="delv.resizeAll()">
+<div
+  id="simpleViewApp"
+  style="overflow:hidden;zindex:1;top:0;left:0;width:100%;height:100%;position:absolute">  
+<svg:svg
+   id="svg"
+   x="0%"
+   y="0%"
+   width="100%"
+   height="100%"
+   version="1.1"
+   style="overflow:hidden;zindex:2;position:absolute"
+   onclick="logEvent(evt)">
+</svg:svg>
+  <!-- For overlapping elements, last one in is on top.  Need to -->
+  <!-- figure out event bubbling / event capturing to make sure events -->
+  <!-- are passed to all overlapping layers (different than -->
+  <!-- embedded/nested tags.  For Qt QWebView, order doesn't matter. -->
+  <!-- For Safari it does. -->
+<div
+  id="Template200Container"
+   style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:90%;position:absolute">
+   <canvas
+   id="Template200"/>
+  </div>
+<div
+  id="SparklineContainer"
+   style="overflow:hidden;zindex:3;top:92.5%;left:2.5%;width:95%;height:5%;position:absolute">
+   <canvas
+   id="Sparkline"/>
+</div>
+  <div
+    id="DataInterfaceContainer">
+    <canvas
+    id="DataInterface"/>
+  </div>
+  </div>
+</body>
+</html>

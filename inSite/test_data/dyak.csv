@@ -1,0 +1,33 @@
+#NAME: dyak
+#START: 0
+#LENGTH: 1618
+##class,start,length,motif_type, strength
+binding_site,22,8,hb,9.92
+binding_site,415,8,hb,9.92
+binding_site,427,8,hb,9.75
+binding_site,487,8,hb,11.28
+binding_site,530,8,hb,10.81
+binding_site,706,8,hb,11.28
+binding_site,1154,8,hb,11.28
+binding_site,102,10,cad,8.44
+binding_site,202,10,cad,8.28
+binding_site,411,10,cad,8.39
+binding_site,470,10,cad,8.72
+binding_site,489,10,cad,9.98
+binding_site,683,10,cad,8.58
+binding_site,708,10,cad,8.06
+binding_site,1035,10,cad,8.12
+binding_site,1047,10,cad,8.15
+binding_site,1156,10,cad,9.58
+binding_site,1204,10,cad,8.23
+binding_site,1270,10,cad,9.01
+binding_site,621,14,hkb,9.85
+binding_site,1342,14,hkb,13.24
+binding_site,546,10,Kr,11.51
+binding_site,554,10,Kr,8.96
+binding_site,764,10,Kr,11.51
+binding_site,801,10,Kr,13.09
+binding_site,877,10,Kr,13.40
+binding_site,924,10,Kr,11.16
+binding_site,944,10,Kr,10.71
+binding_site,1158,12,gt,8.31

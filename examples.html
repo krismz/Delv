@@ -48,16 +48,16 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Delv Examples</a><ul>
+<li><a class="reference internal" href="#insite">inSite</a></li>
+<li><a class="reference internal" href="#d3-demo">D3 Demo</a></li>
+<li><a class="reference internal" href="#vega-crossfilter">Vega Crossfilter</a></li>
+<li><a class="reference internal" href="#simple-views">simple views</a></li>
+<li><a class="reference internal" href="#tangelo">tangelo</a></li>
 <li><a class="reference internal" href="#running-local-examples">Running local examples</a><ul>
 <li><a class="reference internal" href="#serve-locally">Serve locally</a></li>
 <li><a class="reference internal" href="#local-file-loading">Local file loading</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#simple-views">simple views</a></li>
-<li><a class="reference internal" href="#insite">inSite</a></li>
-<li><a class="reference internal" href="#d3-demo">D3 Demo</a></li>
-<li><a class="reference internal" href="#vega-crossfilter">Vega Crossfilter</a></li>
-<li><a class="reference internal" href="#tangelo">tangelo</a></li>
 </ul>
 </li>
 </ul>
@@ -96,47 +96,34 @@
             
   <div class="section" id="delv-examples">
 <h1>Delv Examples<a class="headerlink" href="#delv-examples" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="running-local-examples">
-<span id="simple-views-example"></span><h2>Running local examples<a class="headerlink" href="#running-local-examples" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="serve-locally">
-<h3>Serve locally<a class="headerlink" href="#serve-locally" title="Permalink to this headline">¶</a></h3>
-<p>Run your favorite web server from the Delv examples directory.  Then navigate to <tt class="docutils literal"><span class="pre">localhost:8384</span></tt>
-in your web browser (substitute whatever port you&#8217;ve chosen as necessary).  For example</p>
-<p>&gt; cd /path/to/delv/examples
-&gt; python -m SimpleHTTPServer 8384</p>
-</div>
-<div class="section" id="local-file-loading">
-<h3>Local file loading<a class="headerlink" href="#local-file-loading" title="Permalink to this headline">¶</a></h3>
-<p>Enable local file loading for your browsers.
-<strong>Note that these are all dangerous settings when browsing the web, only use these settings for LOCAL browsing.</strong></p>
-<p>Firefox: go to <a class="reference external" href="about:config">about:config</a> and set security.fileuri.strict_origin_policy to false
-Safari: Advanced-&gt; Show develop menu in menu bar.  Develop-&gt;Disable local file restrictions
-Chrome:  Start chrome with &#8211;allow-file-access-from-files (from mac: open /Applications/GoogleChrome.app &#8211;args &#8211;allow-file-access-from-files)</p>
-</div>
-</div>
-<div class="section" id="simple-views">
-<h2>simple views<a class="headerlink" href="#simple-views" title="Permalink to this headline">¶</a></h2>
-<p>This is a demonstration of a simple 1-D view (a sparkline) interacting with a 2-D view
-(Template200).  Point a web browser at <tt class="docutils literal"><span class="pre">localhost:8384/simple_views/simple_views.xhtml</span></tt> or
-<tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/simple_views/simple_views.xhtml</span></tt> to start the example.  Note that mousing over points in the bar chart will highlight the points in the sparkline.</p>
-</div>
 <div class="section" id="insite">
 <span id="insite-example"></span><h2>inSite<a class="headerlink" href="#insite" title="Permalink to this headline">¶</a></h2>
-<p>To run the inSite example in Processing, open <tt class="docutils literal"><span class="pre">/path/to/delv/examples/inSite/inSite.pde</span></tt> from your
-Processing environment and press play.  To see the same example in Javascript, point a web browser
-at <tt class="docutils literal"><span class="pre">localhost:8384/inSite/inSite.xhtml</span></tt> or <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/inSite/inSite.xhtml</span></tt>.  This is an example of several interactions including category filtering, an interactive color choosing legend, rollover / hovering, etc.</p>
+<p>This is an example of several interactions including category filtering, an interactive color
+choosing legend, rollover / hovering, etc.</p>
+<p>For a live demo, go to <a class="reference external" href="inSite/inSite.xhtml">inSite/inSite.xhtml</a>.  To run the inSite example in Processing, open
+<tt class="docutils literal"><span class="pre">/path/to/delv/examples/inSite/inSite.pde</span></tt> from your Processing environment and press play.  To
+<a class="reference internal" href="#run-example-locally">run-example-locally</a> in Javascript, point a web browser at <tt class="docutils literal"><span class="pre">localhost:8384/inSite/inSite.xhtml</span></tt> or <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/inSite/inSite.xhtml</span></tt>.</p>
 </div>
 <div class="section" id="d3-demo">
 <span id="d3-demo-example"></span><h2>D3 Demo<a class="headerlink" href="#d3-demo" title="Permalink to this headline">¶</a></h2>
 <p>The D3 demo is an example of 4 different D3 examples taken from <a class="reference external" href="https://github.com/mbostock/d3/wiki/Gallery">d3js.org</a> and combined with the RegionView that is the center
-bar chart visualization in the <a class="reference internal" href="#insite-example">insite-example</a>.  To run this example, point a web browser at
+bar chart visualization in the <a class="reference internal" href="#insite-example">insite-example</a>.</p>
+<p>For a live demo, go to <a class="reference external" href="d3_demo/d3_demo.xhtml">d3_demo/d3_demo.xhtml</a>.  To <a class="reference internal" href="#run-example-locally">run-example-locally</a>, point a web browser at
 <tt class="docutils literal"><span class="pre">localhost:8384/d3_demo/d3_demo.xhtml</span></tt> or  <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/d3_demo/d3_demo.xhtml</span></tt></p>
 </div>
 <div class="section" id="vega-crossfilter">
 <span id="vega-crossfilter-example"></span><h2>Vega Crossfilter<a class="headerlink" href="#vega-crossfilter" title="Permalink to this headline">¶</a></h2>
 <p>The Vega Crossfilter example is an example of integrating the Vega crossfilter example from  the
-<a class="reference external" href="http://vega.github.io/vega-editor/">Vega online editor</a>  into Delv.  To run this example, point a web browser at
+<a class="reference external" href="http://vega.github.io/vega-editor/">Vega online editor</a>  into Delv.</p>
+<p>For a live demo, go to <a class="reference external" href="vega_crossfilter/vega_crossfilter.xhtml">vega_crossfilter/vega_crossfilter.xhtml</a>.  To <a class="reference internal" href="#run-example-locally">run-example-locally</a>, point a web browser at
 <tt class="docutils literal"><span class="pre">localhost:8384/vega_crossfilter/vega_crossfilter.xhtml</span></tt> or  <tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/vega_crossfilter/vega_crossfilter.xhtml</span></tt></p>
+</div>
+<div class="section" id="simple-views">
+<span id="simple-views-example"></span><h2>simple views<a class="headerlink" href="#simple-views" title="Permalink to this headline">¶</a></h2>
+<p>This is a demonstration of a simple 1-D view (a sparkline) interacting with a 2-D view
+(Template200).</p>
+<p>For a live demo, go to <a class="reference external" href="simple_views/simple_views.xhtml">simple_views/simple_views.xhtml</a>.  Or to <a class="reference internal" href="#run-example-locally">run-example-locally</a>, point a web browser at <tt class="docutils literal"><span class="pre">localhost:8384/simple_views/simple_views.xhtml</span></tt> or
+<tt class="docutils literal"><span class="pre">file:///path/to/delv/examples/simple_views/simple_views.xhtml</span></tt> to start the example.  Note that mousing over points in the bar chart will highlight the points in the sparkline.</p>
 </div>
 <div class="section" id="tangelo">
 <span id="tangelo-example"></span><h2>tangelo<a class="headerlink" href="#tangelo" title="Permalink to this headline">¶</a></h2>
@@ -155,6 +142,24 @@ bar chart visualization in the <a class="reference internal" href="#insite-examp
 </pre></div>
 </div>
 <p>And then start the ner example as you normally would.</p>
+</div>
+<div class="section" id="running-local-examples">
+<span id="run-example-locally"></span><h2>Running local examples<a class="headerlink" href="#running-local-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="serve-locally">
+<h3>Serve locally<a class="headerlink" href="#serve-locally" title="Permalink to this headline">¶</a></h3>
+<p>Run your favorite web server from the Delv examples directory.  Then navigate to <tt class="docutils literal"><span class="pre">localhost:8384</span></tt>
+in your web browser (substitute whatever port you&#8217;ve chosen as necessary).  For example</p>
+<p>&gt; cd /path/to/delv/examples
+&gt; python -m SimpleHTTPServer 8384</p>
+</div>
+<div class="section" id="local-file-loading">
+<h3>Local file loading<a class="headerlink" href="#local-file-loading" title="Permalink to this headline">¶</a></h3>
+<p>Enable local file loading for your browsers.
+<strong>Note that these are all dangerous settings when browsing the web, only use these settings for LOCAL browsing.</strong></p>
+<p>Firefox: go to <a class="reference external" href="about:config">about:config</a> and set security.fileuri.strict_origin_policy to false
+Safari: Advanced-&gt; Show develop menu in menu bar.  Develop-&gt;Disable local file restrictions
+Chrome:  Start chrome with &#8211;allow-file-access-from-files (from mac: open /Applications/GoogleChrome.app &#8211;args &#8211;allow-file-access-from-files)</p>
+</div>
 </div>
 </div>
 

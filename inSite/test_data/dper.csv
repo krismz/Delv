@@ -1,0 +1,28 @@
+#NAME: dper
+#START: 0
+#LENGTH: 1626
+##class,start,length,motif_type, strength
+binding_site,1233,7,tll,8.93
+binding_site,846,10,kni,10.61
+binding_site,21,8,hb,9.95
+binding_site,46,8,hb,9.92
+binding_site,536,8,hb,9.92
+binding_site,581,8,hb,10.81
+binding_site,609,8,hb,11.28
+binding_site,650,8,hb,9.75
+binding_site,828,8,hb,11.28
+binding_site,212,10,cad,9.11
+binding_site,592,10,cad,8.93
+binding_site,611,10,cad,8.93
+binding_site,805,10,cad,8.82
+binding_site,830,10,cad,9.27
+binding_site,216,14,hkb,9.87
+binding_site,668,10,Kr,13.40
+binding_site,886,10,Kr,13.40
+binding_site,912,10,Kr,13.09
+binding_site,997,10,Kr,12.30
+binding_site,1028,10,Kr,10.84
+binding_site,1029,10,Kr,9.94
+binding_site,1046,10,Kr,11.51
+binding_site,214,12,gt,8.90
+binding_site,893,12,gt,9.40
