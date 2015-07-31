@@ -54,9 +54,9 @@ independently, and then wrap them in the Delv framework.  Once they've been wrap
 a Processing application using the views, and then modify them to make them respond to more interaction
 types.  Finally, we'll create a javascript application using the same views.
 
----------------------
+========================
 Introducing the sketches
----------------------
+========================
 Let's start by running the existing sketches.  Start Processing, then open the scatterplot.pde
 sketch via File->Open..., navigate to delv->examples->scatterplot and select scatterplot.pde.  When
 you run the sketch, you should see something like the following:
@@ -68,9 +68,8 @@ this:
 
 .. image:: images/stand-alone_bspline.*
 
---------------------
 Create scatterplot view
---------------------
+=======================
 
 The scatterplot is a 2-dimensional view, using 2 columns of data for the x and y positions.  Thus,
 we can use the existing Delv2DView class, and just extend it to meet our scatter plot needs.  First

@@ -4,9 +4,9 @@ Using Delv with D3.js
 
 .. _d3-project-layout:
 
-==============
+=================
 D3.js project layout
-==============
+=================
 
 For a standard Delv d3.js project, the following directory
 structure is recommended:
