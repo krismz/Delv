@@ -30,6 +30,7 @@ function init() {
 
 function finishLoadingJSData() {
   console.log("finishLoadingJSData called");
+  dataLoaded = true;
   delv.giveDataIFToViews("vgDemo");
   delv.reloadData("vgDemo");
 }
@@ -72,6 +73,9 @@ function init_view_instance(view, elemId) {
 
   }
   delv.log("init_view_instance resizeAll");
+  if (dataLoaded) {
+    delv.reloadData("vgDemo");
+  }
   resizeAll();
 }
 
