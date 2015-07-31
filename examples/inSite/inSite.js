@@ -155,7 +155,8 @@ function finishLoadingData() {
   }
   if (dataLoaded) {
     // TODO add any initialization or customization here
-    pDataIF.clearRegionFiles();
+    //pDataIF.clearRegionFiles();
+    pDataIF.loadData();
     pDataIF.setDelvIF(delv);
     delv.addDataIF(pDataIF);
     delv.giveDataIFToViews("inSite");

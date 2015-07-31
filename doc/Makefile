@@ -54,6 +54,20 @@ clean:
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
+	@echo "Sphinx build finished."
+	@echo
+	@echo "Building d3 demo"
+	cp -r ../examples/d3_demo $(BUILDDIR)/html/d3_demo
+	@echo
+	@echo "Building inSite"
+	cp -r ../examples/inSite $(BUILDDIR)/html/inSite
+	@echo
+	@echo "Building simple_views"
+	cp -r ../examples/simple_views $(BUILDDIR)/html/simple_views
+	@echo
+	@echo "Building vega_crossfilter"
+	cp -r ../examples/vega_crossfilter $(BUILDDIR)/html/vega_crossfilter
+	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 dirhtml:
