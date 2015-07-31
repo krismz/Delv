@@ -49,6 +49,11 @@
   <ul>
 <li><a class="reference internal" href="#">Using Delv with Processing</a><ul>
 <li><a class="reference internal" href="#processing-project-layout">Processing project layout</a></li>
+<li><a class="reference internal" href="#basic-plots-tutorial">Basic Plots Tutorial</a></li>
+<li><a class="reference internal" href="#introducing-the-sketches">Introducing the sketches</a><ul>
+<li><a class="reference internal" href="#create-scatterplot-view">Create scatterplot view</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -97,32 +102,35 @@ structure is recommended:</p>
 <div><ul>
 <li><p class="first"><tt class="docutils literal"><span class="pre">your_app.xhtml</span></tt> &#8211; See <a class="reference internal" href="templates.html#xhtml-templates"><em>xhtml Layout Templates</em></a> for a layout template.</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">javascript</span></tt> &#8211; In order to work in the web browser, the javascript code
-should be in a subdirectory relative to your xhtml.</p>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">your_javascript_app.js</span></tt> &#8211; This file contains the logic to construct and connect the</dt>
+<dd><p class="first last">visualizations together, including configuration of the views.  See
+<a class="reference internal" href="templates.html#javascript-templates"><em>Javascript Templates</em></a> for an example of how to setup Delv and configure views.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_project_directory.pde</span></tt> &#8211; to have this sketch run in Processing as well as in the web browser,
+make sure that your main .pde file in this directory has the same name as the directory
+itself. <a class="footnote-reference" href="#f1" id="id2">[1]</a></p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_processing_vis.pde</span></tt> &#8211; This file contains the view for one visualization type.  See
+<a class="reference internal" href="templates.html#processing-templates"><em>Processing Templates</em></a> for an example View. <a class="footnote-reference" href="#f2" id="id3">[2]</a></p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_other_processing_vis.pde</span></tt> &#8211; This file contains the view for another visualization
+type.  <a class="footnote-reference" href="#f2" id="id4">[2]</a></p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">Delv.pde</span></tt>    <a class="footnote-reference" href="#f3" id="id5">[3]</a>  If you prefer not to copy Delv.pde, you can link to it instead:</p>
+<p><tt class="samp docutils literal"><span class="pre">cd</span> <span class="pre">your_project_directory;</span> <span class="pre">ln</span> <span class="pre">-s</span>&nbsp; <span class="pre">&lt;/path/to/delv/delv_processing/Delv.pde&gt;</span></tt></p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">delvjs</span></tt> &#8211; In order to work in the web browser, the javascript code
+should be in a subdirectory relative to your xhtml.  If you prefer not to copy the contents of
+delvjs, you can link to it instead:</p>
+<p><tt class="samp docutils literal"><span class="pre">cd</span> <span class="pre">your_project_directory;</span> <span class="pre">ln</span> <span class="pre">-s</span> <span class="pre">&lt;/path/to/delv/delvjs&gt;</span></tt></p>
 <blockquote>
 <div><ul class="simple">
-<li><tt class="docutils literal"><span class="pre">your_javascript_app.js</span></tt> &#8211; This file contains the logic to construct and connect the
-visualizations together, including configuration of the views.  See
-<a class="reference internal" href="templates.html#javascript-templates"><em>Javascript Templates</em></a> for an example of how to setup Delv and configure views.</li>
 <li><tt class="docutils literal"><span class="pre">delv.js</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">jquery-1.7.2.js</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">processing-1.4.0.js</span></tt></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">your_processing_sketch</span></tt> &#8211; to have this sketch run in Processing as well as in the web browser,
-make sure that you have a corresponding .pde file in this directory with the same name</p>
-<blockquote>
-<div><ul class="simple">
-<li><tt class="docutils literal"><span class="pre">your_processing_sketch.pde</span></tt> &#8211; main entry to your processing sketch.  <a class="footnote-reference" href="#f1" id="id2">[1]</a></li>
-<li><tt class="docutils literal"><span class="pre">your_processing_vis.pde</span></tt> &#8211; This file contains the view for one
-visualization type.
-See <a class="reference internal" href="templates.html#processing-templates"><em>Processing Templates</em></a> for an example View. <a class="footnote-reference" href="#f2" id="id3">[2]</a></li>
-<li><tt class="docutils literal"><span class="pre">your_other_processing_vis.pde</span></tt> &#8211; This file contains the view for another
-visualization type.  <a class="footnote-reference" href="#f2" id="id4">[2]</a></li>
-<li><tt class="docutils literal"><span class="pre">Delv.pde</span></tt>  <a class="footnote-reference" href="#f3" id="id5">[3]</a></li>
-<li><tt class="docutils literal"><span class="pre">DelvBasicData.pde</span></tt> <a class="footnote-reference" href="#f3" id="id6">[3]</a></li>
-<li><tt class="docutils literal"><span class="pre">DelvView.pde</span></tt> <a class="footnote-reference" href="#f3" id="id7">[3]</a></li>
 </ul>
 </div></blockquote>
 </li>
@@ -139,16 +147,60 @@ visualization type.  <a class="footnote-reference" href="#f2" id="id4">[2]</a></
 <table class="docutils footnote" frame="void" id="f2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[2]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> Make sure all files including Delv.pde, DelvBasicData.pde and DelvView.pde are explicitly loaded in your_javascript_app.js</td></tr>
+<tr><td class="label">[2]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> Make sure all processing .pde files including Delv.pde are explicitly loaded in your_javascript_app.js</td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="f3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[3]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id6">2</a>, <a class="fn-backref" href="#id7">3</a>)</em> For the web browser, this file could be in another location, but to work in Processing it needs to be in the same directory of your sketch (you can use a link if you
-don&#8217;t want to copy the file).</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id5">[3]</a></td><td>For the web browser, this file could be in another location, but to work in Processing it needs to be in the same directory of your sketch (you can use a link if you don&#8217;t want to copy the file).</td></tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="basic-plots-tutorial">
+<h2>Basic Plots Tutorial<a class="headerlink" href="#basic-plots-tutorial" title="Permalink to this headline">¶</a></h2>
+<p>For this tutorial, we will take two existing stand-alone Processing sketches, run them
+independently, and then wrap them in the Delv framework.  Once they&#8217;ve been wrapped, we&#8217;ll create
+a Processing application using the views, and then modify them to make them respond to more interaction
+types.  Finally, we&#8217;ll create a javascript application using the same views.</p>
+</div>
+<div class="section" id="introducing-the-sketches">
+<h2>Introducing the sketches<a class="headerlink" href="#introducing-the-sketches" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s start by running the existing sketches.  Start Processing, then open the scatterplot.pde
+sketch via File-&gt;Open..., navigate to delv-&gt;examples-&gt;scatterplot and select scatterplot.pde.  When
+you run the sketch, you should see something like the following:</p>
+<img alt="_images/stand-alone_scatterplot.png" src="_images/stand-alone_scatterplot.png" />
+<p>Next run the bspline_curve.pde example found in delv-&gt;examples-&gt;bspline_curve to get something like
+this:</p>
+<img alt="_images/stand-alone_bspline.png" src="_images/stand-alone_bspline.png" />
+<div class="section" id="create-scatterplot-view">
+<h3>Create scatterplot view<a class="headerlink" href="#create-scatterplot-view" title="Permalink to this headline">¶</a></h3>
+<p>The scatterplot is a 2-dimensional view, using 2 columns of data for the x and y positions.  Thus,
+we can use the existing Delv2DView class, and just extend it to meet our scatter plot needs.  First
+let&#8217;s open up the tutorial.pde sketch found in delv-&gt;examples-&gt;tutorial and click on the scatterplot
+tab.</p>
+<p>We need to add the following at the very beginning of the file in order to become a Delv 2D
+View:</p>
+<div class="highlight-python"><div class="highlight"><pre>class ScatterplotView extends Delv2DView {
+</pre></div>
+</div>
+<p>and then we close the class definition at the very end of the file with:</p>
+<div class="highlight-python"><div class="highlight"><pre>}
+</pre></div>
+</div>
+<p>Now we&#8217;ll rename and modify the setup() method so that it becomes our new class constructor.
+Change the code starting at <tt class="docutils literal"><span class="pre">void</span> <span class="pre">setup()</span></tt> to:</p>
+<div class="highlight-python"><div class="highlight"><pre> ScatterplotView(String name)
+ {
+ super(name);
+ w = 400;
+ h = 400;
+ point_rolled_over = false;
+ rolled_over_point = 0;
+}
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 
@@ -175,7 +227,7 @@ don&#8217;t want to copy the file).</td></tr>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Kris Zygmunt.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

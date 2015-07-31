@@ -23,10 +23,6 @@ function init() {
     var sketch = new delv.processingSketch(canvas,
 					    ["./Globals.pde",
 					     "./Attribute.pde",
-					     "./DelvView.pde",
-						   "./Delv1DView.pde",
-						   "./Delv2DView.pde",
-						   "./DelvCategoryView.pde",
 					     "./Delv.pde",
 					     "./BasicRegion.pde", // currently only needed for the RegionView
 					     "./"+id+".pde"],

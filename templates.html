@@ -121,14 +121,16 @@ this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em
 <span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;delv.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/delv.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 
 <span class="c">&lt;!-- script containing the application-specific logic for connecting --&gt;</span>
-<span class="c">&lt;!-- to delv and configuring mediators. --&gt;</span>
+<span class="c">&lt;!-- to delv and configuring views. --&gt;</span>
 <span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">&quot;text/ecmascript&quot;</span> <span class="na">id=</span><span class="s">&quot;app.script&quot;</span> <span class="na">src=</span><span class="s">&quot;./javascript/example_app.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 <span class="nt">&lt;/head&gt;</span>
 
 <span class="c">&lt;!-- Note that onload calls init() which should be defined in your app --&gt;</span>
-<span class="c">&lt;!-- script.  Also, the body onresize should call delv.resizeAll() --&gt;</span>
+<span class="c">&lt;!-- script.  Alternatively, call your application&#39;s appropriate --&gt;</span>
+<span class="c">&lt;!-- initialization routine. --&gt;</span>
+<span class="c">&lt;!-- Also, the body onresize should call delv.resizeAll() --&gt;</span>
 <span class="c">&lt;!-- (or a custom function that also calls delv.resizeAll()) so that --&gt;</span>
-<span class="c">&lt;!-- each mediator/view can resize and redraw itself appropriately.--&gt;</span>
+<span class="c">&lt;!-- each view can resize and redraw itself appropriately.--&gt;</span>
 <span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">&quot;init()&quot;</span> <span class="na">onresize=</span><span class="s">&quot;delv.resizeAll()&quot;</span><span class="nt">&gt;</span>
 
 <span class="c">&lt;!-- Note that sizes are expressed as percentages in most places.  It --&gt;</span>
@@ -161,12 +163,12 @@ this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em
  <span class="nt">&lt;div</span>
     <span class="na">id =</span><span class="s">&quot;d3_view1_container&quot;</span>
     <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:3%;left:3%;width:47%;height:47%;position:absolute&quot;</span><span class="nt">&gt;</span>
-    <span class="c">&lt;!-- if id matches the name of the mediator for this element, then --&gt;</span>
+    <span class="c">&lt;!-- if id matches the name of the view for this element, then --&gt;</span>
     <span class="c">&lt;!-- the example_app.js can use this assumption to automatically --&gt;</span>
-    <span class="c">&lt;!-- construct the mediator based on element id.  Otherwise, will --&gt;</span>
-    <span class="c">&lt;!-- need to pass in the name of the desired mediator to a --&gt;</span>
+    <span class="c">&lt;!-- construct the view based on element id.  Otherwise, will --&gt;</span>
+    <span class="c">&lt;!-- need to pass in the name of the desired view to a --&gt;</span>
     <span class="c">&lt;!-- javascript construction function of some sort. --&gt;</span>
-    <span class="c">&lt;!-- In this case, construct a partition_sunburst_zoom_mediator --&gt;</span>
+    <span class="c">&lt;!-- In this case, construct a partition_sunburst_zoom_view --&gt;</span>
     <span class="nt">&lt;svg:svg</span>
        <span class="na">id=</span><span class="s">&quot;partition_sunburst_zoom&quot;</span>
        <span class="na">class=</span><span class="s">&quot;d3&quot;</span>
@@ -225,12 +227,12 @@ this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em
     <span class="nt">&lt;div</span>
     <span class="na">id =</span> <span class="s">&quot;processing_views&quot;</span>
     <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:1;top:90%;left:0;width:100%;height:10%;position:absolute&quot;</span><span class="nt">&gt;</span>
-    <span class="c">&lt;!-- if id matches the name of the mediator for this element, then --&gt;</span>
+    <span class="c">&lt;!-- if id matches the name of the view for this element, then --&gt;</span>
     <span class="c">&lt;!-- the example_app.js can use this assumption to automatically --&gt;</span>
-    <span class="c">&lt;!-- construct the mediator based on element id.  Otherwise, will --&gt;</span>
-    <span class="c">&lt;!-- need to pass in the name of the desired mediator to a --&gt;</span>
+    <span class="c">&lt;!-- construct the view based on element id.  Otherwise, will --&gt;</span>
+    <span class="c">&lt;!-- need to pass in the name of the desired view to a --&gt;</span>
     <span class="c">&lt;!-- javascript construction function of some sort. --&gt;</span>
-    <span class="c">&lt;!-- In this case, construct a RegionMediator --&gt;</span>
+    <span class="c">&lt;!-- In this case, construct a RegionView --&gt;</span>
     <span class="nt">&lt;div</span>
       <span class="na">id=</span><span class="s">&quot;processing_view_container&quot;</span>
       <span class="na">style=</span><span class="s">&quot;overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:95%;position:absolute&quot;</span><span class="nt">&gt;</span>
@@ -276,10 +278,6 @@ this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em
     <span class="kd">var</span> <span class="nx">sketch</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">delv</span><span class="p">.</span><span class="nx">processingSketch</span><span class="p">(</span><span class="nx">canvas</span><span class="p">,</span>
 					    <span class="p">[</span><span class="s2">&quot;./Globals.pde&quot;</span><span class="p">,</span>
 					     <span class="s2">&quot;./Attribute.pde&quot;</span><span class="p">,</span>
-					     <span class="s2">&quot;./DelvView.pde&quot;</span><span class="p">,</span>
-						   <span class="s2">&quot;./Delv1DView.pde&quot;</span><span class="p">,</span>
-						   <span class="s2">&quot;./Delv2DView.pde&quot;</span><span class="p">,</span>
-						   <span class="s2">&quot;./DelvCategoryView.pde&quot;</span><span class="p">,</span>
 					     <span class="s2">&quot;./Delv.pde&quot;</span><span class="p">,</span>
 					     <span class="s2">&quot;./BasicRegion.pde&quot;</span><span class="p">,</span> <span class="c1">// currently only needed for the RegionView</span>
 					     <span class="s2">&quot;./&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;.pde&quot;</span><span class="p">],</span>
@@ -573,7 +571,7 @@ this <a class="reference internal" href="d3_tutorial.html#d3-project-layout"><em
     </div>
     <div class="footer">
         &copy; Copyright 2013, Kris Zygmunt.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

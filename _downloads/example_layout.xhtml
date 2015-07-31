@@ -25,14 +25,16 @@
 <script type="text/ecmascript" id="delv.script" src="./javascript/delv.js"></script>
 
 <!-- script containing the application-specific logic for connecting -->
-<!-- to delv and configuring mediators. -->
+<!-- to delv and configuring views. -->
 <script type="text/ecmascript" id="app.script" src="./javascript/example_app.js"></script>
 </head>
 
 <!-- Note that onload calls init() which should be defined in your app -->
-<!-- script.  Also, the body onresize should call delv.resizeAll() -->
+<!-- script.  Alternatively, call your application's appropriate -->
+<!-- initialization routine. -->
+<!-- Also, the body onresize should call delv.resizeAll() -->
 <!-- (or a custom function that also calls delv.resizeAll()) so that -->
-<!-- each mediator/view can resize and redraw itself appropriately.-->
+<!-- each view can resize and redraw itself appropriately.-->
 <body onload="init()" onresize="delv.resizeAll()">
 
 <!-- Note that sizes are expressed as percentages in most places.  It -->
@@ -65,12 +67,12 @@
  <div
     id ="d3_view1_container"
     style="overflow:hidden;zindex:3;top:3%;left:3%;width:47%;height:47%;position:absolute">
-    <!-- if id matches the name of the mediator for this element, then -->
+    <!-- if id matches the name of the view for this element, then -->
     <!-- the example_app.js can use this assumption to automatically -->
-    <!-- construct the mediator based on element id.  Otherwise, will -->
-    <!-- need to pass in the name of the desired mediator to a -->
+    <!-- construct the view based on element id.  Otherwise, will -->
+    <!-- need to pass in the name of the desired view to a -->
     <!-- javascript construction function of some sort. -->
-    <!-- In this case, construct a partition_sunburst_zoom_mediator -->
+    <!-- In this case, construct a partition_sunburst_zoom_view -->
     <svg:svg
        id="partition_sunburst_zoom"
        class="d3"
@@ -129,12 +131,12 @@
     <div
     id = "processing_views"
     style="overflow:hidden;zindex:1;top:90%;left:0;width:100%;height:10%;position:absolute">
-    <!-- if id matches the name of the mediator for this element, then -->
+    <!-- if id matches the name of the view for this element, then -->
     <!-- the example_app.js can use this assumption to automatically -->
-    <!-- construct the mediator based on element id.  Otherwise, will -->
-    <!-- need to pass in the name of the desired mediator to a -->
+    <!-- construct the view based on element id.  Otherwise, will -->
+    <!-- need to pass in the name of the desired view to a -->
     <!-- javascript construction function of some sort. -->
-    <!-- In this case, construct a RegionMediator -->
+    <!-- In this case, construct a RegionView -->
     <div
       id="processing_view_container"
       style="overflow:hidden;zindex:3;top:2.5%;left:2.5%;width:95%;height:95%;position:absolute">

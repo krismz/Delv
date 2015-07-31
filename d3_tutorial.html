@@ -97,21 +97,24 @@ structure is recommended:</p>
 <div><ul>
 <li><p class="first"><tt class="docutils literal"><span class="pre">your_app.xhtml</span></tt> &#8211; See <a class="reference internal" href="templates.html#xhtml-templates"><em>xhtml Layout Templates</em></a> for a layout template</p>
 </li>
-<li><p class="first"><tt class="docutils literal"><span class="pre">javascript</span></tt> &#8211; In order to work in the web browser, the javascript code
-should be in a subdirectory relative to your xhtml.</p>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_javascript_app.js</span></tt> &#8211; This file contains the logic to construct and connect the
+visualizations together, including configuration of the views.  See
+<a class="reference internal" href="templates.html#javascript-templates"><em>Javascript Templates</em></a> for an example of how to setup Delv and configure views.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_d3_chart_type.js</span></tt> &#8211; This file contains the view for one d3 chart type. See
+<a class="reference internal" href="templates.html#d3-templates"><em>D3 Templates</em></a> for an example view.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">your_other_d3_chart_type.js</span></tt> &#8211; This file contains the view for another d3 chart type.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">delvjs</span></tt> &#8211; In order to work in the web browser, the javascript code
+should be in a subdirectory relative to your xhtml.   If you prefer not to copy the contents of
+delvjs, you can link to it instead:</p>
+<p><tt class="samp docutils literal"><span class="pre">cd</span> <span class="pre">your_project_directory;</span> <span class="pre">ln</span> <span class="pre">-s</span> <span class="pre">&lt;/path/to/delv/delvjs&gt;</span></tt></p>
 <blockquote>
 <div><ul class="simple">
-<li><tt class="docutils literal"><span class="pre">your_javascript_app.js</span></tt> &#8211; This file contains the logic to construct and connect the
-visualizations together, including configuration of the views.  See
-<a class="reference internal" href="templates.html#javascript-templates"><em>Javascript Templates</em></a> for an example of how to setup Delv and configure views.</li>
 <li><tt class="docutils literal"><span class="pre">delv.js</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">jquery-1.7.2.js</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">d3.v2.js</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">your_d3_chart_type.js</span></tt> &#8211; This file contains the view for
-one d3 chart type.
-See  <a class="reference internal" href="templates.html#d3-templates"><em>D3 Templates</em></a> for an example view.</li>
-<li><tt class="docutils literal"><span class="pre">your_other_d3_chart_type.js</span></tt> &#8211; This file contains the view for
-another d3 chart type.</li>
 </ul>
 </div></blockquote>
 </li>
@@ -145,7 +148,7 @@ another d3 chart type.</li>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Kris Zygmunt.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
