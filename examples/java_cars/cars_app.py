@@ -1,18 +1,18 @@
-from org.eclipse.swt import *
-from org.eclipse.swt.graphics import *
-from org.eclipse.swt.layout import *
-from org.eclipse.swt.widgets import *
+from org.eclipse.swt import SWT
+#from org.eclipse.swt.graphics import *
+from org.eclipse.swt.layout import GridLayout, GridData
+from org.eclipse.swt.widgets import Display, Shell, Composite
 from org.eclipse.swt.custom import StackLayout
-from org.eclipse.swt.events import *
+from org.eclipse.swt.events import ControlAdapter
 
 # TODO this import should be temporary
-from org.eclipse.swt.browser import *
+from org.eclipse.swt.browser import Browser
 
 # Following is for swing integration
-from org.eclipse.swt.awt import *
+from org.eclipse.swt.awt import SWT_AWT
 
 # and general java stuff
-from java.lang import *
+from java.lang import System
 
 # clear background on resize
 class CleanResizeListener(ControlAdapter):
@@ -87,11 +87,14 @@ if __name__ == "__main__":
 
   browser3 = Browser(shell, SWT.RESIZE)
   jggplot = JRI_ggplot(None, Rengine(["--vanilla"], False, None))
-  browser3.setUrl(jggplot.qplot("mpg","cyl","mtcars"))
+  jggplot.Rengine.eval('mtcars$cyl <- factor(mtcars$cyl,levels=c(4,6,8),labels=c("4cyl","6cyl","8cyl"))')
+  #browser3.setUrl(jggplot.qplot("cyl","mpg","mtcars")
+  browser3.setUrl(jggplot.qplot("wt","mpg","mtcars", 'geom=c("point", "smooth"), method="lm", formula=y~x, color=cyl, main="Regression of MPG on Weight", xlab="Weight", ylab="Miles per Gallon"'))
+
   #jgd = GridData(SWT.FILL, SWT.FILL, True, True)
   jgd = GridData()
-  jgd.widthHint = 504
-  jgd.heightHint = 504
+  jgd.widthHint = 404 #504
+  jgd.heightHint = 404 #504
   browser3.setLayoutData(jgd)
 
   
@@ -102,7 +105,7 @@ if __name__ == "__main__":
   cgd = GridData()
   cgd.widthHint = 100
   #cgd.heightHint = 200
-  cgd.heightHint = 504
+  cgd.heightHint = 404 #504
   composite.setLayoutData(cgd)
   frame = SWT_AWT.new_Frame(composite)
   # Do this instead if running without SWT
@@ -144,12 +147,15 @@ if __name__ == "__main__":
 
   applet.reloadData("cars app")
 
-  shell.setSize(1500,800)
+  #shell.setSize(1500,800)
   shell.pack()
   shell.open()
   while not shell.isDisposed():
     if not display.readAndDispatch():
+      #print "display.sleep"
       display.sleep()
+    #else:
+      #print "display.readAndDispatch"
   # do this if not using SWT
   #frame.pack()
   #frame.visible=1                  

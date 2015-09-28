@@ -73,5 +73,5 @@ jp=${delv_jp}
 # -XstartOnFirstThread is for Mac and SWT to avoid:  "WARNING: Display must be created on main thread due to Cocoa restrictions."
 
 # startonfirstthread for SWT/AWT things
-$jython_bin -J-XstartOnFirstThread -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*
-#$jython_bin -J-Djava.library.path=$pth -Dpython.path=$cp:$jp $*
+$jython_bin -J-XstartOnFirstThread -J-Djava.library.path=$pth -Dpython.cachedir.skip=true -Dpython.path=$cp:$jp $*
+#$jython_bin -J-Djava.library.path=$pth -Dpython.path=$cp:$jp -Dpython.cachedir.skip=true $*

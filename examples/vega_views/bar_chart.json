@@ -45,8 +45,7 @@
     {"name": "xHighClamp", "init": 24},
     {"name": "minX", "expr": "max(min(xStart, xEnd), xLowClamp)"},
     {"name": "maxX", "expr": "min(max(xStart, xEnd), xHighClamp)"},
-    {"name": "title", "init": "Bar Chart"},
-    {"name": "titlePos", "init": 0}
+    {"name": "title", "init": "Bar Chart"}
   ],
 
   "predicates": [

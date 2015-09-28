@@ -2,6 +2,7 @@
 # works from jython
 #from ggplot import ggplot
 import tempfile
+import time
 
 #class JRI_ggplot(ggplot):
 # TODO make sure all classes new-style
@@ -21,17 +22,24 @@ class JRI_ggplot:
   def setup(self):
     pass
 
-  def qplot(self, x, y, data=None):
+  def qplot(self, x, y, data=None, qplot_args=None):
     # TODO really need to be able to pull the data from Delv instead.
     # TODO also need to write the plot to SVG and annotate it appropriately
     dataStr = ""
     if data is not None:
       dataStr = ", data=%s" % (data)
+    argsStr = ""
+    if qplot_args is not None:
+      argsStr = ", %s" % (qplot_args)
 
     # TODO need some other way to keep the plot from popping up in a device.  CairoSVG?
     self.Rengine.eval("svg()")  
-    result = self.Rengine.eval("print(qplot(%s, %s%s))" % (x, y, dataStr))
+    result = self.Rengine.eval("print(qplot(%s, %s%s%s))" % (x, y, dataStr, argsStr))
 
     self.Rengine.eval('grid.export("%s")' % self.file.name)
     print "plotting to file:", self.file.name
+    
+    # TODO necessary?  Suspect that there is delay for writing out the R SVG
+    time.sleep(5)
+    
     return self.file.name
