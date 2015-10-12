@@ -13,19 +13,248 @@ import java.util.Map.Entry;
 interface Delv {
   void log(String msg);
   void emitEvent(String name, String detail);
-  DelvData getDataIF(String dataSource);
-  void addDataIF(DelvData dataInt);
-  void emitSignal(String signal, String invoker, String dataset, String attribute);
-  void emitSignal(String signal, String invoker, String dataset, String[] attributes);
+  void emitSignal(String signal, String invoker, String dataset, String detail);
+  void emitSignal(String signal, String invoker, String dataset, String[] details);
   void connectToSignal(String signal, String name, String method);
   void disconnectFromSignal(String signal, String name);
+  DelvView getView(String name);
   void addView(DelvView view, String name);
-  void reloadData();
   void runInThread(Object obj, String name);
+
+  ////////////////////
+  // data sets
+  ////////////////////
+  void addDataSet(String name, DelvDataSet dataset);
+  DelvDataSet getDataSet(String name);  // returns a new data set if one doesn't exist
+  boolean hasDataSet(String name);
+  void removeDataSet(String name);
+
+  ////////////////////
+  // data attributes
+  ////////////////////
+  Boolean hasAttr(String dataset, String attribute);
+  String[] getAttrs(String dataset);
+  String[] getAllCats(String dataset, String attribute);
+  String[] getCatColor(String dataset, String attribute, String category);
+  String[][] getCatColors(String dataset, String attribute);
+  String[] getCatEncoding(String dataset, String attribute, String category);
+  String[][] getCatEncodings(String dataset, String attribute);
+
+  ////////////////////
+  // data items
+  ////////////////////
+  void clearItems(String dataset);
+  void setItem(String dataset, String attribute, String identifier, String item);
+  void setItem(String dataset, String attribute, String[] coordinate, String item);
+  void setFloatItem(String dataset, String attribute, String identifier, Float item);
+  void setFloatItem(String dataset, String attribute, String[] coordinate, Float item);
+  void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
+  void setFloatArrayItem(String dataset, String attribute, String[] coordinate, float[] item);
+  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item);
+  void setStringArrayItem(String dataset, String attribute, String[] coordinate, String[] item);
+
+  String getItem(String dataset, String attribute, String identifier);
+  String getItem(String dataset, String attribute, String[] coordinate);
+  Float getItemAsFloat(String dataset, String attribute, String identifier);
+  Float getItemAsFloat(String dataset, String attribute, String[] coordinate);
+  float[] getItemAsFloatArray(String dataset, String attribute, String identifier);
+  float[] getItemAsFloatArray(String dataset, String attribute, String[] coordinate);
+  String[] getItemAsStringArray(String dataset, String attribute, String identifier);
+  String[] getItemAsStringArray(String dataset, String attribute, String[] coordinate);
+
+  String[] getAllItems(String dataset, String attribute);
+  // TODO Float, float, Double or double here?
+  Float[] getAllItemsAsFloat(String dataset, String attribute);
+  float[][] getAllItemsAsFloatArray(String dataset, String attribute);
+  String[][] getAllItemsAsStringArray(String dataset, String attribute);
+  String[] getFilterItems(String dataset, String attribute);
+  Float[] getFilterItemsAsFloat(String dataset, String attribute);
+  float[][] getFilterItemsAsFloatArray(String dataset, String attribute);
+  String[][] getFilterItemsAsStringArray(String dataset, String attribute);
+
+  String[] getItemColor(String dataset, String colorByAttribute, String identifier);
+  String[] getItemColor(String dataset, String colorByAttribute, String[] coordinate);
+  String[][] getItemColors(String dataset, String colorByAttribute);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String identifier);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String[] coordinate);
+  String[][] getItemEncodings(String dataset, String encodingByAttribute);
+
+  ////////////////////
+  // data coordinates
+  ////////////////////
+  String[] getAllIds(String dataset, String attribute);
+  String[][] getAllCoords(String dataset, String attribute);
+
+  ////////////////////
+  // data as graph
+  ////////////////////
+
+  // TODO put in graph-like interface
+
+  ////////////////////
+  // data operations
+  ////////////////////
+  // sort
+  // possible values of sortType: ascending, descending
+  void sortBy(String invoker, String dataset, String attribute, String sortType);
+  // possible values of similarity sortType: similarity, dissimilarity
+  void sortBy(String invoker, String dataset, String identifier, String sortType);
+  void sortBy(String invoker, String dataset, String[] coordinate, String sortType);
+  void clearSort(String invoker, String dataset);
+  String[][] getSortCriteria(String dataset);
+
+  // TODO transforms
+
+  // TODO aggregates
+
+  ////////////////////
+  // set selections
+  ////////////////////
+  // TODO is this the best way to do coordinates into multidimensional dataset?  Should there also be a specific interface for one-dimensional data sets?  How about an interface that takes an index instead of id?
+  // TODO rename hover as probe? I got the term from Curran Kelleher's dissertation, but he said hovering was also known as probing, find another source to cite or cite his?
+  void hoverItem(String invoker, String dataset, String identifier);
+  void hoverItem(String invoker, String dataset, String[] coordinate);
+  void hoverCat(String invoker, String dataset, String attribute, String category);
+  void hoverRange(String invoker, String dataset, String attribute, String minVal, String maxVal);
+  // TODO how to specify relationship LIKE this coordinate (ie find all points similar to this one)?
+  // might need to be able to pass in arbitrary function ala colorfun which would then make this hard to support cross language (ie over QtBridge)
+  void hoverLike(String invoker, String dataset, String identifier, String relationship);
+  void hoverLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // selectType is one of Primary, Secondary, Tertiary.
+  // TODO better to have it be primarySelectItems, secondarySelectItems?  selectType allows for extension and default to primary if not specified
+  // TODO can OR across multiple calls to selectCats, but how to combine calls to selectItems with calls to selectCats or selectRanges?  OR or override?
+  void selectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void selectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  // TODO need way to pass arbitrary shape definition (ie function) not just rectangular?
+  // TODO need one call of select per attribute?  Or allow multiple at once?  what about multiple ranges per attribute? think need single range per attribute since ANDing across attribute array here. to be able to OR across ranges for single attribute, would need multiple calls to select
+  // TODO same question for filter
+  void selectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void deselectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void selectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void selectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void selectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  // TODO is this the right API to clear out all ranges/values for the specified coordinate/relationships?  written as is, this is really item selection
+  void clearSelect(String invoker, String dataset, String selectType);
+
+  // TODO need filter clearing API too
+  void filterCats(String invoker, String dataset, String attribute, String[] categories);
+  void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes);
+  // TODO can we specify a coordinate in a multidimensional table as a single string?  Do we even want to?  Can we specify a generic data relationship as a string?  Is there some other representation we want to use here?
+  void filterLike(String invoker, String dataset, String[] coordinates, String[] relationships);
+  void filterLike(String invoker, String dataset, String[][] coordinates, String[] relationships);
+  void clearFilter(String invoker, String dataset);
+
+  // TODO need to figure out a way to specify a continuous color map (colorfun) in some cross-language way.  Some intermediate compromises might include a more generic checkpoints style interface where the colors get specified along with a value and then nicely lerped in between
+  void mapColor(String invoker, String dataset, String attribute, String category, String[] rgbaColor);
+  // TODO how to define a glyph encoding in a cross-language manner?
+  void mapEncoding(String invoker, String dataset, String attribute, String category, String encoding);
+
+  // nav changes center of window and size of window
+  void navItem(String invoker, String dataset, String identifier, String numItems);
+  void navItem(String invoker, String dataset, String[] coordinate, String numItems);
+  // following works for ordered categorical attribute
+  void navVal(String invoker, String dataset, String attribute, String value, String leftVal, String rightVal);
+  // following works for unordered categorical attribute
+  void navCat(String invoker, String dataset, String attribute, String category, String numCats);
+  void navRange(String invoker, String dataset, String attribute, String center, String minVal, String maxVal);
+  // width specified in data space
+  void navRange(String invoker, String dataset, String attribute, String center, String width);
+  void navLike(String invoker, String dataset, String identifier, String relationship, String numLikeItems);
+  void navLike(String invoker, String dataset, String[] coordinate, String relationship, String numLikeItems);
+  void clearNav(String invoker, String dataset);
+
+  // pan changes center of window, leaves size the same as last nav
+  void panItem(String invoker, String dataset, String identifier);
+  void panItem(String invoker, String dataset, String[] coordinate);
+  void panCat(String invoker, String dataset, String attribute, String category);
+  void panRange(String invoker, String dataset, String attribute, String center);
+  void panLike(String invoker, String dataset, String identifier, String relationship);
+  void panLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // zoom changes size of window, leaving the center at the previous spot
+  // TODO add a zoomOut / zoomIn API that allows jumping back to previous zoom
+  void zoomItem(String invoker, String dataset, String numItems);
+  void zoomVal(String invoker, String dataset, String leftVal, String rightVal);
+  void zoomCat(String invoker, String dataset, String numCats);
+  void zoomRange(String invoker, String dataset, String minVal, String maxVal);
+  // width specified in data space
+  void zoomRange(String invoker, String dataset, String width);
+  void zoomLike(String invoker, String dataset, String numLikeItems);
+
+  void setLOD(String invoker, String dataset, String levelOfDetail);
+
+  ////////////////////
+  // get selections
+  ////////////////////
+
+  String getHoverId(String dataset);
+  String[] getHoverCoord(String dataset);
+  String getHoverCat(String dataset, String attribute);
+  String[] getHoverRange(String dataset, String attribute);
+  // TODO how do we want this to work?  It returns the coordinate/relationship pair or just the relationship
+  String[] getHoverLike(String dataset);
+
+  String[] getSelectIds(String dataset, String selectType);
+  String[][] getSelectCoords(String dataset, String selectType);
+  String[][] getSelectCats(String dataset, String attribute, String selectType);
+  String[][] getSelectRanges(String dataset, String attribute, String selectType);
+  String[][] getSelectLike(String dataset, String selectType);
+  String[][][] getSelectCriteria(String dataset, String selectType);
+
+  String[] getFilterIds(String dataset);
+  String[][] getFilterCoords(String dataset);
+  String[][] getFilterCats(String dataset, String attribute);
+  String[][] getFilterRanges(String dataset, String attribute);
+  String[][] getFilterLike(String dataset);
+  String[][][] getFilterCriteria(String dataset);
+
+  // nav changes center of window and size of window
+  String getNavCenterId(String dataset);
+  String[] getNavCenterCoord(String dataset);
+  String[] getNavIds(String dataset);
+  String[][] getNavCoords(String dataset);
+  String getNavNumItems(String dataset);
+  String getNavCenterVal(String dataset, String attribute);
+  String getNavLeftVal(String dataset, String attribute);
+  String getNavRightVal(String dataset, String attribute);
+  String getNavNumCats(String dataset, String attribute);
+  String getNavMinVal(String dataset, String attribute);
+  String getNavMaxVal(String dataset, String attribute);
+  String getNavWidth(String dataset, String attribute);
+  String getNavLike(String dataset);
+  String getNavNumLike(String dataset);
+
+  String getLOD(String dataset);
+
+  ////////////////////
+  // selection colors
+  ////////////////////
+  // TODO allow for rgba everywhere
+  void setHoverColor(String[] rgbaColor);
+  void setHoverColor(String dataset, String[] rgbaColor);
+  void setSelectColor(String[] rgbaColor, String selectType);
+  void setSelectColor(String dataset, String[] rgbaColor, String selectType);
+  void setFilterColor(String[] rgbaColor);
+  void setFilterColor(String dataset, String[] rgbaColor);
+  void setLikeColor(String[] rgbaColor);
+  void setLikeColor(String dataset, String[] rgbaColor);
+
+  String[] getHoverColor(String dataset);
+  String[] getSelectColor(String dataset, String selectType);
+  String[] getFilterColor(String dataset);
+  String[] getLikeColor(String dataset);
+  // TODO figure out interface for setting other encodings (shape / size / etc).
+
  }
 
 // A movie interface to wrap either a stub movie, or Movie from processing.video or something else eventually.  Mostly needed to hook up the movieEvent
-interface MovieIF {
+interface DelvMovie {
   void read();
 }
 
@@ -33,18 +262,15 @@ interface MovieIF {
 
 interface DelvView {
   void bindDelv(Delv dlv);
-  DelvView dataIF(String dataIFName);
+  DelvView dataSet(String dataSetName);
   String name();
   DelvView name(String name);
   void connectSignals();
-  void reloadData(String source);
+  void onDataChanged(String source);
   // TODO should resize be handled like other signals or treated specially?
   // for instance, should it be called sizeChanged?
   void resize(int w, int h);
   void resize(int w, int h, boolean doDraw);
-  // TODO undo this hack
-  void onDataUpdated(String invoker, String dataset, String attribute);
-  void onDataUpdated(String invoker, String dataset, String[] attributes);
 
   void draw();
   void setup();
@@ -55,109 +281,853 @@ interface DelvView {
   void mousePressed();
   void mouseReleased();
   void mouseScrolled();
-  void movieEvent(MovieIF m);
-}
-
-interface DelvData {
-  String getName();
-  void setName(String name);
-
-  DelvDataSet addDataSet(String dataset);
-  DelvDataSet getDataSet(String dataset);
-  boolean hasDataSet(String dataset);
-  void removeDataSet(String dataset);
-
-  void updateCategoryVisibility(String invoker, String dataset, String attribute, String selection);
-  void updateCategoryColor(String invoker, String dataset, String attribute, String selection, String[] rgbColor);
-  void updateHighlightedCategory(String invoker, String dataset, String attribute, String selection);
-  void updateHoveredCategory(String invoker, String dataset, String attribute, String selection);
-  void updateHighlightedId(String invoker, String dataset, String id);
-  void updateHoveredId(String invoker, String dataset, String id);
-  void updateSelectedIds(String invoker, String dataset, String[] ids);
-
-  void clearItems(String dataset);
-  void setItem(String dataset, String attribute, String identifier, String item);
-  void setFloatItem(String dataset, String attribute, String identifier, Float item);
-  void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
-  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item);
-
-  Boolean hasAttribute(String dataset, String attribute);
-  String[] getAttributes(String dataset);
-  String[] getAllCategories(String dataset, String attribute);
-  String[] getVisibleCategories(String dataset, String attribute);
-  String[] getCategoryColor(String dataset, String attribute, String category);
-  String[][] getAllCategoryColors(String dataset, String attribute);
-  String[][] getVisibleCategoryColors(String dataset, String attribute);
-  String[] getItemColor(String dataset, String attribute, String identifier);
-  String[][] getAllItemColors(String dataset, String attribute);
-  String[] getAllItems(String dataset, String attribute);
-  // TODO Float, float, Double or double here?
-  Float[] getAllItemsAsFloat(String dataset, String attribute);
-  float[][] getAllItemsAsFloatArray(String dataset, String attribute);
-  String[][] getAllItemsAsStringArray(String dataset, String attribute);
-  String[] getAllIds(String dataset, String attribute);
-  String getItem(String dataset, String attribute, String identifier);
-  Float getItemAsFloat(String dataset, String attribute, String identifier);
-  float[] getItemAsFloatArray(String dataset, String attribute, String identifier);
-  String[] getItemAsStringArray(String dataset, String attribute, String identifier);
-  String getHighlightedId(String dataset);
-  String getHoveredId(String dataset);
-  String getHighlightedCategory(String dataset, String attribute);
-  String getHoveredCategory(String dataset, String attribute);
+  void movieEvent(DelvMovie m);
 }
 
 interface DelvDataSet {
-  void clearItems();
-  void clearAttributes();
+  String getName();
+  void setName(String name);
 
+  // identifiers / coordinates
   void addId(String id);
   boolean hasId(String id);
-  String[] getSelectedIds();
-  String[] getVisibleIds();
-  String getHighlightedId();
-  String getHoveredId();
+  void addCoord(String[] coord);
+  boolean hasCoord(String[] coord);
+
+  String[] getAllIds(String attr);
+  String[][] getAllCoords(String attr);
+  String getHoverId();
+  String[] getHoverCoord();
+  String[] getSelectIds(String selectType);
+  String[][] getSelectCoords(String selectType);
+  String[] getFilterIds();
+  String[][] getFilterCoords();
+  String getNavCenterId();
+  String getNavCenterCoord();
+  String[] getNavIds();
+  String[][] getNavCoords();
+
   int getNumIds();
+  int getNumCoords();
   String getNextId();
+  // return a unique coordinate in nD multidimensional space where n is specified by numCoords
+  String[] getNextCoord(int numCoords);
   void removeId(String id);
+  void removeCoord(String[] coord);
 
-  void addAttribute(DelvBasicAttribute attr);
-  Boolean hasAttribute(String attr);
-  String[] getAttributes();
-
+  // items
+  void clearItems();
   void setItem(String attr, String id, String item);
+  void setItem(String attr, String[] coord, String item);
   void setFloatItem(String attr, String id, Float item);
+  void setFloatItem(String attr, String[] coord, Float item);
   void setFloatArrayItem(String attr, String id, float[] item);
+  void setFloatArrayItem(String attr, String[] coord, float[] item);
   void setStringArrayItem(String attr, String id, String[] item);
+  void setStringArrayItem(String attr, String[] coord, String[] item);
 
-  String[] getAllCategories(String attr);
-  String[] getVisibleCategories(String attr);
-  String[] getCategoryColor(String attr, String cat);
-  String[][] getAllCategoryColors(String attr);
-  String[][] getVisibleCategoryColors(String attr);
-  String[] getItemColor(String attr, String id);
-  String[][] getAllItemColors(String attr);
-  String getHighlightedCategory(String attr);
-  String getHoveredCategory(String attr);
+  String getItem(String attr, String id);
+  String getItem(String attr, String[] coord);
+  Float getItemAsFloat(String attr, String id);
+  Float getItemAsFloat(String attr, String[] coord);
+  float[] getItemAsFloatArray(String attr, String id);
+  float[] getItemAsFloatArray(String attr, String[] coord);
+  String[] getItemAsStringArray(String attr, String id);
+  String[] getItemAsStringArray(String attr, String[] coord);
 
   String[] getAllItems(String attr);
   Float[] getAllItemsAsFloat(String attr);
   float[][] getAllItemsAsFloatArray(String attr);
   String[][] getAllItemsAsStringArray(String attr);
-  String getItem(String attr, String id);
-  Float getItemAsFloat(String attr, String id);
-  float[] getItemAsFloatArray(String attr, String id);
-  String[] getItemAsStringArray(String attr, String id);
+  String[] getFilterItems(String attr);
+  Float[] getFilterItemsAsFloat(String attr);
+  float[][] getFilterItemsAsFloatArray(String attr);
+  String[][] getFilterItemsAsStringArray(String attr);
+
+  String[] getItemColor(String colorByAttr, String id);
+  String[] getItemColor(String colorByAttr, String[] coord);
+  String[][] getItemColors(String colorByAttr);
+  String[] getItemEncoding(String encodingByAttr, String id);
+  String[] getItemEncoding(String encodingByAttr, String[] coord);
+  String[][] getItemEncodings(String encodingByAttr);
+
+  // attributes
+  void clearAttributes();
+  void addAttr(DelvBasicAttribute attr);
+  Boolean hasAttr(String attr);
+  String[] getAttrs();
+    Boolean hasAttr(String dataset, String attribute);
+  String[] getAttrs(String dataset);
+  String[] getAllCats(String dataset, String attribute);
+  String[] getCatColor(String dataset, String attribute, String category);
+  String[][] getCatColors(String dataset, String attribute);
+  String[] getCatEncoding(String dataset, String attribute, String category);
+  String[][] getCatEncodings(String dataset, String attribute);
+
+  ////////////////////
+  // data items
+  ////////////////////
+  void clearItems(String dataset);
+  void setItem(String dataset, String attribute, String identifier, String item);
+  void setItem(String dataset, String attribute, String[] coordinate, String item);
+  void setFloatItem(String dataset, String attribute, String identifier, Float item);
+  void setFloatItem(String dataset, String attribute, String[] coordinate, Float item);
+  void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
+  void setFloatArrayItem(String dataset, String attribute, String[] coordinate, float[] item);
+  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item);
+  void setStringArrayItem(String dataset, String attribute, String[] coordinate, String[] item);
+
+  String getItem(String dataset, String attribute, String identifier);
+  String getItem(String dataset, String attribute, String[] coordinate);
+  Float getItemAsFloat(String dataset, String attribute, String identifier);
+  Float getItemAsFloat(String dataset, String attribute, String[] coordinate);
+  float[] getItemAsFloatArray(String dataset, String attribute, String identifier);
+  float[] getItemAsFloatArray(String dataset, String attribute, String[] coordinate);
+  String[] getItemAsStringArray(String dataset, String attribute, String identifier);
+  String[] getItemAsStringArray(String dataset, String attribute, String[] coordinate);
+
+  String[] getAllItems(String dataset, String attribute);
+  // TODO Float, float, Double or double here?
+  Float[] getAllItemsAsFloat(String dataset, String attribute);
+  float[][] getAllItemsAsFloatArray(String dataset, String attribute);
+  String[][] getAllItemsAsStringArray(String dataset, String attribute);
+  String[] getFilterItems(String dataset, String attribute);
+  Float[] getFilterItemsAsFloat(String dataset, String attribute);
+  float[][] getFilterItemsAsFloatArray(String dataset, String attribute);
+  String[][] getFilterItemsAsStringArray(String dataset, String attribute);
+
+  String[] getItemColor(String dataset, String colorByAttribute, String identifier);
+  String[] getItemColor(String dataset, String colorByAttribute, String[] coordinate);
+  String[][] getItemColors(String dataset, String colorByAttribute);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String identifier);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String[] coordinate);
+  String[][] getItemEncodings(String dataset, String encodingByAttribute);
+
+  ////////////////////
+  // data coordinates
+  ////////////////////
+  String[] getAllIds(String dataset, String attribute);
+  String[][] getAllCoords(String dataset, String attribute);
+
+  ////////////////////
+  // data as graph
+  ////////////////////
+
+  // TODO put in graph-like interface
+
+  ////////////////////
+  // data operations
+  ////////////////////
+  // sort
+  // possible values of sortType: ascending, descending
+  void sortBy(String invoker, String dataset, String attribute, String sortType);
+  // possible values of similarity sortType: similarity, dissimilarity
+  void sortBy(String invoker, String dataset, String identifier, String sortType);
+  void sortBy(String invoker, String dataset, String[] coordinate, String sortType);
+  void clearSort(String invoker, String dataset);
+  String[][] getSortCriteria(String dataset);
+
+  // TODO transforms
+
+  // TODO aggregates
+
+  ////////////////////
+  // set selections
+  ////////////////////
+  // TODO is this the best way to do coordinates into multidimensional dataset?  Should there also be a specific interface for one-dimensional data sets?  How about an interface that takes an index instead of id?
+  // TODO rename hover as probe? I got the term from Curran Kelleher's dissertation, but he said hovering was also known as probing, find another source to cite or cite his?
+  void hoverItem(String invoker, String dataset, String identifier);
+  void hoverItem(String invoker, String dataset, String[] coordinate);
+  void hoverCat(String invoker, String dataset, String attribute, String category);
+  void hoverRange(String invoker, String dataset, String attribute, String minVal, String maxVal);
+  // TODO how to specify relationship LIKE this coordinate (ie find all points similar to this one)?
+  // might need to be able to pass in arbitrary function ala colorfun which would then make this hard to support cross language (ie over QtBridge)
+  void hoverLike(String invoker, String dataset, String identifier, String relationship);
+  void hoverLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // selectType is one of Primary, Secondary, Tertiary.
+  // TODO better to have it be primarySelectItems, secondarySelectItems?  selectType allows for extension and default to primary if not specified
+  // TODO can OR across multiple calls to selectCats, but how to combine calls to selectItems with calls to selectCats or selectRanges?  OR or override?
+  void selectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void selectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  // TODO need way to pass arbitrary shape definition (ie function) not just rectangular?
+  // TODO need one call of select per attribute?  Or allow multiple at once?  what about multiple ranges per attribute? think need single range per attribute since ANDing across attribute array here. to be able to OR across ranges for single attribute, would need multiple calls to select
+  // TODO same question for filter
+  void selectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void deselectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void selectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void selectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void selectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  // TODO is this the right API to clear out all ranges/values for the specified coordinate/relationships?  written as is, this is really item selection
+  void clearSelect(String invoker, String dataset, String selectType);
+
+  // TODO need filter clearing API too
+  void filterCats(String invoker, String dataset, String attribute, String[] categories);
+  void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes);
+  // TODO can we specify a coordinate in a multidimensional table as a single string?  Do we even want to?  Can we specify a generic data relationship as a string?  Is there some other representation we want to use here?
+  void filterLike(String invoker, String dataset, String[] coordinates, String[] relationships);
+  void filterLike(String invoker, String dataset, String[][] coordinates, String[] relationships);
+  void clearFilter(String invoker, String dataset);
+
+  // TODO need to figure out a way to specify a continuous color map (colorfun) in some cross-language way.  Some intermediate compromises might include a more generic checkpoints style interface where the colors get specified along with a value and then nicely lerped in between
+  void mapColor(String invoker, String dataset, String attribute, String category, String[] rgbaColor);
+  // TODO how to define a glyph encoding in a cross-language manner?
+  void mapEncoding(String invoker, String dataset, String attribute, String category, String encoding);
+
+  // nav changes center of window and size of window
+  void navItem(String invoker, String dataset, String identifier, String numItems);
+  void navItem(String invoker, String dataset, String[] coordinate, String numItems);
+  // following works for ordered categorical attribute
+  void navVal(String invoker, String dataset, String attribute, String value, String leftVal, String rightVal);
+  // following works for unordered categorical attribute
+  void navCat(String invoker, String dataset, String attribute, String category, String numCats);
+  void navRange(String invoker, String dataset, String attribute, String center, String minVal, String maxVal);
+  // width specified in data space
+  void navRange(String invoker, String dataset, String attribute, String center, String width);
+  void navLike(String invoker, String dataset, String identifier, String relationship, String numLikeItems);
+  void navLike(String invoker, String dataset, String[] coordinate, String relationship, String numLikeItems);
+  void clearNav(String invoker, String dataset);
+
+  // pan changes center of window, leaves size the same as last nav
+  void panItem(String invoker, String dataset, String identifier);
+  void panItem(String invoker, String dataset, String[] coordinate);
+  void panCat(String invoker, String dataset, String attribute, String category);
+  void panRange(String invoker, String dataset, String attribute, String center);
+  void panLike(String invoker, String dataset, String identifier, String relationship);
+  void panLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // zoom changes size of window, leaving the center at the previous spot
+  // TODO add a zoomOut / zoomIn API that allows jumping back to previous zoom
+  void zoomItem(String invoker, String dataset, String numItems);
+  void zoomVal(String invoker, String dataset, String leftVal, String rightVal);
+  void zoomCat(String invoker, String dataset, String numCats);
+  void zoomRange(String invoker, String dataset, String minVal, String maxVal);
+  // width specified in data space
+  void zoomRange(String invoker, String dataset, String width);
+  void zoomLike(String invoker, String dataset, String numLikeItems);
+
+  void setLOD(String invoker, String dataset, String levelOfDetail);
+
+  ////////////////////
+  // get selections
+  ////////////////////
+
+  String getHoverId(String dataset);
+  String[] getHoverCoord(String dataset);
+  String getHoverCat(String dataset, String attribute);
+  String[] getHoverRange(String dataset, String attribute);
+  // TODO how do we want this to work?  It returns the coordinate/relationship pair or just the relationship
+  String[] getHoverLike(String dataset);
+
+  String[] getSelectIds(String dataset, String selectType);
+  String[][] getSelectCoords(String dataset, String selectType);
+  String[][] getSelectCats(String dataset, String attribute, String selectType);
+  String[][] getSelectRanges(String dataset, String attribute, String selectType);
+  String[][] getSelectLike(String dataset, String selectType);
+  String[][][] getSelectCriteria(String dataset, String selectType);
+
+  String[] getFilterIds(String dataset);
+  String[][] getFilterCoords(String dataset);
+  String[][] getFilterCats(String dataset, String attribute);
+  String[][] getFilterRanges(String dataset, String attribute);
+  String[][] getFilterLike(String dataset);
+  String[][][] getFilterCriteria(String dataset);
+
+  // nav changes center of window and size of window
+  String getNavCenterId(String dataset);
+  String[] getNavCenterCoord(String dataset);
+  String[] getNavIds(String dataset);
+  String[][] getNavCoords(String dataset);
+  String getNavNumItems(String dataset);
+  String getNavCenterVal(String dataset, String attribute);
+  String getNavLeftVal(String dataset, String attribute);
+  String getNavRightVal(String dataset, String attribute);
+  String getNavNumCats(String dataset, String attribute);
+  String getNavMinVal(String dataset, String attribute);
+  String getNavMaxVal(String dataset, String attribute);
+  String getNavWidth(String dataset, String attribute);
+  String getNavLike(String dataset);
+  String getNavNumLike(String dataset);
+
+  String getLOD(String dataset);
+
+  ////////////////////
+  // selection colors
+  ////////////////////
+  // TODO allow for rgba everywhere
+  void setHoverColor(String[] rgbaColor);
+  void setHoverColor(String dataset, String[] rgbaColor);
+  void setSelectColor(String[] rgbaColor, String selectType);
+  void setSelectColor(String dataset, String[] rgbaColor, String selectType);
+  void setFilterColor(String[] rgbaColor);
+  void setFilterColor(String dataset, String[] rgbaColor);
+  void setLikeColor(String[] rgbaColor);
+  void setLikeColor(String dataset, String[] rgbaColor);
+
+  String[] getHoverColor(String dataset);
+  String[] getSelectColor(String dataset, String selectType);
+  String[] getFilterColor(String dataset);
+  String[] getLikeColor(String dataset);
+  // TODO figure out interface for setting other encodings (shape / size / etc).
+
+ }
+
+// A movie interface to wrap either a stub movie, or Movie from processing.video or something else eventually.  Mostly needed to hook up the movieEvent
+interface DelvMovie {
+  void read();
+}
+
+// DelvView is used to support having multiple processing sketches in both Processing and processing.js
+
+interface DelvView {
+  void bindDelv(Delv dlv);
+  DelvView dataSet(String dataSetName);
+  String name();
+  DelvView name(String name);
+  void connectSignals();
+  void onDataChanged(String source);
+  // TODO should resize be handled like other signals or treated specially?
+  // for instance, should it be called sizeChanged?
+  void resize(int w, int h);
+  void resize(int w, int h, boolean doDraw);
+
+  void draw();
+  void setup();
+  void mouseMoved();
+  void mouseOut();
+  void mouseClicked();
+  void mouseDragged();
+  void mousePressed();
+  void mouseReleased();
+  void mouseScrolled();
+  void movieEvent(DelvMovie m);
+}
+
+interface DelvDataSet {
+  String getName();
+  void setName(String name);
+
+  // identifiers / coordinates
+  void addId(String id);
+  boolean hasId(String id);
+  void addCoord(String[] coord);
+  boolean hasCoord(String[] coord);
+
   String[] getAllIds(String attr);
+  String[][] getAllCoords(String attr);
+  String getHoverId();
+  String[] getHoverCoord();
+  String[] getSelectIds(String selectType);
+  String[][] getSelectCoords(String selectType);
+  String[] getFilterIds();
+  String[][] getFilterCoords();
+  String getNavCenterId();
+  String getNavCenterCoord();
+  String[] getNavIds();
+  String[][] getNavCoords();
 
-  void updateCategoryVisibility(String attr, String cat);
-  void updateCategoryColor(String attr, String cat, String[] rgbColor);
-  void updateHighlightedCategory(String attr, String cat);
-  void updateHoveredCategory(String attr, String cat);
+  int getNumIds();
+  int getNumCoords();
+  String getNextId();
+  // return a unique coordinate in nD multidimensional space where n is specified by numCoords
+  String[] getNextCoord(int numCoords);
+  void removeId(String id);
+  void removeCoord(String[] coord);
 
-  void determineItemVisibility();
-  void updateSelectedIds(String[] ids);
-  void updateHighlightedId(String id);
-  void updateHoveredId(String id);
+  // items
+  void clearItems();
+  void setItem(String attr, String id, String item);
+  void setItem(String attr, String[] coord, String item);
+  void setFloatItem(String attr, String id, Float item);
+  void setFloatItem(String attr, String[] coord, Float item);
+  void setFloatArrayItem(String attr, String id, float[] item);
+  void setFloatArrayItem(String attr, String[] coord, float[] item);
+  void setStringArrayItem(String attr, String id, String[] item);
+  void setStringArrayItem(String attr, String[] coord, String[] item);
+
+  String getItem(String attr, String id);
+  String getItem(String attr, String[] coord);
+  Float getItemAsFloat(String attr, String id);
+  Float getItemAsFloat(String attr, String[] coord);
+  float[] getItemAsFloatArray(String attr, String id);
+  float[] getItemAsFloatArray(String attr, String[] coord);
+  String[] getItemAsStringArray(String attr, String id);
+  String[] getItemAsStringArray(String attr, String[] coord);
+
+  String[] getAllItems(String attr);
+  Float[] getAllItemsAsFloat(String attr);
+  float[][] getAllItemsAsFloatArray(String attr);
+  String[][] getAllItemsAsStringArray(String attr);
+  String[] getFilterItems(String attr);
+  Float[] getFilterItemsAsFloat(String attr);
+  float[][] getFilterItemsAsFloatArray(String attr);
+  String[][] getFilterItemsAsStringArray(String attr);
+
+  String[] getItemColor(String colorByAttr, String id);
+  String[] getItemColor(String colorByAttr, String[] coord);
+  String[][] getItemColors(String colorByAttr);
+  String[] getItemEncoding(String encodingByAttr, String id);
+  String[] getItemEncoding(String encodingByAttr, String[] coord);
+  String[][] getItemEncodings(String encodingByAttr);
+
+  // attributes
+  void clearAttributes();
+  void addAttr(DelvBasicAttribute attr);
+  Boolean hasAttr(String attr);
+  String[] getAttrs();
+    Boolean hasAttr(String dataset, String attribute);
+  String[] getAttrs(String dataset);
+  String[] getAllCats(String dataset, String attribute);
+  String[] getCatColor(String dataset, String attribute, String category);
+  String[][] getCatColors(String dataset, String attribute);
+  String[] getCatEncoding(String dataset, String attribute, String category);
+  String[][] getCatEncodings(String dataset, String attribute);
+
+  ////////////////////
+  // data items
+  ////////////////////
+  void clearItems(String dataset);
+  void setItem(String dataset, String attribute, String identifier, String item);
+  void setItem(String dataset, String attribute, String[] coordinate, String item);
+  void setFloatItem(String dataset, String attribute, String identifier, Float item);
+  void setFloatItem(String dataset, String attribute, String[] coordinate, Float item);
+  void setFloatArrayItem(String dataset, String attribute, String identifier, float[] item);
+  void setFloatArrayItem(String dataset, String attribute, String[] coordinate, float[] item);
+  void setStringArrayItem(String dataset, String attribute, String identifier, String[] item);
+  void setStringArrayItem(String dataset, String attribute, String[] coordinate, String[] item);
+
+  String getItem(String dataset, String attribute, String identifier);
+  String getItem(String dataset, String attribute, String[] coordinate);
+  Float getItemAsFloat(String dataset, String attribute, String identifier);
+  Float getItemAsFloat(String dataset, String attribute, String[] coordinate);
+  float[] getItemAsFloatArray(String dataset, String attribute, String identifier);
+  float[] getItemAsFloatArray(String dataset, String attribute, String[] coordinate);
+  String[] getItemAsStringArray(String dataset, String attribute, String identifier);
+  String[] getItemAsStringArray(String dataset, String attribute, String[] coordinate);
+
+  String[] getAllItems(String dataset, String attribute);
+  // TODO Float, float, Double or double here?
+  Float[] getAllItemsAsFloat(String dataset, String attribute);
+  float[][] getAllItemsAsFloatArray(String dataset, String attribute);
+  String[][] getAllItemsAsStringArray(String dataset, String attribute);
+  String[] getFilterItems(String dataset, String attribute);
+  Float[] getFilterItemsAsFloat(String dataset, String attribute);
+  float[][] getFilterItemsAsFloatArray(String dataset, String attribute);
+  String[][] getFilterItemsAsStringArray(String dataset, String attribute);
+
+  String[] getItemColor(String dataset, String colorByAttribute, String identifier);
+  String[] getItemColor(String dataset, String colorByAttribute, String[] coordinate);
+  String[][] getItemColors(String dataset, String colorByAttribute);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String identifier);
+  String[] getItemEncoding(String dataset, String encodingByAttribute, String[] coordinate);
+  String[][] getItemEncodings(String dataset, String encodingByAttribute);
+
+  ////////////////////
+  // data coordinates
+  ////////////////////
+  String[] getAllIds(String dataset, String attribute);
+  String[][] getAllCoords(String dataset, String attribute);
+
+  ////////////////////
+  // data as graph
+  ////////////////////
+
+  // TODO put in graph-like interface
+
+  ////////////////////
+  // data operations
+  ////////////////////
+  // sort
+  // possible values of sortType: ascending, descending
+  void sortBy(String invoker, String dataset, String attribute, String sortType);
+  // possible values of similarity sortType: similarity, dissimilarity
+  void sortBy(String invoker, String dataset, String identifier, String sortType);
+  void sortBy(String invoker, String dataset, String[] coordinate, String sortType);
+  void clearSort(String invoker, String dataset);
+  String[][] getSortCriteria(String dataset);
+
+  // TODO transforms
+
+  // TODO aggregates
+
+  ////////////////////
+  // set selections
+  ////////////////////
+  // TODO is this the best way to do coordinates into multidimensional dataset?  Should there also be a specific interface for one-dimensional data sets?  How about an interface that takes an index instead of id?
+  // TODO rename hover as probe? I got the term from Curran Kelleher's dissertation, but he said hovering was also known as probing, find another source to cite or cite his?
+  void hoverItem(String invoker, String dataset, String identifier);
+  void hoverItem(String invoker, String dataset, String[] coordinate);
+  void hoverCat(String invoker, String dataset, String attribute, String category);
+  void hoverRange(String invoker, String dataset, String attribute, String minVal, String maxVal);
+  // TODO how to specify relationship LIKE this coordinate (ie find all points similar to this one)?
+  // might need to be able to pass in arbitrary function ala colorfun which would then make this hard to support cross language (ie over QtBridge)
+  void hoverLike(String invoker, String dataset, String identifier, String relationship);
+  void hoverLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // selectType is one of Primary, Secondary, Tertiary.
+  // TODO better to have it be primarySelectItems, secondarySelectItems?  selectType allows for extension and default to primary if not specified
+  // TODO can OR across multiple calls to selectCats, but how to combine calls to selectItems with calls to selectCats or selectRanges?  OR or override?
+  void selectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[] coordinates, String selectType);
+  void selectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  void deselectItems(String invoker, String dataset, String[][] coordinates, String selectType);
+  // TODO need way to pass arbitrary shape definition (ie function) not just rectangular?
+  // TODO need one call of select per attribute?  Or allow multiple at once?  what about multiple ranges per attribute? think need single range per attribute since ANDing across attribute array here. to be able to OR across ranges for single attribute, would need multiple calls to select
+  // TODO same question for filter
+  void selectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void deselectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void selectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void selectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[] coordinates, String[] relationships, String selectType);
+  void selectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  void deselectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
+  // TODO is this the right API to clear out all ranges/values for the specified coordinate/relationships?  written as is, this is really item selection
+  void clearSelect(String invoker, String dataset, String selectType);
+
+  // TODO need filter clearing API too
+  void filterCats(String invoker, String dataset, String attribute, String[] categories);
+  void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes);
+  // TODO can we specify a coordinate in a multidimensional table as a single string?  Do we even want to?  Can we specify a generic data relationship as a string?  Is there some other representation we want to use here?
+  void filterLike(String invoker, String dataset, String[] coordinates, String[] relationships);
+  void filterLike(String invoker, String dataset, String[][] coordinates, String[] relationships);
+  void clearFilter(String invoker, String dataset);
+
+  // TODO need to figure out a way to specify a continuous color map (colorfun) in some cross-language way.  Some intermediate compromises might include a more generic checkpoints style interface where the colors get specified along with a value and then nicely lerped in between
+  void mapColor(String invoker, String dataset, String attribute, String category, String[] rgbaColor);
+  // TODO how to define a glyph encoding in a cross-language manner?
+  void mapEncoding(String invoker, String dataset, String attribute, String category, String encoding);
+
+  // nav changes center of window and size of window
+  void navItem(String invoker, String dataset, String identifier, String numItems);
+  void navItem(String invoker, String dataset, String[] coordinate, String numItems);
+  // following works for ordered categorical attribute
+  void navVal(String invoker, String dataset, String attribute, String value, String leftVal, String rightVal);
+  // following works for unordered categorical attribute
+  void navCat(String invoker, String dataset, String attribute, String category, String numCats);
+  void navRange(String invoker, String dataset, String attribute, String center, String minVal, String maxVal);
+  // width specified in data space
+  void navRange(String invoker, String dataset, String attribute, String center, String width);
+  void navLike(String invoker, String dataset, String identifier, String relationship, String numLikeItems);
+  void navLike(String invoker, String dataset, String[] coordinate, String relationship, String numLikeItems);
+  void clearNav(String invoker, String dataset);
+
+  // pan changes center of window, leaves size the same as last nav
+  void panItem(String invoker, String dataset, String identifier);
+  void panItem(String invoker, String dataset, String[] coordinate);
+  void panCat(String invoker, String dataset, String attribute, String category);
+  void panRange(String invoker, String dataset, String attribute, String center);
+  void panLike(String invoker, String dataset, String identifier, String relationship);
+  void panLike(String invoker, String dataset, String[] coordinate, String relationship);
+
+  // zoom changes size of window, leaving the center at the previous spot
+  // TODO add a zoomOut / zoomIn API that allows jumping back to previous zoom
+  void zoomItem(String invoker, String dataset, String numItems);
+  void zoomVal(String invoker, String dataset, String leftVal, String rightVal);
+  void zoomCat(String invoker, String dataset, String numCats);
+  void zoomRange(String invoker, String dataset, String minVal, String maxVal);
+  // width specified in data space
+  void zoomRange(String invoker, String dataset, String width);
+  void zoomLike(String invoker, String dataset, String numLikeItems);
+
+  void setLOD(String invoker, String dataset, String levelOfDetail);
+
+  ////////////////////
+  // get selections
+  ////////////////////
+
+  String getHoverId(String dataset);
+  String[] getHoverCoord(String dataset);
+  String getHoverItem(String dataset, String attribute);
+  String getHoverCat(String dataset, String attribute);
+  String[] getHoverRange(String dataset, String attribute);
+  // TODO how do we want this to work?  It returns the coordinate/relationship pair or just the relationship
+  String[] getHoverLike(String dataset);
+
+  String[] getSelectIds(String dataset, String selectType);
+  String[][] getSelectCoords(String dataset, String selectType);
+  String[] getSelectItems(String dataset, String attribute, String selectType);
+  String[][] getSelectCats(String dataset, String attribute, String selectType);
+  String[][] getSelectRanges(String dataset, String attribute, String selectType);
+  String[][] getSelectLike(String dataset, String selectType);
+  String[][][] getSelectCriteria(String dataset, String selectType);
+
+  String[] getFilterIds(String dataset);
+  String[][] getFilterCoords(String dataset);
+  String[][] getFilterItems(String dataset, String attribute);
+  String[][] getFilterCats(String dataset, String attribute);
+  String[][] getFilterRanges(String dataset, String attribute);
+  String[][] getFilterLike(String dataset);
+  String[][][] getFilterCriteria(String dataset);
+
+  // nav changes center of window and size of window
+  String getNavCenterId(String dataset);
+  String[] getNavCenterCoord(String dataset);
+  String[] getNavIds(String dataset);
+  String[][] getNavCoords(String dataset);
+  String getNavNumItems(String dataset);
+  String getNavItems(String dataset);
+  String getNavCenterVal(String dataset, String attribute);
+  String getNavLeftVal(String dataset, String attribute);
+  String getNavRightVal(String dataset, String attribute);
+  String getNavNumCats(String dataset, String attribute);
+  String getNavMinVal(String dataset, String attribute);
+  String getNavMaxVal(String dataset, String attribute);
+  String getNavWidth(String dataset, String attribute);
+  String getNavLike(String dataset);
+  String getNavNumLike(String dataset);
+
+  String getLOD(String dataset);
+
+  ////////////////////
+  // selection colors
+  ////////////////////
+  // TODO allow for rgba everywhere
+  void setHoverColor(String[] rgbaColor);
+  void setHoverColor(String dataset, String[] rgbaColor);
+  void setSelectColor(String[] rgbaColor, String selectType);
+  void setSelectColor(String dataset, String[] rgbaColor, String selectType);
+  void setFilterColor(String[] rgbaColor);
+  void setFilterColor(String dataset, String[] rgbaColor);
+  void setLikeColor(String[] rgbaColor);
+  void setLikeColor(String dataset, String[] rgbaColor);
+
+  String[] getHoverColor(String dataset);
+  String[] getSelectColor(String dataset, String selectType);
+  String[] getFilterColor(String dataset);
+  String[] getLikeColor(String dataset);
+  // TODO figure out interface for setting other encodings (shape / size / etc).
+
+ }
+
+// A movie interface to wrap either a stub movie, or Movie from processing.video or something else eventually.  Mostly needed to hook up the movieEvent
+interface DelvMovie {
+  void read();
+}
+
+// DelvView is used to support having multiple processing sketches in both Processing and processing.js
+
+interface DelvView {
+  void bindDelv(Delv dlv);
+  DelvView dataSet(String dataSetName);
+  String name();
+  DelvView name(String name);
+  void connectSignals();
+  void onDataChanged(String source);
+  // TODO should resize be handled like other signals or treated specially?
+  // for instance, should it be called sizeChanged?
+  void resize(int w, int h);
+  void resize(int w, int h, boolean doDraw);
+
+  void draw();
+  void setup();
+  void mouseMoved();
+  void mouseOut();
+  void mouseClicked();
+  void mouseDragged();
+  void mousePressed();
+  void mouseReleased();
+  void mouseScrolled();
+  void movieEvent(DelvMovie m);
+}
+
+interface DelvDataSet {
+  String getName();
+  void setName(String name);
+
+  // identifiers / coordinates
+  void addId(String id);
+  boolean hasId(String id);
+  void addCoord(String[] coord);
+  boolean hasCoord(String[] coord);
+
+  String[] getAllIds(String attr);
+  String[][] getAllCoords(String attr);
+  String getHoverId();
+  String[] getHoverCoord();
+  String[] getSelectIds(String selectType);
+  String[][] getSelectCoords(String selectType);
+  String[] getFilterIds();
+  String[][] getFilterCoords();
+  String getNavCenterId();
+  String getNavCenterCoord();
+  String[] getNavIds();
+  String[][] getNavCoords();
+
+  int getNumIds();
+  int getNumCoords();
+  String getNextId();
+  // return a unique coordinate in nD multidimensional space where n is specified by numCoords
+  String[] getNextCoord(int numCoords);
+  void removeId(String id);
+  void removeCoord(String[] coord);
+
+  // items
+  void clearItems();
+  void setItem(String attr, String id, String item);
+  void setItem(String attr, String[] coord, String item);
+  void setFloatItem(String attr, String id, Float item);
+  void setFloatItem(String attr, String[] coord, Float item);
+  void setFloatArrayItem(String attr, String id, float[] item);
+  void setFloatArrayItem(String attr, String[] coord, float[] item);
+  void setStringArrayItem(String attr, String id, String[] item);
+  void setStringArrayItem(String attr, String[] coord, String[] item);
+
+  String getItem(String attr, String id);
+  String getItem(String attr, String[] coord);
+  Float getItemAsFloat(String attr, String id);
+  Float getItemAsFloat(String attr, String[] coord);
+  float[] getItemAsFloatArray(String attr, String id);
+  float[] getItemAsFloatArray(String attr, String[] coord);
+  String[] getItemAsStringArray(String attr, String id);
+  String[] getItemAsStringArray(String attr, String[] coord);
+
+  String[] getAllItems(String attr);
+  Float[] getAllItemsAsFloat(String attr);
+  float[][] getAllItemsAsFloatArray(String attr);
+  String[][] getAllItemsAsStringArray(String attr);
+  String[] getFilterItems(String attr);
+  Float[] getFilterItemsAsFloat(String attr);
+  float[][] getFilterItemsAsFloatArray(String attr);
+  String[][] getFilterItemsAsStringArray(String attr);
+
+  String[] getItemColor(String colorByAttr, String id);
+  String[] getItemColor(String colorByAttr, String[] coord);
+  String[][] getAllItemColors(String colorByAttr);
+  String[][] getFilterItemColors(String colorByAttr);
+  String[] getItemEncoding(String encodingByAttr, String id);
+  String[] getItemEncoding(String encodingByAttr, String[] coord);
+  String[][] getItemEncodings(String encodingByAttr);
+
+  void hoverItem(String invoker, String id);
+  void hoverItem(String invoker, String[] coord);
+
+  void selectItems(String invoker, String[] coords, String selectType);
+  void deselectItems(String invoker, String[] coords, String selectType);
+  void selectItems(String invoker, String[][] coords, String selectType);
+  void deselectItems(String invoker, String[][] coords, String selectType);
+  void navItem(String invoker, String id, String numItems);
+  void navItem(String invoker, String[] coord, String numItems);
+  void panItem(String invoker, String id);
+  void panItem(String invoker, String[] coord);
+  void zoomItem(String invoker, String numItems);
+
+  String getHoverItem(String attr);
+  String[] getSelectItems(String attr, String selectType);
+  String[][] getFilterItems(String attr);
+  String getNavNumItems();
+  String getNavItems();
+
+
+  // attributes
+  void clearAttributes();
+  void addAttr(DelvBasicAttribute attr);
+  Boolean hasAttr(String attr);
+  String[] getAttrs();
+  String[] getAllCats(String attr);
+  String[] getCatColor(String attr, String cat);
+  String[][] getAllCatColors(String attr);
+  String[][] getFilterCatColors(String attr);
+  String[] getCatEncoding(String attr, String cat);
+  String[][] getCatEncodings(String attr);
+
+  void hoverCat(String invoker, String attr, String cat);
+  void hoverRange(String invoker, String attr, String minVal, String maxVal);
+  void selectCats(String invoker, String[] attrs, String[] cats, String selectType);
+  void deselectCats(String invoker, String[] attrs, String[] cats, String selectType);
+  void selectRanges(String invoker, String[] attrs, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String invoker, String[] attrs, String[] mins, String[] maxes, String selectType);
+  void filterCats(String invoker, String attr, String[] cats);
+  void filterRanges(String invoker, String attr, String[] mins, String[] maxes);
+
+  void mapColor(String invoker, String attr, String cat, String[] rgbaColor);
+  // TODO how to define a glyph encoding in a cross-language manner?
+  void mapEncoding(String invoker, String attr, String cat, String encoding);
+
+  // following works for ordered categorical attribute
+  void navVal(String invoker, String attr, String value, String leftVal, String rightVal);
+  // following works for unordered categorical attribute
+  void navCat(String invoker, String attr, String cat, String numCats);
+  void navRange(String invoker, String attr, String center, String minVal, String maxVal);
+  // width specified in data space
+  void navRange(String invoker, String attr, String center, String width);
+
+  void panCat(String invoker, String attr, String cat);
+  void panRange(String invoker, String attr, String center);
+
+  void zoomCat(String invoker, String numCats);
+  void zoomRange(String invoker, String minVal, String maxVal);
+  // width specified in data space
+  void zoomRange(String invoker, String width);
+
+  String getHoverCat(String attr);
+  String[] getHoverRange(String attr);
+  String[][] getSelectCats(String attr, String selectType);
+  String[][] getSelectRanges(String attr, String selectType);
+  String[][][] getSelectCriteria(String selectType);
+  String[][] getFilterCats(String attr);
+  String[][] getFilterRanges(String attr);
+  String[][][] getFilterCriteria(String dataset);
+  String getNavCenterVal(String attr);
+  String getNavLeftVal(String attr);
+  String getNavRightVal(String attr);
+  String getNavNumCats(String attr);
+  String getNavMinVal(String attr);
+  String getNavMaxVal(String attr);
+  String getNavWidth(String attr);
+
+  // Relationships
+  void hoverLike(String invoker, String id, String relationship);
+  void hoverLike(String invoker, String[] coord, String relationship);
+  void selectLike(String invoker, String[] coords, String[] relationships, String selectType);
+  void deselectLike(String invoker, String[] coords, String[] relationships, String selectType);
+  void selectLike(String invoker, String[][] coords, String[] relationships, String selectType);
+  void deselectLike(String invoker, String[][] coords, String[] relationships, String selectType);
+  // TODO is this the right API to clear out all ranges/values for the specified coordinate/relationships?  written as is, this is really item selection
+  void clearSelect(String invoker, String selectType);
+
+  void filterLike(String invoker, String[] coords, String[] relationships);
+  void filterLike(String invoker, String[][] coords, String[] relationships);
+  void clearFilter(String invoker);
+
+  void navLike(String invoker, String id, String relationship, String numLikeItems);
+  void navLike(String invoker, String[] coord, String relationship, String numLikeItems);
+  void clearNav(String invoker);
+
+  void panLike(String invoker, String id, String relationship);
+  void panLike(String invoker, String[] coord, String relationship);
+
+ void zoomLike(String invoker, String numLikeItems);
+
+  void setLOD(String invoker, String levelOfDetail);
+
+  // TODO how do we want this to work?  It returns the coordinate/relationship pair or just the relationship
+  String[] getHoverLike();
+  String[][] getSelectLike(String selectType);
+  String[][] getFilterLike();
+  String getNavLike();
+  String getNavNumLike();
+  String getLOD();
+
+  // color
+  void setHoverColor(String[] rgbaColor);
+  void setSelectColor(String[] rgbaColor, String selectType);
+  void setFilterColor(String[] rgbaColor);
+  void setLikeColor(String[] rgbaColor);
+
+  String[] getHoverColor();
+  String[] getSelectColor(String selectType);
+  String[] getFilterColor();
+  String[] getLikeColor();
+
+  // apply filters
+  void applyFilters();
+
 }
 
 interface DelvAttribute {
