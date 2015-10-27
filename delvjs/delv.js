@@ -1284,8 +1284,10 @@ var vg = vg || {};
   delv.AttributeType = {
     UNSTRUCTURED: {name: "UNSTRUCTURED"},
     CATEGORICAL: {name: "CATEGORICAL"},
+    CATEGORICAL_LIST: {name: "CATEGORICAL_LIST"},
     CONTINUOUS: {name: "CONTINUOUS"},
     DATETIME: {name: "DATETIME"}
+    FLOAT_ARRAY: {name: "FLOAT_ARRAY"}
   }; 
 
   delv.attribute = function(attr_name, attr_type, color_map, data_range) {
