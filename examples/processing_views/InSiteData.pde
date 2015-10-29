@@ -5,11 +5,13 @@
 // License: New BSD 3-Clause (see accompanying LICENSE file for details)
 // ======================================================================
 
-public class InSiteData extends DelvBasicData {
+public class InSiteDataSet extends DelvBasicDataSet {
   ArrayList _region_files;
   boolean _normalize_globally;
+  DelvBasicDataSet _regions;
+  DelvBasicDataSet _annotations;
 
-  public InSiteData(String name) {
+  public InSiteDataSet(String name) {
     super(name);
     _normalize_globally = false;
     _global_min_v = 5.0;
@@ -20,30 +22,47 @@ public class InSiteData extends DelvBasicData {
     load_from_file("./test_data/config.txt");
   }
 
+  void bindDelv(Delv dlv) {
+    super.bindDelv(dlv);
+    if (_regions != null) {
+      dlv.addDataSet("Regions", _regions);
+    }
+    if (_annotations != null) {
+      dlv.addDataSet("Annotations", _annotations);
+    }
+  }
+
   public void clearRegionFiles() {
     _region_files = new ArrayList();
 
     // set up datasets
     color def_col = color_( 210 );
-    removeDataSet("Regions");
-    DelvDataSet ds = addDataSet("Regions");
-    ds.addAttribute(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("class", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("start", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
-    ds.addAttribute(new DelvBasicAttribute("length", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
-    ds.addAttribute(new DelvBasicAttribute("motif_type", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("strength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
-    ds.addAttribute(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    if (_delv != null) {
+      _delv.removeDataSet("Regions");
+    }
+    DelvBasicDataSet ds = new DelvBasicDataSet("Regions");
+    ds.addAttr(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("class", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("start", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    ds.addAttr(new DelvBasicAttribute("length", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    ds.addAttr(new DelvBasicAttribute("motif_type", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("strength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    ds.addAttr(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    _regions = ds;
 
-    ds = addDataSet("Annotations");
-    ds.addAttribute(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("class", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-     ds.addAttribute(new DelvBasicAttribute("start", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
-    ds.addAttribute(new DelvBasicAttribute("length", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
-    ds.addAttribute(new DelvBasicAttribute("description", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
-    ds.addAttribute(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    if (_delv != null) {
+      _delv.removeDataSet("Annotations");
+    }
+    ds = new DelvBasicDataSet("Annotations");
+    ds.addAttr(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("class", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+     ds.addAttr(new DelvBasicAttribute("start", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    ds.addAttr(new DelvBasicAttribute("length", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    ds.addAttr(new DelvBasicAttribute("description", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+    ds.addAttr(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+    _annotations = ds;
   }
 
   public void addRegionFile(String filename) {
@@ -174,7 +193,7 @@ public class InSiteData extends DelvBasicData {
 
       else if ( cols[0].equalsIgnoreCase("binding_site") )
       {
-        DelvDataSet ds = _data.get("Regions");
+        DelvDataSet ds = _regions;
         String id = ds.getNextId();
 
         // TODO, really could get column names and position from file header
@@ -193,7 +212,7 @@ public class InSiteData extends DelvBasicData {
 
       else if ( cols[0].equalsIgnoreCase("feature") || cols[0].equalsIgnoreCase("annotation") )
       {
-        DelvDataSet ds = _data.get("Annotations");
+        DelvDataSet ds = _annotations;
         String id = ds.getNextId();
 
         // TODO, really could get column names and position from file header
@@ -214,4 +233,4 @@ public class InSiteData extends DelvBasicData {
 
   }
 
-} // end class InSiteData
+} // end class InSiteDataSet

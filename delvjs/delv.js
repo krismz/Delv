@@ -594,6 +594,7 @@ var vg = vg || {};
     }
   };
 
+
   delv.addView = function (view, id) {
     delv.log("Adding view for " + id);
     delv.log("typeof view: " + typeof(view));

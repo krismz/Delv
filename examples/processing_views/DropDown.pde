@@ -46,23 +46,23 @@ public class DropDownView extends DelvCategoryView {
     dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
   }
 
-  public void cat1Updated() {
-    cats_selected = new boolean[_cat1.length];
+  public void catUpdated() {
+    cats_selected = new boolean[_cat.length];
     dropbox_max_width = 0;
     int pad = 10;
     textFont( _pixel_font_8b );
-    for (int i = 0; i < _cat1.length; ++i) {
+    for (int i = 0; i < _cat.length; ++i) {
       cats_selected[i] = true;
-      dropbox_max_width = max( dropbox_max_width, (int)(textWidth( _cat1[i] )) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET + pad);
+      dropbox_max_width = max( dropbox_max_width, (int)(textWidth( _cat[i] )) + DROPBOX_RADIO_BUTTON_W+DROPBOX_RADIO_BUTTON_OFFSET + pad);
     }
     resize();
   }
 
-  public void visibleCat1Updated() {
-    for (int i = 0; i < _cat1.length; ++i) {
+  public void filterCatsUpdated() {
+    for (int i = 0; i < _cat.length; ++i) {
       cats_selected[i] = false;
-      for (int j = 0; j < _visibleCat1.length; ++j) {
-        if (_visibleCat1[j].equals(_cat1[i])) {
+      for (int j = 0; j < _filterCats.length; ++j) {
+        if (_filterCats[j].equals(_cat[i])) {
           cats_selected[i] = true;
         }
       }
@@ -97,16 +97,16 @@ public class DropDownView extends DelvCategoryView {
       fill( DROPBOX_FILL_COLOR );
       stroke( DROPBOX_LINE_COLOR );
       strokeWeight( 1 );
-      rect( x, y, _w - 2 * DROPBOX_BORDER, _cat1.length*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET) + DROPBOX_LINE_OFFSET);
+      rect( x, y, _w - 2 * DROPBOX_BORDER, _cat.length*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET) + DROPBOX_LINE_OFFSET);
 
       x += DROPBOX_BORDER;
       y += DROPBOX_BORDER + DROPBOX_LINE_H;
       textAlign( LEFT, BOTTOM );
       fill( DROPBOX_TEXT_COLOR );
       stroke( DROPBOX_TEXT_COLOR );
-      for ( int i = 0; i < _cat1.length; i++ )
+      for ( int i = 0; i < _cat.length; i++ )
       {
-        String choice = _cat1[i];
+        String choice = _cat[i];
 
         // TODO need to be able to respond to highlights and hovers initialized by other views
         if ( dropdown_is_highlighted && (pressed_dropdown == i) )
@@ -157,7 +157,7 @@ public class DropDownView extends DelvCategoryView {
     {
       // we're over the box from a width perspective
       // now see which selection inside the box (y direction) we're over
-      for ( int i = 0; i < _cat1.length; i++ )
+      for ( int i = 0; i < _cat.length; i++ )
       {
         if ( (my >= y) && (my <= y+DROPBOX_LINE_H+DROPBOX_LINE_OFFSET) )
         {
@@ -181,9 +181,9 @@ public class DropDownView extends DelvCategoryView {
     {
       rolled_over_dropdown = selection;
       dropdown_is_rolled_over = true;
-      hover_id = _cat1[rolled_over_dropdown];
+      hover_id = _cat[rolled_over_dropdown];
     }
-    hoveredCat(hover_id);
+    hoverCat(hover_id);
   }
 
   public void mousePressedInView( int mx, int my, boolean rightPressed )
@@ -237,21 +237,21 @@ public class DropDownView extends DelvCategoryView {
     } else {
       w = dropbox_max_width + 2 * DROPBOX_BORDER;
     }
-    h = 2 * (2*DROPBOX_BORDER + (_cat1.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET));
+    h = 2 * (2*DROPBOX_BORDER + (_cat.length)*(DROPBOX_LINE_H+DROPBOX_LINE_OFFSET));
     super.resize(w, h, doDraw);
   }
 
   public void mouseReleasedInView(int mx, int my) {
     if (dropdown_is_pressed) {
       cats_selected[pressed_dropdown] = ! cats_selected[pressed_dropdown];
-      selectedCat(_cat1[pressed_dropdown]);
+      toggleCatFilter(_cat[pressed_dropdown]);
     } else {
       if (dropdown_is_highlighted) {
-        highlightedCat(_cat1[pressed_dropdown]);
+        selectCat(_cat[pressed_dropdown], "SECONDARY");
       }
       else
       {
-        highlightedCat("");
+        selectCat("", "SECONDARY");
       }
     }
     dropdown_is_pressed = false;

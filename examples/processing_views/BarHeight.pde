@@ -49,8 +49,8 @@ class BarHeightView extends Delv2DView {
     _val_hovered = false;
   }
 
-  void reloadData(String source) {
-    if (_delvIF == null) {
+  void onDataChanged(String source) {
+    if (_delv == null) {
       return;
     }
 
@@ -59,7 +59,7 @@ class BarHeightView extends Delv2DView {
       float[] minVals;
       float[] maxVals;
       if (!_dim2Attr.equals("")) {
-          categories = _dataIF.getAllCategories(_datasetName, _dim2Attr);
+          categories = _delv.getAllCats(_datasetName, _dim2Attr);
         }
         else {
           categories = new String[1];
@@ -74,10 +74,10 @@ class BarHeightView extends Delv2DView {
         }
 
         String[] vals;
-        vals = _dataIF.getAllItems(_datasetName, _dim1Attr);
+        vals = _delv.getAllItems(_datasetName, _dim1Attr);
         String[] cats;
         if (!_dim2Attr.equals("")) {
-          cats = _dataIF.getAllItems(_datasetName, _dim2Attr);
+          cats = _delv.getAllItems(_datasetName, _dim2Attr);
         } else {
           cats = new String[1];
           cats[0] = "default";
@@ -108,33 +108,21 @@ class BarHeightView extends Delv2DView {
   }
 
   void connectSignals() {
-    if (_delvIF == null) {
+    if (_delv == null) {
       return;
     }
     super.connectSignals();
-    _delvIF.connectToSignal("hoveredCategoryChanged", _name, "onHoveredCategoryChanged");
   }
 
-  void onHoveredCategoryChanged(String invoker, String dataset, String attribute) {
-    if (!invoker.equals(_name)) {
-      if (dataset.equals(_datasetName)) {
-        if (attribute.equals(_dim2Attr)) {
-          updateHoveredCategory(_dataIF.getHoveredCategory(_datasetName, _dim2Attr));
-        } else {
-          updateHoveredCategory("");
-        }
-      }
+  void hoveredCoordsUpdated() {
+    String val = "";
+    if (_hoverCoords.length == 1) {
+      val = _delv.getItem(_datasetName, _dim1Attr, _hoverCoords[0]);
     }
+    updateHoveredVal(val);
   }
 
-  void hoveredIdUpdated() {
-    String cat = _dataIF.getItem(_datasetName, _dim2Attr, _hoverId);
-    String val = _dataIF.getItem(_datasetName, _dim1Attr, _hoverId);
-    updateHoveredVal(val, cat);
-  }
-
-  void updateHoveredVal(String val, String cat) {
-    setHoveredType(cat);
+  void updateHoveredVal(String val) {
     if (!val.equals("")) {
       setHoveredVal(float(val));
     } else {
@@ -142,7 +130,8 @@ class BarHeightView extends Delv2DView {
     }
  }
 
-  void updateHoveredCategory(String cat) {
+  void hoveredCatUpdated() {
+    String cat = _delv.getHoverCat(_datasetName, _dim2Attr);
     setHoveredType(cat);
   }
 

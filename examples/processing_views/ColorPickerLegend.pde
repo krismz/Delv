@@ -69,36 +69,17 @@ public class ColorPickerLegendView extends DelvCategoryView {
   }
 
   public String dataAttr() {
-    return cat1Attr();
+    return catAttr();
   }
   public ColorPickerLegendView dataAttr(String attr) {
-    cat1Attr(attr);
+    catAttr(attr);
     colorAttr(attr);
     return this;
   }
 
-  void visibleCat1Updated() {
-    //_visibleCat1Colors = new color[_visibleCat1.length];
-    // clearColors();
+  void filterCatsUpdated() {
     computeLegendParameters();
   }
-
-  // void clearColors() {
-  //   for (int i = 0; i < _visibleCat1Colors.length; i++ ) {
-  //     _visibleCat1Colors[i] = DEFAULT_COLOR;
-  //     coloredCat(_visibleCat1[i], DEFAULT_COLOR, false);
-  //   }
-  // }
-
-  // void setItemColor(String item, color c) {
-  //   for ( int i = 0; i < _visibleCat1.length; i++ ) {
-  //     if ( _visibleCat1[i].equals(item) ) {
-  //       _colors[i] = c;
-  //       break;
-  //     }
-  //   }
-  //   redraw();
-  // }
 
   void hoveredCatUpdated() {
     //_rolled_over_item = _hoverCat;
@@ -108,7 +89,7 @@ public class ColorPickerLegendView extends DelvCategoryView {
   void computeLegendParameters()
   {
     // count the number of visible item types
-    int num_visible_items = _visibleCat1.length;
+    int num_visible_items = _filterCats.length;
 
     // compute the item legend height
     _item_legend_h = 2*FEATURE_LEGEND_BORDER_W + num_visible_items*FEATURE_LEGEND_BOX_H +
@@ -184,11 +165,11 @@ public class ColorPickerLegendView extends DelvCategoryView {
     String item;
     textAlign( LEFT, CENTER );
     strokeWeight( 1 );
-    for ( int i = 0; i < _visibleCat1.length; i++ )
+    for ( int i = 0; i < _filterCats.length; i++ )
     {
-      item = _visibleCat1[i];
+      item = _filterCats[i];
       if ( _legend_item_color_selected && (_selected_legend_item_color == i) ) fill( DEFAULT_COLOR );
-      else fill( _visibleCat1Colors[i] );
+      else fill( _filterCatColors[i] );
       if ( _rolled_over_item.equals(item) || _hoverCat.equals(item) ) stroke( COLOR_PICKER_SELECTED_LINE_COLOR );
       else noStroke();
       rect( x, y, FEATURE_LEGEND_BOX_W, FEATURE_LEGEND_BOX_H );
@@ -227,7 +208,7 @@ public class ColorPickerLegendView extends DelvCategoryView {
       y = _my + _legend_item_color_box_offset[1];
       stroke( COLOR_PICKER_SELECTED_LINE_COLOR );
       strokeWeight( 1 );
-      fill( _visibleCat1Colors[_selected_legend_item_color] );
+      fill( _filterCatColors[_selected_legend_item_color] );
       rect( x, y, FEATURE_LEGEND_BOX_W, FEATURE_LEGEND_BOX_H );
     }
 
@@ -247,20 +228,20 @@ public class ColorPickerLegendView extends DelvCategoryView {
     y = FEATURE_LEGEND_BORDER_W;
 
     String item;
-    for ( int i = 0; i < _visibleCat1.length; i++ )
+    for ( int i = 0; i < _filterCats.length; i++ )
     {
-      item = _visibleCat1[i];
+      item = _filterCats[i];
 
       if ( (mx >= x) && (mx <= x+_item_legend_w) && (my >= y) && (my <= y+FEATURE_LEGEND_BOX_H) )
       {
-        hoveredCat(item, false);
+        hoverCat(item, false);
         hoveredCatUpdated();
         return true;
       }
 
       y += FEATURE_LEGEND_BOX_OFFSET+FEATURE_LEGEND_BOX_H;
     }
-    hoveredCat("", false);
+    hoverCat("", false);
     hoveredCatUpdated();
 
     return false;
@@ -275,13 +256,13 @@ public class ColorPickerLegendView extends DelvCategoryView {
     y = FEATURE_LEGEND_BORDER_W;
 
     String item;
-    for ( int i = 0; i < _visibleCat1.length; i++ )
+    for ( int i = 0; i < _filterCats.length; i++ )
     {
-      item = _visibleCat1[i];
+      item = _filterCats[i];
 
       if ( (mx >= x) && (mx <= x+FEATURE_LEGEND_BOX_W) && (my >= y) && (my <= y+FEATURE_LEGEND_BOX_H) )
       {
-        if ( _visibleCat1Colors[i] == DEFAULT_COLOR ) return false;
+        if ( _filterCatColors[i] == DEFAULT_COLOR ) return false;
 
         _legend_item_color_selected = true;
         _selected_legend_item_color = i;
@@ -359,12 +340,12 @@ public class ColorPickerLegendView extends DelvCategoryView {
     int x = FEATURE_LEGEND_BORDER_W;
     int y = FEATURE_LEGEND_BORDER_W;
 
-    for ( int i = 0; i < _visibleCat1.length; i++ )
+    for ( int i = 0; i < _filterCats.length; i++ )
     {
       if ( (mx >= x) && (mx <= x+FEATURE_LEGEND_BOX_W) && (my >= y) && (my <= y+FEATURE_LEGEND_BOX_H) )
       {
-        _visibleCat1Colors[i] = c;
-        coloredCat(_visibleCat1[i], c, false);
+        _filterCatColors[i] = c;
+        coloredCat(_filterCats[i], c, false);
         return true;
       }
 
@@ -378,13 +359,13 @@ public class ColorPickerLegendView extends DelvCategoryView {
   {
     // TODO sort out _selected_legend_item_color vs _selected_color
     // first check if we have dropped it over another legend box
-    colorReleasedOverItemLegend( mx, my, _visibleCat1Colors[_selected_legend_item_color] );
+    colorReleasedOverItemLegend( mx, my, _filterCatColors[_selected_legend_item_color] );
 
     int x_diff = abs( (mx+_legend_item_color_box_offset[0])-_legend_item_color_box[0] );
     int y_diff = abs( (my+_legend_item_color_box_offset[1])-_legend_item_color_box[1] );
     if ( (x_diff > FEATURE_LEGEND_BOX_W) || (y_diff > FEATURE_LEGEND_BOX_H) )
     {
-      _visibleCat1Colors[_selected_legend_item_color] = DEFAULT_COLOR;
+      _filterCatColors[_selected_legend_item_color] = DEFAULT_COLOR;
       return true;
     }
     return false;
@@ -392,7 +373,7 @@ public class ColorPickerLegendView extends DelvCategoryView {
 
   public void mouseOutOfView() {
     if (_item_rolled_over) {
-      hoveredCat("", false);
+      hoverCat("", false);
       hoveredCatUpdated();
     }
     _item_rolled_over = false;
@@ -439,21 +420,21 @@ public class ColorPickerLegendView extends DelvCategoryView {
 
     if ( _legend_item_color_selected ) {
       if (legendItemColorReleased( mx-_item_legend_origin[0], my-_item_legend_origin[1] )) {
-        coloredCat(_visibleCat1[_selected_legend_item_color], _visibleCat1Colors[_selected_legend_item_color], false);
+        coloredCat(_filterCats[_selected_legend_item_color], _filterCatColors[_selected_legend_item_color], false);
       }
     }
 
     else if ( _clear_button_selected )
     {
       //clearColors();
-      for ( int i = 0; i < _visibleCat1.length; i++ )
+      for ( int i = 0; i < _filterCats.length; i++ )
       {
         // TODO but we need to update _cat1Colors too
         // TODO really this color thing is hacky, we should be using the color map object instead
-        _visibleCat1Colors[i] = DEFAULT_COLOR;
+        _filterCatColors[i] = DEFAULT_COLOR;
         // TODO send just one notification or one per change?
         // TODO only notify if actually changed?
-        coloredCat(_visibleCat1[i], DEFAULT_COLOR, false);
+        coloredCat(_filterCats[i], DEFAULT_COLOR, false);
       }
     }
 

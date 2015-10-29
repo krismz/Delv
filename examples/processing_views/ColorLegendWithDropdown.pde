@@ -35,7 +35,7 @@ public class ColorLegendWithDropdownView extends DelvCompositeView {
   public ColorLegendWithDropdownView dataAttr(String attr) {
     _dataAttr = attr;
     _legend_view.dataAttr(attr);
-    _dropdown_view.cat1Attr(attr);
+    _dropdown_view.catAttr(attr);
     return this;
   }
 

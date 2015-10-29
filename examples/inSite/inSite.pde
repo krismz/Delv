@@ -32,21 +32,15 @@ void testInsite() {
   _barView = new BarHeightView(name+"BarHeight");
   _alignView = new AlignmentView(name+"Alignment");
 
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  Delv _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
-
-  _dropView.bindDelv(_delv);
-  _dropView.dataIF("inSite");
-  _regionView.bindDelv(_delv);
-  _regionView.dataIF("inSite");
-  _alignView.bindDelv(_delv);
-  _alignView.dataIF("inSite");
-  _barView.bindDelv(_delv);
-  _barView.dataIF("inSite");
-  _colorLegendView.bindDelv(_delv);
-  _colorLegendView.dataIF("inSite");
+  Delv _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
+  _delv.addView(_dropView);
+  _delv.addView(_regionView);
+  _delv.addView(_alignView);
+  _delv.addView(_barView);
+  _delv.addView(_colorLegendView);
 
   RegionDataset aboveDataset = _regionView.createDataset("Regions");
   aboveDataset.regionTypeAttr("Species")
@@ -67,14 +61,14 @@ void testInsite() {
               .defaultBarType("Annotations");
   _regionView.addDataset(belowDataset, true);
 
-  _dropView.datasetName("Regions");
-  _dropView.cat1Attr("Species")
+  _dropView.dataSet("Regions");
+  _dropView.catAttr("Species")
           .label("Species");
 
-  _colorLegendView.datasetName("Regions");
+  _colorLegendView.dataSet("Regions");
   _colorLegendView.dataAttr("motif_type");
 
-  _barView.datasetName("Regions");
+  _barView.dataSet("Regions");
   _barView.dim1Attr("strength");
   _barView.dim2Attr("motif_type");
 
@@ -84,11 +78,11 @@ void testInsite() {
   _barView.setup();
   _alignView.setup();
 
-  _dropView.reloadData("Processing.pde");
-  _regionView.reloadData("Processing.pde");
-  _alignView.reloadData("Processing.pde");
-  _barView.reloadData("Processing.pde");
-  _colorLegendView.reloadData("Processing.pde");
+  _dropView.onDataChanged("Processing.pde");
+  _regionView.onDataChanged("Processing.pde");
+  _alignView.onDataChanged("Processing.pde");
+  _barView.onDataChanged("Processing.pde");
+  _colorLegendView.onDataChanged("Processing.pde");
 
   int w = width;
   int h = height;
@@ -149,7 +143,7 @@ public class InSiteView extends DelvCompositeView {
     addView(_alignView);
   }
 
-  public void reloadData(String source) {
+  public void onDataChanged(String source) {
     RegionDataset aboveDataset = _regionView.createDataset("Regions");
     aboveDataset.regionTypeAttr("Species")
                 .regionLengthAttr("totalLength")
@@ -169,23 +163,23 @@ public class InSiteView extends DelvCompositeView {
                 .defaultBarType("Annotations");
     _regionView.addDataset(belowDataset, true);
 
-    _dropView.datasetName("Regions");
-    _dropView.cat1Attr("Species")
+    _dropView.dataSet("Regions");
+    _dropView.catAttr("Species")
             .label("Species");
 
-    _legendView.datasetName("Regions");
+    _legendView.dataSet("Regions");
     _legendView.dataAttr("motif_type");
     _legendView.label("TF");
 
-    _barView.datasetName("Regions");
+    _barView.dataSet("Regions");
     _barView.dim1Attr("strength");
     _barView.dim2Attr("motif_type");
 
-    _regionView.reloadData(source);
-    _dropView.reloadData(source);
-    _legendView.reloadData(source);
-    _barView.reloadData(source);
-    _alignView.reloadData(source);
+    _regionView.onDataChanged(source);
+    _dropView.onDataChanged(source);
+    _legendView.onDataChanged(source);
+    _barView.onDataChanged(source);
+    _alignView.onDataChanged(source);
 
   }
 
@@ -247,60 +241,60 @@ public class InSiteView extends DelvCompositeView {
 
 
 // for testInSite, use these versions of draw, mouseDragged, mouseMoved,...,mouseReleased
-// // void draw() {
-// //   noStroke();
+// void draw() {
+//   noStroke();
 
-// //   fill( BACKGROUND_COLOR );
-// //   rect(0, 0, width, height);
-// //   noFill();
+//   fill( BACKGROUND_COLOR );
+//   rect(0, 0, width, height);
+//   noFill();
 
-// //   _dropView.draw();
-// //   _regionView.draw();
-// //   _alignView.draw();
-// //   _barView.draw();
-// //   _colorLegendView.draw();
-// // }
-// // void mouseDragged() {
-// //   _dropView.mouseDragged();
-// //   _regionView.mouseDragged();
-// //   _alignView.mouseDragged();
-// //   _barView.mouseDragged();
-// //   _colorLegendView.mouseDragged();
-// //   draw();
-// // }
-// // void mouseMoved() {
-// //   _dropView.mouseMoved();
-// //   _regionView.mouseMoved();
-// //   _alignView.mouseMoved();
-// //   _barView.mouseMoved();
-// //   _colorLegendView.mouseMoved();
-// //   draw();
-// // }
-// // void mouseClicked() {
-// //   println("mouseClicked: " + mouseX + ", " + mouseY );
-// //   _dropView.mouseClicked();
-// //   _regionView.mouseClicked();
-// //   _alignView.mouseClicked();
-// //   _barView.mouseClicked();
-// //   _colorLegendView.mouseClicked();
-// //   draw();
-// // }
-// // void mousePressed() {
-// //   _dropView.mousePressed();
-// //   _regionView.mousePressed();
-// //   _alignView.mousePressed();
-// //   _barView.mousePressed();
-// //   _colorLegendView.mousePressed();
-// //   draw();
-// // }
-// // void mouseReleased() {
-// //   _dropView.mouseReleased();
-// //   _regionView.mouseReleased();
-// //   _alignView.mouseReleased();
-// //   _barView.mouseReleased();
-// //   _colorLegendView.mouseReleased();
-// //   draw();
-// // }
+//   _dropView.draw();
+//   _regionView.draw();
+//   _alignView.draw();
+//   _barView.draw();
+//   _colorLegendView.draw();
+// }
+// void mouseDragged() {
+//   _dropView.mouseDragged();
+//   _regionView.mouseDragged();
+//   _alignView.mouseDragged();
+//   _barView.mouseDragged();
+//   _colorLegendView.mouseDragged();
+//   draw();
+// }
+// void mouseMoved() {
+//   _dropView.mouseMoved();
+//   _regionView.mouseMoved();
+//   _alignView.mouseMoved();
+//   _barView.mouseMoved();
+//   _colorLegendView.mouseMoved();
+//   draw();
+// }
+// void mouseClicked() {
+//   println("mouseClicked: " + mouseX + ", " + mouseY );
+//   _dropView.mouseClicked();
+//   _regionView.mouseClicked();
+//   _alignView.mouseClicked();
+//   _barView.mouseClicked();
+//   _colorLegendView.mouseClicked();
+//   draw();
+// }
+// void mousePressed() {
+//   _dropView.mousePressed();
+//   _regionView.mousePressed();
+//   _alignView.mousePressed();
+//   _barView.mousePressed();
+//   _colorLegendView.mousePressed();
+//   draw();
+// }
+// void mouseReleased() {
+//   _dropView.mouseReleased();
+//   _regionView.mouseReleased();
+//   _alignView.mouseReleased();
+//   _barView.mouseReleased();
+//   _colorLegendView.mouseReleased();
+//   draw();
+// }
 
 // for all other tests, use these versions of draw, mouseClicked, etc
 void redraw() {
@@ -334,14 +328,13 @@ void redraw() {
 void testInsiteView() {
   InSiteView insite_view = new InSiteView("TestInsiteView");
   _view = insite_view;
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  DelvImpl _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
-  insite_view.bindDelv(_delv);
-  insite_view.dataIF("inSite");
+  DelvImpl _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
+  _delv.addView(insite_view);
   insite_view.setup();
-  insite_view.reloadData("Processing.pde");
+  insite_view.onDataChanged("Processing.pde");
   insite_view.resize(1400, 800);
 }
 
@@ -353,12 +346,11 @@ void testRegion(int x_origin, int y_origin,
   RegionView view = new RegionView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  Delv _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
+  Delv _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
   view.bindDelv(_delv);
-  view.dataIF("inSite");
   view.setup();
   RegionDataset aboveDataset = view.createDataset("Regions");
   aboveDataset.regionTypeAttr("Species")
@@ -379,7 +371,7 @@ void testRegion(int x_origin, int y_origin,
     .defaultBarType("Annotations");
   view.addDataset(belowDataset, true);
 
-  view.reloadData("Processing.pde");
+  view.onDataChanged("Processing.pde");
   // to capture the size of the monitor
   int _w = 1400;
   int _h = 700;
@@ -411,17 +403,16 @@ void testDropDown(int x_origin, int y_origin,
   _view = view;
   ((DelvBasicView)_view).setOrigin(x_origin, y_origin);
   view.setBackgroundColor(205);
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  Delv _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
-  view.bindDelv(_delv);
-  view.dataIF("inSite");
-  view.datasetName("Regions");
-  view.cat1Attr("Species")
+  Delv _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
+  _delv.addView(view);
+  view.dataSet("Regions");
+  view.catAttr("Species")
       .label("Species");
   view.setup();
-  view.reloadData("Processing.pde");
+  view.onDataChanged("Processing.pde");
 
   //view.resize(w, h);
   //view.onCategoryVisibilityChanged("someone", "Regions", "Species");
@@ -434,16 +425,15 @@ void testColorPickerLegend(int x_origin, int y_origin) {
   ColorPickerLegendView view = new ColorPickerLegendView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  Delv _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
-  view.bindDelv(_delv);
-  view.dataIF("inSite");
-  view.datasetName("Regions");
+  Delv _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
+  _delv.addView(view);
+  view.dataSet("Regions");
   view.dataAttr("motif_type");
   view.setup();
-  view.reloadData("Processing.pde");
+  view.onDataChanged("Processing.pde");
   view.resize(200,300);
 }
 void testColorLegendWithDropdown() {
@@ -453,17 +443,16 @@ void testColorLegendWithDropdown(int x_origin, int y_origin) {
   ColorLegendWithDropdownView view = new ColorLegendWithDropdownView();
   _view = view;
   view.setOrigin(x_origin, y_origin);
-  InSiteData _dataIF = new InSiteData("inSite");
+  InSiteDataSet _dataIF = new InSiteDataSet("inSite");
   _dataIF.loadData();
-  Delv _delv = new DelvImpl(_dataIF);
-  _dataIF.setDelvIF(_delv);
-  view.bindDelv(_delv);
-  view.dataIF("inSite");
-  view.datasetName("Regions");
+  Delv _delv = new DelvImpl();
+  _delv.addDataSet("inSite", _dataIF);
+  _delv.addView(view);
+  view.dataSet("Regions");
   view.dataAttr("motif_type");
   view.label("motif");
   view.setup();
-  view.reloadData("Processing.pde");
+  view.onDataChanged("Processing.pde");
   view.resize(200,300);
 }
 

@@ -34,9 +34,6 @@ long convertTimeToMinutes(String time){
     return Long.parseLong(time.split(":")[0].trim())*60 + Long.parseLong(time.split(":")[1].trim());
 }
 
-// Data structures
-Attribute [] _attribute_list;
-
 DelvView _view;
 
 // Other variables

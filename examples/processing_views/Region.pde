@@ -242,73 +242,78 @@ class RegionView extends DelvBasicView {
   }
 
   void connectSignals() {
-    if (_delvIF == null) {
+    if (_delv == null) {
       return;
     }
     super.connectSignals();
-    _delvIF.connectToSignal("categoryVisibilityChanged", _name, "onCategoryVisibilityChanged");
-    _delvIF.connectToSignal("categoryColorsChanged", _name, "onCategoryColorsChanged");
-    _delvIF.connectToSignal("hoveredCategoryChanged", _name, "onHoveredCategoryChanged");
-    _delvIF.connectToSignal("alignmentChanged", _name, "onAlignmentChanged");
+    // filter, hover handled by base class
+    // TODO document better what each class provides
+    _delv.connectToSignal("colorChanged", _name, "onColorChanged");
+    _delv.connectToSignal("alignmentChanged", _name, "onAlignmentChanged");
   }
 
   // Region needs to override a number of methods because of the dual datasets
   // TODO maybe create a Delv1DatasetView and a Delv2DatasetView?
-  void hoveredId(String id, boolean doDraw) {
-    if (!(id.equals(_hoverId))) {
-      _hoverId = id;
-      _dataIF.updateHoveredId(_name, _above_dataset.name(), id);
-      // TODO remove this, just done for d3 demo
-      String[] selections = new String[1];
-      selections[0] = id;
-      _dataIF.updateSelectedIds(_name, _above_dataset.name(), selections);
-      if (doDraw) {
-        draw();
+  void hoverItem(String id, boolean doDraw) {
+    String[][] coords = new String[1][];
+    coords[0] = idToCoord(id);
+    if (_feature_above_rolled_over) {
+      if (_hoverCoords.length != 1 ||
+          !(coordsEqual(coords[0],_hoverCoords[0]))) {
+        _hoverCoords = coords;
+        _delv.hoverItem(_name, _above_dataset.name(), coords[0]);
+        _delv.hoverItem(_name, _below_dataset.name(), new String[0]);
+
+        // TODO remove this, just done for d3 demo
+        String[] selections = new String[1];
+        selections[0] = id;
+        _delv.selectItems(_name, _above_dataset.name(), selections, "PRIMARY");
+      }
+    } else {
+      _delv.hoverItem(_name, _below_dataset.name(), coords[0]);
+      _delv.hoverItem(_name, _above_dataset.name(), new String[0]);
+    }
+    if (doDraw) {
+      draw();
+    }
+  }
+
+  void onColorChanged(String invoker, String dataset, String attribute) {
+    // TODO respond to color for below dataset as well
+    if (!invoker.equals(_name) &&
+        dataset.equals(_above_dataset.name()) &&
+        attribute.equals(_above_dataset.barTypeAttr())) {
+      updateFeatureVisibility();
+    }
+  }
+
+  void onFilterChanged(String invoker, String dataset, String coordination) {
+    // TODO respond to filter for below dataset as well
+    if (!invoker.equals(_name) &&
+        dataset.equals(_above_dataset.name())) {
+      updateRegionVisibility();
+      updateFeatureVisibility();
+    }
+  }
+
+  void onHoverChanged(String invoker, String dataset, String coordination) {
+    // TODO respond to hover for below dataset as well
+    if (!invoker.equals(_name) &&
+        dataset.equals(_above_dataset.name())) {
+      if (coordination.equals("ITEM")) {
+        updateHoveredIds(_delv.getHoverIds(_above_dataset.name()));
+      } else {
+        updateHoveredCategory(_delv.getHoverCat(_above_dataset.name(), _above_dataset.barTypeAttr()));
       }
     }
   }
 
-  void onCategoryColorsChanged(String invoker, String dataset, String attribute) {
-    if (!invoker.equals(_name)) {
-      if ((dataset.equals(_above_dataset.name())) && (attribute.equals(_above_dataset.barTypeAttr()))) {
-        updateFeatureVisibility();
-      }
-    }
-  }
-
-  void onCategoryVisibilityChanged(String invoker, String dataset, String attribute) {
-    if (!invoker.equals(_name)) {
-      if (attribute.equals(_above_dataset.regionTypeAttr())) {
-        updateRegionVisibility();
-      }
-      else if (dataset.equals(_above_dataset.name()) && attribute.equals(_above_dataset.barTypeAttr())) {
-        updateFeatureVisibility();
-      }
-    }
-  }
-
-  void onHoveredCategoryChanged(String invoker, String dataset, String attribute) {
-    if (!invoker.equals(_name)) {
-      if (dataset.equals(_above_dataset.name()) && attribute.equals(_above_dataset.barTypeAttr())) {
-        updateHoveredCategory(_dataIF.getHoveredCategory(_above_dataset.name(), _above_dataset.barTypeAttr()));
-      }
-    }
-  }
-
-  void onHoveredIdChanged(String invoker, String dataset, String identifier) {
-    if (!invoker.equals(_name)) {
-      if (dataset.equals(_above_dataset.name())) {
-        updateHoveredId(identifier);
-      }
-    }
-  }
-
-  void onSelectedIdsChanged(String invoker, String dataset, String[] identifiers) {
-    if (!invoker.equals(_name)) {
-      if (dataset.equals(_above_dataset.name())) {
-        // TODO undo this crosslinking from selection to hovering
-        updateHoveredId(identifiers[0]);
-      }
+  void onSelectChanged(String invoker, String dataset, String coordination, String selectType) {
+    // TODO respond to select for below dataset as well
+    if (!invoker.equals(_name) &&
+        dataset.equals(_above_dataset.name()) &&
+        selectType.equals("PRIMARY")) {
+      updateSelections();
     }
   }
 
@@ -319,8 +324,8 @@ class RegionView extends DelvBasicView {
   }
 
   void updateSelections() {
-    String id = _dataIF.getHoveredId(_above_dataset.name());
-    updateHoveredId(id);
+    // TODO undo this crosslinking from selection to hovering
+    updateHoveredIds(_delv.getSelectIds(_above_dataset.name(), "PRIMARY"));
   }
 
   void addDatasetToRegionMap(RegionDataset dataset, HashMap<String,Region> regionMap, boolean add_below) {
@@ -341,52 +346,52 @@ class RegionView extends DelvBasicView {
     boolean haveBarHeights;
 
     // TODO want to refactor dataIF to something like _dataIF.allItems(name, dataset.regionTypeAttr())
-    barStarts = _dataIF.getAllItems(name, dataset.barStartAttr());
+    barStarts = _delv.getAllItems(name, dataset.barStartAttr());
 
     if (!dataset.regionTypeAttr().equals("")) {
-      regions = _dataIF.getAllItems(name, dataset.regionTypeAttr());
+      regions = _delv.getAllItems(name, dataset.regionTypeAttr());
       haveRegions = true;
     } else { haveRegions = false; }
 
     if (!dataset.regionLengthAttr().equals("")) {
-      regionLengths = _dataIF.getAllItems(name, dataset.regionLengthAttr());
+      regionLengths = _delv.getAllItems(name, dataset.regionLengthAttr());
       haveRegionLengths = true;
     } else { haveRegionLengths = false; }
 
     if (!dataset.barLengthAttr().equals("")) {
-      barLengths = _dataIF.getAllItems(name, dataset.barLengthAttr());
+      barLengths = _delv.getAllItems(name, dataset.barLengthAttr());
       haveBarLengths = true;
     }
     else { haveBarLengths = false; }
 
     if (!dataset.barTypeAttr().equals("")) {
-      barTypes = _dataIF.getAllItems(name, dataset.barTypeAttr());
+      barTypes = _delv.getAllItems(name, dataset.barTypeAttr());
       haveBarTypes = true;
     }
     else { haveBarTypes = false; }
 
     if (!dataset.barHeightAttr().equals("")) {
-      barHeights = _dataIF.getAllItems(name, dataset.barHeightAttr());
+      barHeights = _delv.getAllItems(name, dataset.barHeightAttr());
       haveBarHeights = true;
     }
     else { haveBarHeights = false; }
 
     if (!dataset.barIdAttr().equals("")) {
-      barIds = _dataIF.getAllItems(name, dataset.barIdAttr());
+      barIds = _delv.getAllItems(name, dataset.barIdAttr());
     }
     else {
-      barIds = _dataIF.getAllIds(name, dataset.barStartAttr());
+      barIds = _delv.getAllIds(name, dataset.barStartAttr());
     }
     if (!dataset.barTagAttr().equals("")) {
-      barTags = _dataIF.getAllItems(name, dataset.barTagAttr());
+      barTags = _delv.getAllItems(name, dataset.barTagAttr());
     }
     else {
-      barTags = _dataIF.getAllIds(name, dataset.barStartAttr());
+      barTags = _delv.getAllIds(name, dataset.barStartAttr());
     }
 
     String[] regionTypes = new String[0];
     if (haveRegions) {
-      regionTypes = _dataIF.getAllCategories(name, dataset.regionTypeAttr());
+      regionTypes = _delv.getAllCats(name, dataset.regionTypeAttr());
     }
     else {
       regionTypes = new String[1];
@@ -406,7 +411,7 @@ class RegionView extends DelvBasicView {
 
     String[] possibleTypes = new String[0];
     if (haveBarTypes) {
-      possibleTypes = _dataIF.getAllCategories(name,dataset.barTypeAttr());
+      possibleTypes = _delv.getAllCats(name,dataset.barTypeAttr());
     }
     else {
       possibleTypes = new String[1];
@@ -476,8 +481,8 @@ class RegionView extends DelvBasicView {
 //     return regionMap;
   } // end addDatasetToRegionMap
 
-  void reloadData(String source) {
-    if (_delvIF == null) {
+  void onDataChanged(String source) {
+    if (_delv == null) {
       return;
     }
     // TODO right now assumes that there is always a region above if there is also a region below
@@ -517,7 +522,7 @@ class RegionView extends DelvBasicView {
   void updateRegionVisibility() {
     String[] visibleRegions;
     if (!_above_dataset.regionTypeAttr().equals("")) {
-      visibleRegions = _dataIF.getVisibleCategories(_above_dataset.name(), _above_dataset.regionTypeAttr());
+      visibleRegions = _delv.getFilterCats(_above_dataset.name(), _above_dataset.regionTypeAttr());
     }
     else {
       visibleRegions = new String[1];
@@ -529,7 +534,7 @@ class RegionView extends DelvBasicView {
   void updateFeatureVisibility() {
     String[] visibleFeatures;
     if (!_above_dataset.barTypeAttr().equals("")) {
-      visibleFeatures = _dataIF.getVisibleCategories(_above_dataset.name(), _above_dataset.barTypeAttr());
+      visibleFeatures = _delv.getFilterCats(_above_dataset.name(), _above_dataset.barTypeAttr());
     }
     else {
       // TODO save this structure off to save time?
@@ -541,8 +546,8 @@ class RegionView extends DelvBasicView {
     if (!_above_dataset.barTypeAttr().equals("")) {
       // TODO should we use colorAttr instead of specifying attr here?
       String[][] colorStrs;
-      colorStrs = _dataIF.getVisibleCategoryColors(_above_dataset.name(),
-                                                   _above_dataset.barTypeAttr());
+      colorStrs = _delv.getFilterCatColors(_above_dataset.name(),
+                                           _above_dataset.barTypeAttr());
       for (int i = 0; i < colorStrs.length; i++) {
         String[] cStr = colorStrs[i];
         color c = color(int(cStr[0]), int(cStr[1]), int(cStr[2]));
@@ -551,8 +556,13 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void updateHoveredId(String id) {
-    setIntervalFeatureAboveHoveredId(id);
+  void updateHoveredIds(String[] ids) {
+    // TODO can only handle one item rolled over here, so arbitrarily take the first one
+    if (ids.length > 0) {
+      setIntervalFeatureAboveHoveredId(ids[0]);
+    } else {
+      setIntervalFeatureAboveHoveredId("");
+    }
   }
 
   void updateHoveredCategory(String cat) {
@@ -1361,7 +1371,7 @@ class RegionView extends DelvBasicView {
     }
 
     // need to always call to make sure hovered_feature is alway up-to-date
-    hoveredId(hovered_feature);
+    hoverItem(hovered_feature);
 
   }
 

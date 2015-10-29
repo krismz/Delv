@@ -55,7 +55,7 @@ class AlignmentView extends DelvBasicView {
   void alignmentChanged(String alignment) {
     if (!alignment.equals("")) {
       // an example of how to emit a custom signal to other delv views
-      _delvIF.emitSignal("alignmentChanged", _name, "", alignment);
+      _delv.emitSignal("alignmentChanged", _name, "", alignment);
     }
   }
 

@@ -13,6 +13,10 @@ import java.util.Map.Entry;
 interface Delv {
   void log(String msg);
   void emitEvent(String name, String detail);
+  // TODO document these better
+  // standard signals:
+  // sortChanged, hoverChanged, selectChanged, filterChanged, colorChanged, encodingChanged, navChanged, lodChanged,
+  // hoverColorChanged, selectColorChanged, filterColorChanged, likeColorChanged
   void emitSignal(String signal, String invoker, String dataset);
   void emitSignal(String signal, String invoker, String dataset, String detail);
   void emitSignal(String signal, String invoker, String dataset, String[] details);
@@ -20,7 +24,7 @@ interface Delv {
   void connectToSignal(String signal, String name, String method);
   void disconnectFromSignal(String signal, String name);
   DelvView getView(String name);
-  void addView(DelvView view, String name);
+  void addView(DelvView view);
   void runInThread(Object obj, String name);
 
   ////////////////////
@@ -39,6 +43,7 @@ interface Delv {
   String[] getAllCats(String dataset, String attribute);
   String[] getCatColor(String dataset, String attribute, String category);
   String[][] getCatColors(String dataset, String attribute);
+  String[][] getFilterCatColors(String dataset, String attribute);
   String[] getCatEncoding(String dataset, String attribute, String category);
   String[][] getCatEncodings(String dataset, String attribute);
 
@@ -164,10 +169,10 @@ interface Delv {
   // TODO need way to pass arbitrary shape definition (ie function) not just rectangular?
   // TODO need one call of select per attribute?  Or allow multiple at once?  what about multiple ranges per attribute? think need single range per attribute since ANDing across attribute array here. to be able to OR across ranges for single attribute, would need multiple calls to select
   // TODO same question for filter
-  void selectCats(String invoker, String dataset, String[] attributes, String[][] categories, String selectType);
-  void deselectCats(String invoker, String dataset, String[] attributes, String[][] categories, String selectType);
-  void selectRanges(String invoker, String dataset, String[] attributes, String[][] mins, String[][] maxes, String selectType);
-  void deselectRanges(String invoker, String dataset, String[] attributes, String[][] mins, String[][] maxes, String selectType);
+  void selectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void deselectCats(String invoker, String dataset, String[] attributes, String[] categories, String selectType);
+  void selectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String invoker, String dataset, String[] attributes, String[] mins, String[] maxes, String selectType);
   void selectLike(String invoker, String dataset, String[] identifiers, String[] relationships, String selectType);
   void deselectLike(String invoker, String dataset, String[] identifiers, String[] relationships, String selectType);
   void selectLike(String invoker, String dataset, String[][] coordinates, String[] relationships, String selectType);
@@ -177,6 +182,7 @@ interface Delv {
 
   // TODO need filter clearing API too
   void filterCats(String invoker, String dataset, String attribute, String[] categories);
+  void toggleCatFilter(String invoker, String dataset, String attribute, String category);
   void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes);
   // TODO can we specify a coordinate in a multidimensional table as a single string?  Do we even want to?  Can we specify a generic data relationship as a string?  Is there some other representation we want to use here?
   void filterLike(String invoker, String dataset, String[] identifiers, String[] relationships);
@@ -244,6 +250,13 @@ interface Delv {
 
   String[] getFilterIds(String dataset);
   String[][] getFilterCoords(String dataset);
+  // TODO Doc: There are two uses here that are conflated
+  // 1. get the filter specification for the particular attribute
+  // 2. get the categories of the filtered data for the particular attribute
+  // the first characterizes the possible filtered range for the attribute
+  // the second characterizes the spread of the actual filtered data
+  // views will need these at different times, so need to specify two interfaces
+  // TODO for now, getFilterCats, getFilterRanges will return #1
   String[] getFilterCats(String dataset, String attribute);
   String[][] getFilterRanges(String dataset, String attribute);
   String[][] getFilterLike(String dataset);
@@ -338,14 +351,17 @@ interface DelvDataSet {
   String getName();
   void setName(String name);
 
+  // bind Delv for adding interior datasets
+  void bindDelv(Delv dlv);
+
   // operations
   // sort
   // possible values of sortType: ascending, descending
-  void sortByVal(String invoker, String attribute, String sortType);
+  void sortByVal(String attribute, String sortType);
   // possible values of similarity sortType: similarity, dissimilarity
-  void sortBySimilarity(String invoker, String identifier, String sortType);
-  void sortSimilarity(String invoker, String[] coordinate, String sortType);
-  void clearSort(String invoker);
+  void sortBySimilarity(String identifier, String sortType);
+  void sortBySimilarity(String[] coordinate, String sortType);
+  void clearSort();
   String[][] getSortCriteria();
 
   // TODO transforms
@@ -405,21 +421,38 @@ interface DelvDataSet {
   Float[] getAllItemsAsFloat(String attr);
   float[][] getAllItemsAsFloatArray(String attr);
   String[][] getAllItemsAsStringArray(String attr);
+  
+  String[] getHoverItems(String attr);
+  Float[] getHoverItemsAsFloat(String attr);
+  float[][] getHoverItemsAsFloatArray(String attr);
+  String[][] getHoverItemsAsStringArray(String attr);
+  
+  String[] getSelectItems(String attr, String selectType);
+  Float[] getSelectItemsAsFloat(String attr, String selectType);
+  float[][] getSelectItemsAsFloatArray(String attr, String selectType);
+  String[][] getSelectItemsAsStringArray(String attr, String selectType);
+  
   String[] getFilterItems(String attr);
   Float[] getFilterItemsAsFloat(String attr);
   float[][] getFilterItemsAsFloatArray(String attr);
   String[][] getFilterItemsAsStringArray(String attr);
+  
+  String[] getNavItems(String attr);
+  Float[] getNavItemsAsFloat(String attr);
+  float[][] getNavItemsAsFloatArray(String attr);
+  String[][] getNavItemsAsStringArray(String attr);
+  String getNumNavItems();
 
   String[] getItemColor(String colorByAttr, String id);
   String[] getItemColor(String colorByAttr, String[] coord);
-  String[][] getAllItemColors(String colorByAttr);
+  String[][] getItemColors(String colorByAttr);
   String[] getItemEncoding(String encodingByAttr, String id);
   String[] getItemEncoding(String encodingByAttr, String[] coord);
   String[][] getItemEncodings(String encodingByAttr);
 
   String[] getItemAttrColor(String colorByAttr, String id);
   String[] getItemAttrColor(String colorByAttr, String[] coord);
-  String[][] getAllItemAttrColors(String colorByAttr);
+  String[][] getItemAttrColors(String colorByAttr);
   String[] getItemAttrEncoding(String encodingByAttr, String id);
   String[] getItemAttrEncoding(String encodingByAttr, String[] coord);
   String[][] getItemAttrEncodings(String encodingByAttr);
@@ -437,12 +470,6 @@ interface DelvDataSet {
   void panItem(String[] coord);
   void zoomItem(String numItems);
 
-  String[] getHoverItems(String attr);
-  String[] getSelectItems(String attr, String selectType);
-  String[][] getFilterItems(String attr);
-  String getNumNavItems();
-  String getNavItems(String attr);
-
   // attributes
   void clearAttributes();
   void addAttr(DelvBasicAttribute attr);
@@ -450,18 +477,19 @@ interface DelvDataSet {
   String[] getAttrs();
   String[] getAllCats(String attr);
   String[] getCatColor(String attr, String cat);
-  String[][] getAllCatColors(String attr);
+  String[][] getCatColors(String attr);
   String[][] getFilterCatColors(String attr);
   String[] getCatEncoding(String attr, String cat);
   String[][] getCatEncodings(String attr);
 
   void hoverCat(String attr, String cat);
   void hoverRange(String attr, String minVal, String maxVal);
-  void selectCats(String[] attrs, String[][] cats, String selectType);
-  void deselectCats(String[] attrs, String[][] cats, String selectType);
-  void selectRanges(String[] attrs, String[][] mins, String[][] maxes, String selectType);
-  void deselectRanges(String[] attrs, String[][] mins, String[][] maxes, String selectType);
+  void selectCats(String[] attrs, String[] cats, String selectType);
+  void deselectCats(String[] attrs, String[] cats, String selectType);
+  void selectRanges(String[] attrs, String[] mins, String[] maxes, String selectType);
+  void deselectRanges(String[] attrs, String[] mins, String[] maxes, String selectType);
   void filterCats(String attr, String[] cats);
+  void toggleCatFilter(String attr, String cat);
   void filterRanges(String attr, String[] mins, String[] maxes);
 
   void colorCat(String attr, String cat, String[] rgbaColor);
@@ -476,9 +504,11 @@ interface DelvDataSet {
   // width specified in data space
   void navRange(String attr, String center, String width);
 
+  void panVal(String attr, String val);
   void panCat(String attr, String cat);
   void panRange(String attr, String center);
 
+  void zoomVal(String attr, String leftVal, String rightVal);
   void zoomCat(String attr, String numCats);
   void zoomRange(String attr, String minVal, String maxVal);
   // width specified in data space
@@ -555,6 +585,8 @@ interface DelvDataSet {
 
 interface DelvAttribute {
 
+  boolean isCategorical();
+
   String getName();
   void setName(String name);
 
@@ -592,14 +624,25 @@ interface DelvAttribute {
   String[] getItemAttrEncoding(String[] coord);
 
   String[] getAllCats();
+  String[] getFilterCats();
   String[] getCatColor(String cat);
-  String[][] getAllCatColors();
+  String[][] getCatColors();
   String[] getCatEncoding(String cat);
   String[][] getCatEncodings();
+  String getMinVal();
+  String getMaxVal();
 
   void colorCat(String cat, String[] rgbaColor);
   // TODO how to define a glyph encoding in a cross-language manner?
   void encodeCat(String cat, String encoding);
+
+  // all items pass filter
+  void filterAll();
+  // all items fail filter
+  void filterNone();
+  void toggleCatFilter(String cat);
+  boolean isFiltered(String id);
+  boolean isFiltered(String[] coord);
 
 } // end interface DelvAttribute
 
@@ -618,7 +661,7 @@ interface DelvColorMap {
 ///////////////////////////////////////////
 
 void notImplemented(String obj, String method, String args) {
-  log(""+obj+"."+method+"("+args+") not implemented");
+  println(""+obj+"."+method+"("+args+") not implemented");
 }
 
 public class DelvImpl implements Delv {
@@ -630,7 +673,7 @@ public class DelvImpl implements Delv {
   String[] _hoverColor;
   String[] _filterColor;
   String[] _likeColor;
-  HashMap< String, boolean > _selectColorsSet;
+  HashMap< String, Boolean > _selectColorsSet;
   boolean _hoverColorSet;
   boolean _filterColorSet;
   boolean _likeColorSet;
@@ -647,10 +690,10 @@ public class DelvImpl implements Delv {
     _selectColors.put( "TERTIARY", toRGBAString( color_(234, 231, 57) ) );
     _filterColor = toRGBAString( color_(140, 200, 235) );
     _likeColor = toRGBAString( color_(180, 71, 241) );
-    _selectColorsSet = new HashMap< String, boolean >();
-    _selectColors.put( "PRIMARY", false );
-    _selectColors.put( "SECONDARY", false );
-    _selectColors.put( "TERTIARY", false );
+    _selectColorsSet = new HashMap< String, Boolean >();
+    _selectColorsSet.put( "PRIMARY", false );
+    _selectColorsSet.put( "SECONDARY", false );
+    _selectColorsSet.put( "TERTIARY", false );
     _hoverColorSet = false;
     _filterColorSet = false;
     _likeColorSet = false;
@@ -664,7 +707,7 @@ public class DelvImpl implements Delv {
     notImplemented("DelvImpl","emitEvent", name +", " + detail);
   }
 
-  void emitSignal(String signal, String invoker, String dataset attribute) {
+  void emitSignal(String signal, String invoker, String dataset) {
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset);
     Class[] params = new Class[2];
     params[0] = invoker.getClass();
@@ -683,7 +726,7 @@ public class DelvImpl implements Delv {
         try {
           // since we don't have entrySet yet, do the following instead:
           //Method m = view.getClass().getMethod(entry.getValue(), params);
-          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          Method m = view.getClass().getMethod(_signalHandlers.get(signal).get(key), params);
           m.invoke(view, args);
         } catch (IllegalArgumentException e) {
           e.printStackTrace();
@@ -719,9 +762,15 @@ public class DelvImpl implements Delv {
         // view = views.get(entry.getKey());
         DelvView view = _views.get(key);
         try {
+          if (view == null) {
+            println("View is null, key: " + key);
+          }
           // since we don't have entrySet yet, do the following instead:
           //Method m = view.getClass().getMethod(entry.getValue(), params);
-          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          Method m = view.getClass().getMethod(_signalHandlers.get(signal).get(key), params);
+          if (m == null) {
+            println("Method is null for view " + view.name());
+          }
           m.invoke(view, args);
         } catch (IllegalArgumentException e) {
           e.printStackTrace();
@@ -767,7 +816,7 @@ public class DelvImpl implements Delv {
         try {
           // since we don't have entrySet yet, do the following instead:
           //Method m = view.getClass().getMethod(entry.getValue(), params);
-          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          Method m = view.getClass().getMethod(_signalHandlers.get(signal).get(key), params);
           m.invoke(view, args);
         } catch (IllegalArgumentException e) {
           e.printStackTrace();
@@ -808,7 +857,7 @@ public class DelvImpl implements Delv {
         try {
           // since we don't have entrySet yet, do the following instead:
           //Method m = view.getClass().getMethod(entry.getValue(), params);
-          Method m = view.getClass().getMethod(signalHandlers.get(signal).get(key), params);
+          Method m = view.getClass().getMethod(_signalHandlers.get(signal).get(key), params);
           m.invoke(view, args);
         } catch (IllegalArgumentException e) {
           e.printStackTrace();
@@ -844,17 +893,18 @@ public class DelvImpl implements Delv {
   DelvView getView(String name) {
     return _views.get(name);
   }
-  void addView(DelvView view, String name) {
-    _views.put(name, view);
+  void addView(DelvView view) {
+    view.bindDelv(this);
+    _views.put(view.name(), view);
   }
 
   void reloadData() {
-    reloadData("Delv");
+    onDataChanged("Delv");
   }
-  void reloadData(String source) {
+  void onDataChanged(String source) {
     log("reloading data");
      for (DelvView view : _views.values()) {
-       view.reloadData(source);
+       view.onDataChanged(source);
      }
      draw();
   }
@@ -879,6 +929,7 @@ public class DelvImpl implements Delv {
   }
 
   void addDataSet(String name, DelvDataSet dataset) {
+    dataset.bindDelv(this);
     _datasets.put(name, dataset);
   }
   DelvDataSet getDataSet(String name) {
@@ -939,6 +990,15 @@ public class DelvImpl implements Delv {
       return new String[0][];
     }
   }
+  String[][] getFilterCatColors(String dataset, String attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.getFilterCatColors(attribute);
+    } else {
+      log("Warning in getFilterCatColors! Dataset <"+dataset+"> does not exist.");
+      return new String[0][];
+    }
+  }
   String[] getCatEncoding(String dataset, String attribute, String category) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -951,7 +1011,7 @@ public class DelvImpl implements Delv {
   String[][] getCatEncodings(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getCatEncodings(dataset, attribute);
+      return ds.getCatEncodings(attribute);
     } else {
       log("Warning in getCatEncodings! Dataset <"+dataset+"> does not exist.");
       return new String[0][];
@@ -996,7 +1056,7 @@ public class DelvImpl implements Delv {
   void setFloatItem(String dataset, String attribute, String[] coordinate, Float item) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.setFloatItem(, attribute, coordinate, item);
+      ds.setFloatItem(attribute, coordinate, item);
     } else {
       log("Warning in setFloatItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -1318,7 +1378,7 @@ public class DelvImpl implements Delv {
       return ds.getItemColors(colorByAttribute);
     } else {
       log("Warning in getItemColors! Dataset <"+dataset+"> does not exist.");
-      return String[0][];
+      return new String[0][];
     }
   }
   String[] getItemEncoding(String dataset, String encodingByAttribute, String identifier) {
@@ -1358,7 +1418,7 @@ public class DelvImpl implements Delv {
       return ds.getItemAttrColors(colorByAttribute);
     } else {
       log("Warning in getItemAttrColors! Dataset <"+dataset+"> does not exist.");
-      return String[0][];
+      return new String[0][];
     }
   }
   String[] getItemAttrEncoding(String dataset, String encodingByAttribute, String identifier) {
@@ -1421,7 +1481,7 @@ public class DelvImpl implements Delv {
   void sortBySimilarity(String invoker, String dataset, String identifier, String sortType) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.sortBySimilarity(attribute, sortType);
+      ds.sortBySimilarity(identifier, sortType);
       emitSignal("sortChanged", invoker, dataset, identifier);
     } else {
       log("Warning in sortBySimilarity! Dataset <"+dataset+"> does not exist.");
@@ -1430,7 +1490,7 @@ public class DelvImpl implements Delv {
   void sortBySimilarity(String invoker, String dataset, String[] coordinate, String sortType) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.sortBySimilarity(attribute, sortType);
+      ds.sortBySimilarity(coordinate, sortType);
       emitSignal("sortChanged", invoker, dataset, coordinate);
     } else {
       log("Warning in sortBySimilarity! Dataset <"+dataset+"> does not exist.");
@@ -1486,7 +1546,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverCat(attribute, category);
-      emitSignal("hoverChanged", invoker, dataset, "CAT", attribute);
+      emitSignal("hoverChanged", invoker, dataset, "CAT");
     } else {
       log("Warning in hoverCat! Dataset <"+dataset+"> does not exist.");
     }
@@ -1495,7 +1555,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverRange(attribute, minVal, maxVal);
-      emitSignal("hoverChanged", invoker, dataset, "RANGE", attribute);
+      emitSignal("hoverChanged", invoker, dataset, "RANGE");
     } else {
       log("Warning in hoverRange! Dataset <"+dataset+"> does not exist.");
     }
@@ -1514,7 +1574,8 @@ public class DelvImpl implements Delv {
   void hoverLike(String invoker, String dataset, String[] coordinate, String relationship) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.hoverLike(identifier, coordinate, relationship);
+      ds.hoverLike(coordinate, relationship);
+      // TODO transmit coordinate or relationship or both?
       emitSignal("hoverChanged", invoker, dataset, "LIKE");
     } else {
       log("Warning in hoverLike! Dataset <"+dataset+"> does not exist.");
@@ -1677,6 +1738,16 @@ public class DelvImpl implements Delv {
       log("Warning in filterCats! Dataset <"+dataset+"> does not exist.");
     }
   }
+  void toggleCatFilter(String invoker, String dataset, String attribute, String category) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      ds.toggleCatFilter(attribute, category);
+      emitSignal("filterChanged", invoker, dataset, "CAT");
+    } else {
+      log("Warning in toggleCatFilter! Dataset <"+dataset+"> does not exist.");
+    }
+  }
+
   void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -1690,7 +1761,7 @@ public class DelvImpl implements Delv {
   void filterLike(String invoker, String dataset, String[] identifiers, String[] relationships) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.filterLike(identifiers, categories);
+      ds.filterLike(identifiers, relationships);
       emitSignal("filterChanged", invoker, dataset, "LIKE");
     } else {
       log("Warning in filterLike! Dataset <"+dataset+"> does not exist.");
@@ -1699,7 +1770,7 @@ public class DelvImpl implements Delv {
   void filterLike(String invoker, String dataset, String[][] coordinates, String[] relationships) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.filterLike(coordinates, categories);
+      ds.filterLike(coordinates, relationships);
       emitSignal("filterChanged", invoker, dataset, "LIKE");
     } else {
       log("Warning in filterLike! Dataset <"+dataset+"> does not exist.");
@@ -1711,7 +1782,7 @@ public class DelvImpl implements Delv {
       ds.clearFilter();
       emitSignal("filterChanged", invoker, dataset, "CLEAR");
     } else {
-      log("Warning in filterCats! Dataset <"+dataset+"> does not exist.");
+      log("Warning in clearFilter! Dataset <"+dataset+"> does not exist.");
     }
   }
 
@@ -1981,7 +2052,7 @@ public class DelvImpl implements Delv {
   String getHoverCat(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getHoverCat();
+      return ds.getHoverCat(attribute);
     } else {
       log("Warning in getHoverCat! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -1990,7 +2061,7 @@ public class DelvImpl implements Delv {
   String[] getHoverRange(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getHoverRange();
+      return ds.getHoverRange(attribute);
     } else {
       log("Warning in getHoverRange! Dataset <"+dataset+"> does not exist.");
       return new String[0];
@@ -2028,7 +2099,7 @@ public class DelvImpl implements Delv {
   String[] getSelectCats(String dataset, String attribute, String selectType) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getSelectCats(selectType);
+      return ds.getSelectCats(attribute, selectType);
     } else {
       log("Warning in getSelectCats! Dataset <"+dataset+"> does not exist.");
       return new String[0];
@@ -2037,7 +2108,7 @@ public class DelvImpl implements Delv {
   String[][] getSelectRanges(String dataset, String attribute, String selectType) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getSelectRanges(selectType);
+      return ds.getSelectRanges(attribute, selectType);
     } else {
       log("Warning in getSelectRanges! Dataset <"+dataset+"> does not exist.");
       return new String[0][];
@@ -2083,7 +2154,7 @@ public class DelvImpl implements Delv {
   String[] getFilterCats(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getFilterCats();
+      return ds.getFilterCats(attribute);
     } else {
       log("Warning in getFilterCats! Dataset <"+dataset+"> does not exist.");
       return new String[0];
@@ -2092,7 +2163,7 @@ public class DelvImpl implements Delv {
   String[][] getFilterRanges(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getFilterRanges();
+      return ds.getFilterRanges(attribute);
     } else {
       log("Warning in getFilterRanges! Dataset <"+dataset+"> does not exist.");
       return new String[0][];
@@ -2166,7 +2237,7 @@ public class DelvImpl implements Delv {
   String getNavCenterVal(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavCenterVal();
+      return ds.getNavCenterVal(attribute);
     } else {
       log("Warning in getNavCenterVal! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2175,7 +2246,7 @@ public class DelvImpl implements Delv {
   String getNavLeftVal(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavLeftVal();
+      return ds.getNavLeftVal(attribute);
     } else {
       log("Warning in getNavLeftVal! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2184,7 +2255,7 @@ public class DelvImpl implements Delv {
   String getNavRightVal(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavRightVal();
+      return ds.getNavRightVal(attribute);
     } else {
       log("Warning in getNavRightVal! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2193,7 +2264,7 @@ public class DelvImpl implements Delv {
   String getNumNavCats(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNumNavCats();
+      return ds.getNumNavCats(attribute);
     } else {
       log("Warning in getNumNavCats! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2202,7 +2273,7 @@ public class DelvImpl implements Delv {
   String getNavMinVal(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavMinVal();
+      return ds.getNavMinVal(attribute);
     } else {
       log("Warning in getNavMinVal! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2211,7 +2282,7 @@ public class DelvImpl implements Delv {
   String getNavMaxVal(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavMaxVal();
+      return ds.getNavMaxVal(attribute);
     } else {
       log("Warning in getNavMaxVal! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2220,7 +2291,7 @@ public class DelvImpl implements Delv {
   String getNavWidth(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      return ds.getNavWidth();
+      return ds.getNavWidth(attribute);
     } else {
       log("Warning in getNavWidth! Dataset <"+dataset+"> does not exist.");
       return "";
@@ -2346,7 +2417,7 @@ public class DelvImpl implements Delv {
   void clearHoverColor(String invoker, String dataset) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.clearHoverColor(rgbaColor);
+      ds.clearHoverColor();
       emitSignal("hoverColorChanged", invoker, dataset);
     } else {
       log("Warning in clearHoverColor! Dataset <"+dataset+"> does not exist.");
@@ -2367,7 +2438,7 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
-      ds.selectColor(selectType);
+      ds.clearSelectColor(selectType);
       emitSignal("selectColorChanged", invoker, dataset, selectType);
     } else {
       log("Warning in clearSelectColor! Dataset <"+dataset+"> does not exist.");
@@ -2436,6 +2507,7 @@ public class DelvImpl implements Delv {
       log("Warning in getSelectColor! Dataset <"+dataset+"> does not exist.");
       return _selectColors.get(selectType);
     }
+  }
   String[] getFilterColor(String dataset) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -2482,15 +2554,15 @@ public class DelvBasicView implements DelvView {
   int _backgroundColor;
   boolean _drawBox;
   String[][] _coords;
-  String[] _hoverCoord;
+  String[][] _hoverCoords;
   HashMap<String, String[][]> _selectCoords;
   String[][] _filterCoords;
   String[][] _likeCoords;
   String _label;
-  int _hoveredIdx;
+  int[] _hoveredIdx;
   HashMap<String, int[]> _selectedIdx;
   int[] _filteredIdx;
-  int[] _likeIdx;
+  int[] _navIdx;
   Delv _delv;
   String _name;
   String _datasetName;
@@ -2505,22 +2577,22 @@ public class DelvBasicView implements DelvView {
     _origin = origin;
     _w = w;
     _h = h;
-    _background_color = color_(255);
+    _backgroundColor = color_(255);
     _drawBox = true;
     // TODO how and when to get dimension of unique coordinates?
     _coords = new String[0][];
-    _hoverCoord = new String[] {""};
+    _hoverCoords = new String[0][];
     _selectCoords = new HashMap<String, String[][]>();
     _selectCoords.put("PRIMARY", new String[0][]);
     _selectCoords.put("SECONDARY", new String[0][]);
     _selectCoords.put("TERTIARY", new String[0][]);
-    _hoveredIdx = -1;
+    _hoveredIdx = new int[0];
     _selectedIdx = new HashMap<String, int[]>();
     _selectedIdx.put("PRIMARY", new int[0]);
     _selectedIdx.put("SECONDARY", new int[0]);
     _selectedIdx.put("TERTIARY", new int[0]);
     _filteredIdx = new int[0];
-    _likeIdx = new int[0];
+    _navIdx = new int[0];
     _colorAttr = "";
   }
   public DelvBasicView() { this("BasicView", new int[2], 100, 100); }
@@ -2538,10 +2610,10 @@ public class DelvBasicView implements DelvView {
     return this;
   }
 
-  public String datasetName() {
+  public String dataSet() {
     return _datasetName;
   }
-  public DelvBasicView datasetName(String name) {
+  public DelvBasicView dataSet(String name) {
     _datasetName = name;
     return this;
   }
@@ -2563,12 +2635,12 @@ public class DelvBasicView implements DelvView {
     _delv.connectToSignal("hoverChanged", _name, "onHoverChanged");
     _delv.connectToSignal("selectChanged", _name, "onSelectChanged");
     _delv.connectToSignal("filterChanged", _name, "onFilterChanged");
-    _delv.connectToSignal("likeChanged", _name, "onLikeChanged");
+    _delv.connectToSignal("navChanged", _name, "onNavChanged");
 
     // TODO instead of connecting to colorChanged, hoverColorChanged, filterColorChanged etc,
     // just get the item color for each item from Delv at render time
 
-    // TODO hook up encodingChanged?  navChanged?
+    // TODO hook up encodingChanged?
 
   }
 
@@ -2589,20 +2661,18 @@ public class DelvBasicView implements DelvView {
   void onHoverChanged(String invoker, String dataset, String coordination) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
-         dataset.equals(_datasetName) ) {
-      setHoveredCoord( _delv.getHoverCoord(_datasetName) );
-      }
+         dataset.equals(_datasetName)) {
+      setHoveredCoords( _delv.getHoverCoords(_datasetName) );
     }
   }
   void onSelectChanged(String invoker, String dataset, String coordination, String selectType) {
     // for all coordination types, just get the coords
     // TODO support secondary / tertiary selections
     if ( !(invoker.equals(_name)) &&
-         dataset.equals(_datasetName) &&
-         selectType.equals("PRIMARY") ) {
+        dataset.equals(_datasetName) &&
+        selectType.equals("PRIMARY") ) {
       setSelectedCoords(_delv.getSelectCoords(_datasetName, selectType));
-        // TODO any redraw notification here?
-      }
+      // TODO any redraw notification here?
     }
   }
   void onFilterChanged(String invoker, String dataset, String coordination) {
@@ -2610,15 +2680,13 @@ public class DelvBasicView implements DelvView {
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
       setFilteredCoords( _delv.getFilterCoords(_datasetName) );
-      }
     }
   }
-  void onLikeChanged(String invoker, String dataset, String coordination) {
+  void onNavChanged(String invoker, String dataset, String coordination) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
-      setLikedCoords( _delv.getLikeCoords(_datasetName) );
-      }
+      setNavCoords( _delv.getNavCoords(_datasetName) );
     }
   }
 
@@ -2626,9 +2694,9 @@ public class DelvBasicView implements DelvView {
     // TODO handle selection updates
     // String[] selections;
     // selections = _dataIF.getSelectedIds(_datasetName);
-    setHoveredCoord( _delv.getHoverCoord(_datasetName) );
+    setHoveredCoords( _delv.getHoverCoords(_datasetName) );
     setFilteredCoords( _delv.getFilterCoords(_datasetName) );
-    setLikedCoords( _delv.getLikeCoords(_datasetName) );
+    setNavCoords( _delv.getNavCoords(_datasetName) );
     // TODO handle color / color map updates
   }
 
@@ -2657,9 +2725,9 @@ public class DelvBasicView implements DelvView {
   public int getOriginPlusHeight(){ return _origin[1] + _h; }
 
   // * * * Get/Set the background color * * * //
-  public int getBackgroundColor() { return _background_color; }
+  public int getBackgroundColor() { return _backgroundColor; }
   public DelvBasicView setBackgroundColor(int c) {
-    _background_color = c;
+    _backgroundColor = c;
     return this;
   }
 
@@ -2679,33 +2747,36 @@ public class DelvBasicView implements DelvView {
     return _coords[idx];
   }
 
-  public void setHoveredCoord(String[] coord) {
+  public void setHoveredCoords(String[][] coords) {
     // TODO actually pick a better data structure and algorithm
-    _hoveredIdx = -1;
-    _hoverCoord = coord;
-    for ( int idx = 0; idx < _coords.length; idx++ ) {
-      if (coordsEqual(_coords[idx], coord) {
-        _hoveredIdx = idx;
-        break;
+    _hoveredIdx = new int[coords.length];
+    _hoverCoords = coords;
+    for (int cc = 0; cc < coords.length; cc++) {
+      for ( int idx = 0; idx < _coords.length; idx++ ) {
+        if (coordsEqual(_coords[idx], coords[cc])) {
+          _hoveredIdx[cc] = idx;
+          break;
+        }
       }
     }
-    hoveredCoordUpdated();
+    hoveredCoordsUpdated();
     //redraw();
   }
   public void setSelectedCoords(String[][] coords) {
     // TODO actually pick a better data structure and algorithm
-    _selectedIdx = new int[coords.length];
+    int[] indices = new int[coords.length];
     // TODO handle secondary, tertiary selections
     _selectCoords.put("PRIMARY", coords);
     for ( int ii = 0; ii < coords.length; ii++) {
       String[] coord = coords[ii];
       for ( int idx = 0; idx < _coords.length; idx++ ) {
-        if (coordsEqual(_coords[idx], coord) {
-          _selectedIdx[ii] = idx;
+        if (coordsEqual(_coords[idx], coord)) {
+          indices[ii] = idx;
           break;
         }
       }
     }
+    _selectedIdx.put("PRIMARY", indices);
     selectedCoordsUpdated();
     draw();
   }
@@ -2715,7 +2786,7 @@ public class DelvBasicView implements DelvView {
     for ( int ii = 0; ii < coords.length; ii++) {
       String[] coord = coords[ii];
       for ( int idx = 0; idx < _coords.length; idx++ ) {
-        if (coordsEqual(_coords[idx], coord) {
+        if (coordsEqual(_coords[idx], coord)) {
           _filteredIdx[ii] = idx;
           break;
         }
@@ -2724,20 +2795,21 @@ public class DelvBasicView implements DelvView {
     filteredCoordsUpdated();
     //redraw();
   }
-  public void setLikedCoords(String[][] coords) {
-    _likedIdx = new int[coords.length];
-    _likeCoords = coords;
-    for ( int ii = 0; ii < coords.length; ii++) {
-      String[] coord = coords[ii];
-      for ( int idx = 0; idx < _coords.length; idx++ ) {
-        if (coordsEqual(_coords[idx], coord) {
-          _likedIdx[ii] = idx;
-          break;
-        }
-      }
-    }
-    likedCoordsUpdated();
-    //redraw();
+  public void setNavCoords(String[][] coords) {
+    notImplemented("DelvBasicView", "setNavCoords", "<coords>");
+    // _navIdx = new int[coords.length];
+    // _navCoords = coords;
+    // for ( int ii = 0; ii < coords.length; ii++) {
+    //   String[] coord = coords[ii];
+    //   for ( int idx = 0; idx < _coords.length; idx++ ) {
+    //     if (coordsEqual(_coords[idx], coord)) {
+    //       _navIdx[ii] = idx;
+    //       break;
+    //     }
+    //   }
+    // }
+    // navCoordsUpdated();
+    // //redraw();
   }
 
   public void hoverOn(int idx) {
@@ -2756,7 +2828,7 @@ public class DelvBasicView implements DelvView {
   public void renderBox() {
     // Render the box around the view
     noStroke();
-    fill( _background_color );
+    fill( _backgroundColor );
     rect(0, 0, _w, _h);
     noFill();
   }
@@ -2846,7 +2918,7 @@ public class DelvBasicView implements DelvView {
       mouseOutOfView();
     draw();
   }
-  public void movieEvent(MovieIF m) {}
+  public void movieEvent(DelvMovie m) {}
   // * * * Render the view (default just sets the background of the view) * * * //
   // override by each subclass
   public void render(){}
@@ -2863,7 +2935,7 @@ public class DelvBasicView implements DelvView {
   // one of these events happens
   public void labelUpdated() {}
   public void coordsUpdated() {}
-  public void hoveredCoordUpdated() {}
+  public void hoveredCoordsUpdated() {}
   public void selectedCoordsUpdated() {}
   public void filteredCoordsUpdated() {}
   public void likedCoordsUpdated() {}
@@ -2873,9 +2945,27 @@ public class DelvBasicView implements DelvView {
     hoverItem(coord, true);
   }
   public void hoverItem(String[] coord, boolean doDraw) {
-    if (!(coordEquals(coord,_hoverCoord))) {
-      _hoverCoord = coord;
+    if (_hoverCoords.length != 1 ||
+        !(coordsEqual(coord,_hoverCoords[0]))) {
+      String[][] coords = new String[1][];
+      coords[0] = coord;
+      _hoverCoords = coords;
       _delv.hoverItem(_name, _datasetName, coord);
+      if (doDraw) {
+        //redraw();
+      }
+    }
+  }
+  public void hoverItem(String id) {
+    hoverItem(id, true);
+  }
+  public void hoverItem(String id, boolean doDraw) {
+    String[][] coords = new String[1][];
+    coords[0] = idToCoord(id);
+    if (_hoverCoords.length != 1 ||
+        !(coordsEqual(coords[0],_hoverCoords[0]))) {
+      _hoverCoords = coords;
+      _delv.hoverItem(_name, _datasetName, coords[0]);
       if (doDraw) {
         //redraw();
       }
@@ -2916,16 +3006,15 @@ public class DelvCompositeView extends DelvBasicView {
 
   public void bindDelv(Delv dlv) {
     for (DelvBasicView view: _views) {
-      dlv.addView(view, view.name());
-      view.bindDelv(dlv);
+      dlv.addView(view);
     }
     super.bindDelv(dlv);
   }
 
-  public DelvBasicView datasetName(String name) {
+  public DelvBasicView dataSet(String name) {
     _datasetName = name;
     for (DelvBasicView view: _views) {
-      view.datasetName(name);
+      view.dataSet(name);
     }
     return this;
   }
@@ -3041,7 +3130,7 @@ public class DelvCompositeView extends DelvBasicView {
     }
   }
 
-  public void movieEvent(MovieIF m) {
+  public void movieEvent(DelvMovie m) {
     for (DelvBasicView view : _views) {
       view.movieEvent(m);
     }
@@ -3080,7 +3169,7 @@ public class DelvCategoryView extends DelvBasicView {
     _filterCats = new String[0];
     _filterCatColors = new color[0];
     _colorCat = "";
-    _selectCats = new HashMap<String, String>();
+    _selectCats = new HashMap<String, String[]>();
     _selectCats.put("PRIMARY", new String[0]);
     _selectCats.put("SECONDARY", new String[0]);
     _selectCats.put("TERTIARY", new String[0]);
@@ -3129,7 +3218,7 @@ public class DelvCategoryView extends DelvBasicView {
 
   public void updateFilters() {
     String[] selections;
-    selections = _dataIF.getFilterCats(_datasetName, _catAttr);
+    selections = _delv.getFilterCats(_datasetName, _catAttr);
     if (_doSort) {
       selections = sort(selections);
     }
@@ -3179,6 +3268,7 @@ public class DelvCategoryView extends DelvBasicView {
     }
   }
   public void onHoverChanged(String invoker, String dataset, String coordination) {
+    super.onHoverChanged(invoker, dataset, coordination);
     if (invoker.equals(_name)) {
       _delv.log(_name+".onHoverChanged(" + dataset + ", " + coordination + ") triggered by self");
     } else {
@@ -3225,6 +3315,19 @@ public class DelvCategoryView extends DelvBasicView {
     cats[0] = cat;
     selectCats(cats, "PRIMARY", doDraw);
   }
+  public void selectCat(String cat, String selectType) {
+    String[] cats = new String[1];
+    cats[0] = cat;
+    selectCats(cats, selectType, true);
+  }
+  public void selectCat(String cat, String selectType, boolean doDraw) {
+    // TODO decide whether selectionChanged should only be issued for different
+    // selections vs repeats of the same.
+    // if (!(cat.equals(_selectCat))) {
+    String[] cats = new String[1];
+    cats[0] = cat;
+    selectCats(cats, selectType, doDraw);
+  }
   // more general selection helpers
   public void selectCats(String[] cats, String selectType) {
     selectCats(cats, selectType, true);
@@ -3233,9 +3336,7 @@ public class DelvCategoryView extends DelvBasicView {
     _selectCats.put(selectType, cats);
     String[] attrs = new String[1];
     attrs[0] = _catAttr;
-    String[] catss = new String[1][];
-    catss[0] = cats;
-    _delv.selectCats(_name, _datasetName, attrs, catss);
+    _delv.selectCats(_name, _datasetName, attrs, cats, selectType);
     if (doDraw) {
       draw();
     }
@@ -3257,12 +3358,12 @@ public class DelvCategoryView extends DelvBasicView {
   public void filterCat(String cat) {
     String[] cats = new String[1];
     cats[0] = cat;
-    filterCat(cats, true);
+    filterCats(cats, true);
   }
   public void filterCat(String cat, boolean doDraw) {
     String[] cats = new String[1];
     cats[0] = cat;
-    filterCat(cats, doDraw);
+    filterCats(cats, doDraw);
   }
   public void filterCats(String[] cats) {
     filterCats(cats, true);
@@ -3274,28 +3375,54 @@ public class DelvCategoryView extends DelvBasicView {
       draw();
     }
   }
+  public void toggleCatFilter(String cat) {
+    toggleCatFilter(cat, true);
+  }
+  public void toggleCatFilter(String cat, boolean doDraw) {
+    int foundIdx = -1;
+    for (int idx = 0; idx < _filterCats.length; idx++) {
+      if (_filterCats[idx].equals(cat)) {
+        foundIdx = idx;
+        break;
+      }
+    }
+    if (foundIdx >= 0) {
+      String[] tmpCats = new String[_filterCats.length-1];
+      System.arraycopy(_filterCats, 0, tmpCats, 0, foundIdx);
+      System.arraycopy(_filterCats, foundIdx+1, tmpCats, foundIdx, _filterCats.length - (foundIdx+1));
+      _filterCats = tmpCats;
+    } else {
+      String[] tmpCats = new String[_filterCats.length+1];
+      System.arraycopy(_filterCats, 0, tmpCats, 0, _filterCats.length);
+      tmpCats[_filterCats.length] = cat;
+      _filterCats = tmpCats;
+    }
+
+    _delv.toggleCatFilter(_name, _datasetName, _catAttr, cat);
+    if (doDraw) {
+      draw();
+    }
+  }
   public void coloredCat(String cat, color c) {
     coloredCat(cat, c, true);
   }
   public void coloredCat(String cat, color c, boolean doDraw) {
-    if (!(cat.equals(_colorCat))) {
-      _colorCat = cat;
-      // TODO, how do we know when to updateCategoryColor
-      // vs when to update item color or range color?
-      // ANSWER (keep track of this for write-up): item colors will never be changed directly, so only ever updating categories or ranges.  So create two interfaces
-      // colorCat for updating categoryColor, and colorRange for updating a continuous range w/ color.
-      _delv.colorCat(_name, _datasetName, _colorAttr, _colorCat, toRGBAString(c));
-      if (doDraw) {
-        draw();
-      }
+    _colorCat = cat;
+    // TODO, how do we know when to updateCategoryColor
+    // vs when to update item color or range color?
+    // ANSWER (keep track of this for write-up): item colors will never be changed directly, so only ever updating categories or ranges.  So create two interfaces
+    // colorCat for updating categoryColor, and colorRange for updating a continuous range w/ color.
+    _delv.colorCat(_name, _datasetName, _colorAttr, _colorCat, toRGBAString(c));
+    if (doDraw) {
+      draw();
     }
   }
 
   // override these if you need to do a one-time calculation when these events happen
   public void catUpdated() {}
-  public void filterCatUpdated() {}
+  public void filterCatsUpdated() {}
   public void hoveredCatUpdated() {}
-  public void selectedCatUpdated() {}
+  public void selectedCatsUpdated() {}
   public void catColorsUpdated() {}
   public void filterCatColorsUpdated() {}
 
@@ -3303,10 +3430,10 @@ public class DelvCategoryView extends DelvBasicView {
 
 // Delv1DView
 // A view that can render one dimension of data
-// Since it inherits from DelvBasicView, it also
-// has access to the colorAttr
+// Since it inherits from DelvCategoryView, it also
+// has access to the colorAttr and the catAttr
 
-class Delv1DView extends DelvBasicView {
+class Delv1DView extends DelvCategoryView {
   String _dim1Attr;
   String[] _dim1;
 
@@ -3344,7 +3471,7 @@ class Delv1DView extends DelvBasicView {
       data = _delv.getAllItems(_datasetName, _dim1Attr);
       setDim1(data);
       String[][] coords;
-      ids = _delv.getAllCoords(_datasetName, _dim1Attr);
+      coords = _delv.getAllCoords(_datasetName, _dim1Attr);
       setCoords(coords);
     }
     super.onDataChanged(source);
@@ -3456,7 +3583,6 @@ class Delv2DView extends Delv1DView {
         result = 31 * result + (second != null ? second.hashCode() : 0);
         return result;
     }
-}
   } // end DelvPair
 
 class DelvItemId {
@@ -3534,6 +3660,18 @@ class DelvCategoricalRange implements DelvRange {
     _filtered.put(cat, true);
   }
 
+  void filterAll() {
+    for (String c: _filtered.keySet()) {
+      _filtered.put(c, true);
+    }
+  }
+
+  void filterNone() {
+    for (String c: _filtered.keySet()) {
+      _filtered.put(c, false);
+    }
+  }
+
   String[] getCategories() {
     return _categories.toArray(new String[_categories.size()]);
   }
@@ -3557,7 +3695,11 @@ class DelvCategoricalRange implements DelvRange {
   }
 
   boolean isCategoryFiltered(String cat) {
-    return _filtered.get(cat);
+    Boolean isFiltered = _filtered.get(cat);
+    if (isFiltered == null) {
+      isFiltered = false;
+    }
+    return isFiltered;
   }
 
 } // end class DelvCategoricalRange
@@ -3679,6 +3821,7 @@ public static final class AttributeType {
 
 public class DelvBasicDataSet implements DelvDataSet {
   String _name;
+  Delv _delv;
   ArrayList<DelvItemId> _itemIds;
   HashMap<String, Integer> _itemIdHash;
   HashMap<String, DelvBasicAttribute> _attributes;
@@ -3692,14 +3835,14 @@ public class DelvBasicDataSet implements DelvDataSet {
   String[] _likeColor;
   boolean _defaultEncodingSet;
   boolean _defaultColorSet;
-  HashMap< String, boolean > _selectColorsSet;
+  HashMap< String, Boolean > _selectColorsSet;
   boolean _hoverColorSet;
   boolean _filterColorSet;
   boolean _likeColorSet;
   String[] _hoverCoord;
   DelvPair< String, DelvRange > _hoverRange;
   HashMap< String, ArrayList< HashMap< String, DelvRange > > > _selectRanges;
-  ArrayList< DelvPair< String, ArrayList< DelvRange > > > _filterRanges;
+  HashMap< String, ArrayList< DelvRange > > _filterRanges;
   // TODO what data structure to manage navigation?
   // TODO what data structure to manage relationships / structure brushes?
 
@@ -3721,10 +3864,10 @@ public class DelvBasicDataSet implements DelvDataSet {
     _filterColor = toRGBAString( color_(140, 200, 235) );
     _likeColor = toRGBAString( color_(180, 71, 241) );
     _defaultColorSet = false;
-    _selectColorsSet = new HashMap< String, boolean >();
-    _selectColors.put( "PRIMARY", false );
-    _selectColors.put( "SECONDARY", false );
-    _selectColors.put( "TERTIARY", false );
+    _selectColorsSet = new HashMap< String, Boolean >();
+    _selectColorsSet.put( "PRIMARY", false );
+    _selectColorsSet.put( "SECONDARY", false );
+    _selectColorsSet.put( "TERTIARY", false );
     _hoverColorSet = false;
     _filterColorSet = false;
     _likeColorSet = false;
@@ -3734,7 +3877,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     _selectRanges.put("PRIMARY", new ArrayList< HashMap< String, DelvRange > >());
     _selectRanges.put("SECONDARY", new ArrayList< HashMap< String, DelvRange > >());
     _selectRanges.put("TERTIARY", new ArrayList< HashMap< String, DelvRange > >());
-    _filterRanges = new HashMap< String, ArrayList< DelvRange > >();
+    _filterRanges = new HashMap<String, ArrayList< DelvRange > >();
  }
 
 
@@ -3743,6 +3886,10 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
   void setName(String name) {
     _name = name;
+  }
+
+  void bindDelv(Delv dlv) {
+    _delv = dlv;
   }
 
   // operations
@@ -3755,7 +3902,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   void sortBySimilarity(String identifier, String sortType) {
     notImplemented("DelvBasicDataSet", "sortBySimilarity", identifier +", " + sortType);
   }
-  void sortSimilarity(String[] coordinate, String sortType) {
+  void sortBySimilarity(String[] coordinate, String sortType) {
     notImplemented("DelvBasicDataSet", "sortBySimilarity", coordinate +", " + sortType);
   }
   void clearSort() {
@@ -3763,6 +3910,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
   String[][] getSortCriteria() {
     notImplemented("DelvBasicDataSet", "getSortCriteria", "");
+    return new String[0][];
   }
 
   // TODO transforms
@@ -3827,22 +3975,16 @@ public class DelvBasicDataSet implements DelvDataSet {
   String[] getSelectIds(String selectType) {
     // assumes selectType has already been validated
     String[] ids = new String[0];
-    switch (selectType) {
-    case "PRIMARY":
+    if (selectType.equals("PRIMARY")) {
       ids = getPrimaryIds();
-      break;
-    case "SECONDARY":
+    } else if (selectType.equals("SECONDARY")) {
       ids = getSecondaryIds();
-      break;
-    case "TERTIARY":
+    } else if (selectType.equals("TERTIARY")) {
       ids = getTertiaryIds();
-      break;
-    default:
-      break;
     }
     return ids;
   }
-  String[] getPrimaryIds(String selectType) {
+  String[] getPrimaryIds() {
     ArrayList<String> selected = new ArrayList<String>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedPrimary) {
@@ -3851,7 +3993,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     return selected.toArray(new String[selected.size()]);
   }
-  String[] getSecondaryIds(String selectType) {
+  String[] getSecondaryIds() {
     ArrayList<String> selected = new ArrayList<String>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedSecondary) {
@@ -3860,7 +4002,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     return selected.toArray(new String[selected.size()]);
   }
-  String[] getTertiaryIds(String selectType) {
+  String[] getTertiaryIds() {
     ArrayList<String> selected = new ArrayList<String>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedTertiary) {
@@ -3873,22 +4015,16 @@ public class DelvBasicDataSet implements DelvDataSet {
   String[][] getSelectCoords(String selectType) {
     // assumes selectType has already been validated
     String[][] coords = new String[0][];
-    switch (selectType) {
-    case "PRIMARY":
+    if (selectType.equals("PRIMARY")) {
       coords = getPrimaryCoords();
-      break;
-    case "SECONDARY":
+    } else if (selectType.equals("SECONDARY")) {
       coords = getSecondaryCoords();
-      break;
-    case "TERTIARY":
+    } else if (selectType.equals("TERTIARY")) {
       coords = getTertiaryCoords();
-      break;
-    default:
-      break;
     }
     return coords;
   }
-  String[][] getPrimaryCoords(String selectType) {
+  String[][] getPrimaryCoords() {
     ArrayList<String[]> selected = new ArrayList<String[]>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedPrimary) {
@@ -3897,7 +4033,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     return selected.toArray(new String[selected.size()][]);
   }
-  String[][] getSecondaryCoords(String selectType) {
+  String[][] getSecondaryCoords() {
     ArrayList<String[]> selected = new ArrayList<String[]>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedSecondary) {
@@ -3906,7 +4042,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     return selected.toArray(new String[selected.size()][]);
   }
-  String[][] getTertiaryCoords(String selectType) {
+  String[][] getTertiaryCoords() {
     ArrayList<String[]> selected = new ArrayList<String[]>();
     for (DelvItemId id : _itemIds) {
       if (id.selectedTertiary) {
@@ -3982,7 +4118,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   void removeId(String id) {
     // TODO switch to entrySet once working in Processing
     for (String attr : _attributes.keySet()) {
-      _attributes.get(attr).removeId(id);
+      _attributes.get(attr).removeItem(id);
     }
     int idx = _itemIdHash.remove(id);
     _itemIds.remove(idx);
@@ -3991,7 +4127,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   void removeCoord(String[] coord) {
     // TODO switch to entrySet once working in Processing
     for (String attr : _attributes.keySet()) {
-      _attributes.get(attr).removeCoord(coord);
+      _attributes.get(attr).removeItem(coord);
     }
     int idx = _itemIdHash.remove( coordToId(coord) );
     _itemIds.remove(idx);
@@ -4001,7 +4137,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   void clearItems() {
     // TODO switch to entrySet once working in Processing
     for (String attr : _attributes.keySet()) {
-      _attributes.get(attr).clear();
+      _attributes.get(attr).clearItems();
     }
     _itemIds = new ArrayList<DelvItemId>();
     _itemIdHash = new HashMap<String, Integer>();
@@ -4264,7 +4400,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<float[]> hovered = new ArrayList<float[]>();
       for (DelvItemId id : _itemIds) {
         if (id.hovered) {
-          hovered.add( at.getItem(id.name) );
+          hovered.add( at.getItemAsFloatArray(id.name) );
         }
       }
       return hovered.toArray(new float[hovered.size()][]);
@@ -4279,7 +4415,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<String[]> hovered = new ArrayList<String[]>();
       for (DelvItemId id : _itemIds) {
         if (id.hovered) {
-          hovered.add( at.getItem(id.name) );
+          hovered.add( at.getItemAsStringArray(id.name) );
         }
       }
       return hovered.toArray(new String[hovered.size()][]);
@@ -4302,7 +4438,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       return new String[0];
     }
   }
-  Float[] getSelectItemsAsFloat(String attr) {
+  Float[] getSelectItemsAsFloat(String attr, String selectType) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
       String[][] coords = getSelectCoords(selectType);
@@ -4316,7 +4452,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       return new Float[0];
     }
   }
-  float[][] getSelectItemsAsFloatArray(String attr) {
+  float[][] getSelectItemsAsFloatArray(String attr, String selectType) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
       String[][] coords = getSelectCoords(selectType);
@@ -4330,7 +4466,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       return new float[0][];
     }
   }
-  String[][] getSelectItemsAsStringArray(String attr) {
+  String[][] getSelectItemsAsStringArray(String attr, String selectType) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
       String[][] coords = getSelectCoords(selectType);
@@ -4381,7 +4517,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<float[]> filtered = new ArrayList<float[]>();
       for (DelvItemId id : _itemIds) {
         if (id.filtered) {
-          filtered.add( at.getItem(id.name) );
+          filtered.add( at.getItemAsFloatArray(id.name) );
         }
       }
       return filtered.toArray(new float[filtered.size()][]);
@@ -4396,7 +4532,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<String[]> filtered = new ArrayList<String[]>();
       for (DelvItemId id : _itemIds) {
         if (id.filtered) {
-          filtered.add( at.getItem(id.name) );
+          filtered.add( at.getItemAsStringArray(id.name) );
         }
       }
       return filtered.toArray(new String[filtered.size()][]);
@@ -4441,7 +4577,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<float[]> navigated = new ArrayList<float[]>();
       for (DelvItemId id : _itemIds) {
         if (id.navigated) {
-          navigated.add( at.getItem(id.name) );
+          navigated.add( at.getItemAsFloatArray(id.name) );
         }
       }
       return navigated.toArray(new float[navigated.size()][]);
@@ -4456,7 +4592,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       ArrayList<String[]> navigated = new ArrayList<String[]>();
       for (DelvItemId id : _itemIds) {
         if (id.navigated) {
-          navigated.add( at.getItem(id.name) );
+          navigated.add( at.getItemAsStringArray(id.name) );
         }
       }
       return navigated.toArray(new String[navigated.size()][]);
@@ -4471,14 +4607,14 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (idx == null) {
       return _defaultColor;
     }
-    DelvItemId item = _itemIds[idx];
+    DelvItemId item = _itemIds.get(idx);
     if ( _hoverColorSet && item.hovered ) {
       return _hoverColor;
-    } else if ( _selectColorsSet.get("PRIMARY") && item.selectPrimary ) {
+    } else if ( _selectColorsSet.get("PRIMARY") && item.selectedPrimary ) {
       return _selectColors.get("PRIMARY");
-    } else if ( _selectColorsSet.get("SECONDARY") && item.selectSecondary ) {
+    } else if ( _selectColorsSet.get("SECONDARY") && item.selectedSecondary ) {
       return _selectColors.get("SECONDARY");
-    } else if ( _selectColorsSet.get("TERTIARY") && item.selectTertiary ) {
+    } else if ( _selectColorsSet.get("TERTIARY") && item.selectedTertiary ) {
       return _selectColors.get("TERTIARY");
     } else if ( _filterColorSet && item.filtered ) {
       return _filterColor;
@@ -4493,14 +4629,14 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (idx == null) {
       return _defaultColor;
     }
-    DelvItemId item = _itemIds[idx];
+    DelvItemId item = _itemIds.get(idx);
     if ( _hoverColorSet && item.hovered ) {
       return _hoverColor;
-    } else if ( _selectColorsSet.get("PRIMARY") && item.selectPrimary ) {
+    } else if ( _selectColorsSet.get("PRIMARY") && item.selectedPrimary ) {
       return _selectColors.get("PRIMARY");
-    } else if ( _selectColorsSet.get("SECONDARY") && item.selectSecondary ) {
+    } else if ( _selectColorsSet.get("SECONDARY") && item.selectedSecondary ) {
       return _selectColors.get("SECONDARY");
-    } else if ( _selectColorsSet.get("TERTIARY") && item.selectTertiary ) {
+    } else if ( _selectColorsSet.get("TERTIARY") && item.selectedTertiary ) {
       return _selectColors.get("TERTIARY");
     } else if ( _filterColorSet && item.filtered ) {
       return _filterColor;
@@ -4510,35 +4646,40 @@ public class DelvBasicDataSet implements DelvDataSet {
       return getItemAttrColor(colorByAttr, coord);
     }
   }
-  String[][] getAllItemColors(String colorByAttr) {
+  String[][] getItemColors(String colorByAttr) {
     String[][] colors = new String[_itemIds.size()][];
+    int idx = 0;
     for (DelvItemId item : _itemIds) {
       if ( _hoverColorSet && item.hovered ) {
-        colors[item] = _hoverColor;
-      } else if ( _selectColorsSet.get("PRIMARY") && item.selectPrimary ) {
-        colors[item] = _selectColors.get("PRIMARY");
-      } else if ( _selectColorsSet.get("SECONDARY") && item.selectSecondary ) {
-        colors[item] = _selectColors.get("SECONDARY");
-      } else if ( _selectColorsSet.get("TERTIARY") && item.selectTertiary ) {
-        colors[item] = _selectColors.get("TERTIARY");
+        colors[idx] = _hoverColor;
+      } else if ( _selectColorsSet.get("PRIMARY") && item.selectedPrimary ) {
+        colors[idx] = _selectColors.get("PRIMARY");
+      } else if ( _selectColorsSet.get("SECONDARY") && item.selectedSecondary ) {
+        colors[idx] = _selectColors.get("SECONDARY");
+      } else if ( _selectColorsSet.get("TERTIARY") && item.selectedTertiary ) {
+        colors[idx] = _selectColors.get("TERTIARY");
       } else if ( _filterColorSet && item.filtered ) {
-        colors[item] = _filterColor;
+        colors[idx] = _filterColor;
       } else if ( _likeColorSet && item.navigated ) {
-        colors[item] = _likeColor;
+        colors[idx] = _likeColor;
       } else {
-        colors[item] = getItemAttrColor(colorByAttr, id);
+        colors[idx] = getItemAttrColor(colorByAttr, item.name);
       }
+      idx++;
     }
     return colors;
   }
   String[] getItemEncoding(String encodingByAttr, String id) {
     notImplemented("DelvBasicDataSet", "getItemEncoding", encodingByAttr + ", " + id);
+    return new String[0];
   }
   String[] getItemEncoding(String encodingByAttr, String[] coord) {
     notImplemented("DelvBasicDataSet", "getItemEncoding", encodingByAttr + ", " + coord);
+    return new String[0];
   }
   String[][] getItemEncodings(String encodingByAttr) {
     notImplemented("DelvBasicDataSet", "getItemEncodings", encodingByAttr);
+    return new String[0][];
   }
 
 
@@ -4547,7 +4688,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (at != null) {
       return at.getItemAttrColor(id);
     } else {
-       println("Warning in getItemAttrColor! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrColor! Attribute <"+colorByAttr+"> does not exist.");
       return _defaultColor;
     }
   }
@@ -4557,11 +4698,11 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (at != null) {
       return at.getItemAttrColor(coord);
     } else {
-       println("Warning in getItemAttrColor! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrColor! Attribute <"+colorByAttr+"> does not exist.");
       return _defaultColor;
     }
   }
-  String[][] getAllItemAttrColors(String colorByAttr) {
+  String[][] getItemAttrColors(String colorByAttr) {
     DelvAttribute at = _attributes.get(colorByAttr);
     if (at != null) {
       int numItems = _itemIds.size();
@@ -4572,7 +4713,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       }
       return colors;
     } else {
-       println("Warning in getAllItemAttrColors! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrColors! Attribute <"+colorByAttr+"> does not exist.");
       return new String[0][];
     }
   }
@@ -4582,7 +4723,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (at != null) {
       return at.getItemAttrEncoding(id);
     } else {
-       println("Warning in getItemAttrEncoding! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrEncoding! Attribute <"+encodingByAttr+"> does not exist.");
       return _defaultEncoding;
     }
   }
@@ -4591,7 +4732,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (at != null) {
       return at.getItemAttrEncoding(coord);
     } else {
-       println("Warning in getItemAttrEncoding! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrEncoding! Attribute <"+encodingByAttr+"> does not exist.");
       return _defaultEncoding;
     }
   }
@@ -4606,7 +4747,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       }
       return encodings;
     } else {
-       println("Warning in getAllItemAttrEncodings! Attribute <"+attr+"> does not exist.");
+       println("Warning in getItemAttrEncodings! Attribute <"+encodingByAttr+"> does not exist.");
       return new String[0][];
     }
   }
@@ -4615,7 +4756,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     clearHover();
     Integer idx = _itemIdHash.get(id);
     if (idx != null) {
-      _itemIds[idx].hovered = true;
+      _itemIds.get(idx).hovered = true;
       _hoverCoord = idToCoord(id);
     }
   }
@@ -4623,7 +4764,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     clearHover();
     Integer idx = _itemIdHash.get( coordToId(coord) );
     if (idx != null) {
-      _itemIds[idx].hovered = true;
+      _itemIds.get(idx).hovered = true;
       _hoverCoord = coord;
     }
   }
@@ -4633,7 +4774,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     for (int ii = 0; ii < ids.length; ii++) {
       Integer idx = _itemIdHash.get(ids[ii]);
       if (idx != null) {
-        _itemIds[idx].selectPrimary = doSelect;
+        _itemIds.get(idx).selectedPrimary = doSelect;
         range.addCategory(ids[ii]);
       }
     }
@@ -4646,7 +4787,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     for (int ii = 0; ii < ids.length; ii++) {
       Integer idx = _itemIdHash.get(ids[ii]);
       if (idx != null) {
-        _itemIds[idx].selectSecondary = doSelect;
+        _itemIds.get(idx).selectedSecondary = doSelect;
         range.addCategory(ids[ii]);
       }
     }
@@ -4659,7 +4800,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     for (int ii = 0; ii < ids.length; ii++) {
       Integer idx = _itemIdHash.get(ids[ii]);
       if (idx != null) {
-        _itemIds[idx].selectTertiary = doSelect;
+        _itemIds.get(idx).selectedTertiary = doSelect;
         range.addCategory(ids[ii]);
       }
     }
@@ -4669,18 +4810,13 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
 
   void selectItems(String[] ids, String selectType, boolean doSelect) {
-    switch (selectType) {
-    case "PRIMARY":
+    // TODO switches on String for Java 1.7 or greater
+    if (selectType.equals("PRIMARY")) {
       selectPrimaryItems(ids, doSelect);
-      break;
-    case "SECONDARY":
+    } else if (selectType.equals("SECONDARY")) {
       selectSecondaryItems(ids, doSelect);
-      break;
-    case "TERTIARY":
+    } else if (selectType.equals("TERTIARY")) {
       selectTertiaryItems(ids, doSelect);
-      break;
-    default:
-      break;
     }
   }
 
@@ -4692,7 +4828,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     //selectItems(ids, selectType, false);
   }
   void selectItems(String[][] coords, String selectType) {
-    String[] ids = new String[coords.length][];
+    String[] ids = new String[coords.length];
     for (int ii = 0; ii < coords.length; ii++) {
       ids[ii] = coordToId(coords[ii]);
     }
@@ -4758,18 +4894,18 @@ public class DelvBasicDataSet implements DelvDataSet {
   String[] getCatColor(String attr, String cat) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
-      return at.getCatColor();
+      return at.getCatColor(cat);
     } else {
       println("Warning in getCatColor! Attribute <"+attr+"> does not exist.");
     }
     return _defaultColor;
   }
-  String[][] getAllCatColors(String attr) {
+  String[][] getCatColors(String attr) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
-      return at.getAllCatColors();
+      return at.getCatColors();
     } else {
-      println("Warning in getAllCatColors! Attribute <"+attr+"> does not exist.");
+      println("Warning in getCatColors! Attribute <"+attr+"> does not exist.");
     }
     return new String[0][];
   }
@@ -4806,7 +4942,7 @@ public class DelvBasicDataSet implements DelvDataSet {
         ((DelvCategoricalRange)range).addCategory(cat);
       } else {
         range = new DelvContinuousRange();
-        ((DelvContinuousRange)range).update(cat);
+        ((DelvContinuousRange)range).update(parseFloat(cat));
       }
       _hoverRange.set(attr, range);
       determineHoveredItems();
@@ -4822,8 +4958,8 @@ public class DelvBasicDataSet implements DelvDataSet {
     // TODO validate that attr is continuous type?
     if (at != null) {
        DelvRange range = new DelvContinuousRange();
-       ((DelvContinuousRange)range).setMin(minVal);
-       ((DelvContinuousRange)range).setMax(maxVal);
+       ((DelvContinuousRange)range).setMin(parseFloat(minVal));
+       ((DelvContinuousRange)range).setMax(parseFloat(maxVal));
       _hoverRange.set(attr, range);
       determineHoveredItems();
     } else {
@@ -4841,7 +4977,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     ArrayList< HashMap< String, DelvRange > > selectList = _selectRanges.get(selectType);
     HashMap< String, DelvRange > selectMap = new HashMap<String, DelvRange>();
-    DelvRange range;
+    DelvRange range = new DelvCategoricalRange();
     for (int ii = 0; ii < attrs.length; ii++) {
       DelvAttribute at = _attributes.get(attrs[ii]);
       if (at != null) {
@@ -4855,10 +4991,10 @@ public class DelvBasicDataSet implements DelvDataSet {
           if (range == null) {
             range = new DelvContinuousRange();
           }
-          ((DelvContinuousRange)range).update(cats[ii]);
+          ((DelvContinuousRange)range).update(parseFloat(cats[ii]));
         }
       } else {
-      println("Warning in selectCats!  Attr< " + attrs[ii]  " not found!");
+      println("Warning in selectCats!  Attr< " + attrs[ii] + " not found!");
       }
       selectMap.put(attrs[ii], range);
     }
@@ -4880,7 +5016,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     ArrayList< HashMap< String, DelvRange > > selectList = _selectRanges.get(selectType);
     HashMap< String, DelvRange > selectMap = new HashMap<String, DelvRange>();
-    DelvRange range;
+    DelvRange range = new DelvCategoricalRange();
     for (int ii = 0; ii < attrs.length; ii++) {
       DelvAttribute at = _attributes.get(attrs[ii]);
       if (at != null) {
@@ -4888,11 +5024,10 @@ public class DelvBasicDataSet implements DelvDataSet {
         if (range == null) {
           range = new DelvContinuousRange();
         }
-        ((DelvContinuousRange)range).setMin(mins[ii]);
-        ((DelvContinuousRange)range).setMax(maxes[ii]);
-        }
+        ((DelvContinuousRange)range).setMin(parseFloat(mins[ii]));
+        ((DelvContinuousRange)range).setMax(parseFloat(maxes[ii]));
       } else {
-      println("Warning in selectRanges!  Attr< " + attrs[ii]  " not found!");
+      println("Warning in selectRanges!  Attr< " + attrs[ii] + " not found!");
       }
       selectMap.put(attrs[ii], range);
     }
@@ -4905,25 +5040,34 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
   // TOO How to apply filter logic ORS during single call, ANDed across multiple calls
   void filterCats(String attr, String[] cats) {
-    
     ArrayList<DelvRange> ranges = new ArrayList<DelvRange>();
     DelvRange range;
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
+      if (at.isCategorical()) {
+        at.filterNone();
+      }
       for (int ii = 0; ii < cats.length; ii++) {
         if (at.isCategorical()) {
-          range = new DelvCategoricalRange();
-          ((DelvCategoricalRange)range).addCategory(cats[ii]);
+          at.toggleCatFilter(cats[ii]);
         } else {
           range = new DelvContinuousRange();
-          ((DelvContinuousRange)range).update(cats[ii]);
+          ((DelvContinuousRange)range).update(parseFloat(cats[ii]));
+          ranges.add(range);
         }
-        ranges.add(range);
       }
       _filterRanges.put(attr, ranges);
       determineFilteredItems();
     } else {
       println("Warning in filterCats!  Attr <" +attr+"> not found!");
+    }
+  }
+  void toggleCatFilter(String attr, String cat) {
+    DelvAttribute at = _attributes.get(attr);
+    if (at != null && at.isCategorical()) {
+      at.toggleCatFilter(cat);
+    }else {
+      println("Warning in toggleCatFilter!  Attr <" +attr+"> not found!");
     }
   }
   void filterRanges(String attr, String[] mins, String[] maxes) {
@@ -4937,8 +5081,8 @@ public class DelvBasicDataSet implements DelvDataSet {
     if (at != null) {
       for (int ii = 0; ii < mins.length; ii++) {
         range = new DelvContinuousRange();
-        ((DelvContinuousRange)range).updateMin(mins[ii]);
-        ((DelvContinuousRange)range).updateMax(maxes[ii]);
+        ((DelvContinuousRange)range).updateMin(parseFloat(mins[ii]));
+        ((DelvContinuousRange)range).updateMax(parseFloat(maxes[ii]));
         ranges.add(range);
       }
       _filterRanges.put(attr, ranges);
@@ -4986,6 +5130,10 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
 
 
+  void panVal(String attr, String val) {
+    notImplemented("DelvBasicDataSet","panVal", attr+", "+val);
+  }
+
   void panCat(String attr, String cat) {
     notImplemented("DelvBasicDataSet","panCat", attr+", "+cat);
   }
@@ -4994,7 +5142,9 @@ public class DelvBasicDataSet implements DelvDataSet {
     notImplemented("DelvBasicDataSet","pnaRange", attr+", "+center);
   }
 
-
+  void zoomVal(String attr, String leftVal, String rightVal) {
+    notImplemented("DelvBasicDataSet", "zoomVal", attr+", "+leftVal+", "+rightVal);
+  }
   void zoomCat(String attr, String numCats) {
     notImplemented("DelvBasicDataSet","zoomCat", attr+", "+numCats);
   }
@@ -5022,18 +5172,12 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
   }
   void determineSelectedItems(String selectType) {
-    switch (selectType) {
-    case "PRIMARY":
+    if (selectType.equals("PRIMARY")) {
       determinePrimarySelection(_selectRanges.get(selectType));
-      break;
-    case "SECONDARY":
+    } else if (selectType.equals("SECONDARY")) {
       determineSecondarySelection(_selectRanges.get(selectType));
-      break;
-    case "TERTIARY":
+    } else if (selectType.equals("TERTIARY")) {
       determineTertiarySelection(_selectRanges.get(selectType));
-      break;
-    default:
-      break;
     }
   }
   void determinePrimarySelection(ArrayList< HashMap< String, DelvRange > > selectList) {
@@ -5043,7 +5187,7 @@ public class DelvBasicDataSet implements DelvDataSet {
         boolean select = true;
         // to be selected by this expression, must be true for all attributes in this map (AND)
         for (String attr: selectMap.keySet()) {
-          DelvAttribute at = _attributes.get(_attr);
+          DelvAttribute at = _attributes.get(attr);
           if (at != null) {
             DelvRange range = selectMap.get(attr);
             if (!range.isInRange(at.getItem(id.name))) {
@@ -5066,7 +5210,7 @@ public class DelvBasicDataSet implements DelvDataSet {
         boolean select = true;
         // to be selected by this expression, must be true for all attributes in this map (AND)
         for (String attr: selectMap.keySet()) {
-          DelvAttribute at = _attributes.get(_attr);
+          DelvAttribute at = _attributes.get(attr);
           if (at != null) {
             DelvRange range = selectMap.get(attr);
             if (!range.isInRange(at.getItem(id.name))) {
@@ -5089,7 +5233,7 @@ public class DelvBasicDataSet implements DelvDataSet {
         boolean select = true;
         // to be selected by this expression, must be true for all attributes in this map (AND)
         for (String attr: selectMap.keySet()) {
-          DelvAttribute at = _attributes.get(_attr);
+          DelvAttribute at = _attributes.get(attr);
           if (at != null) {
             DelvRange range = selectMap.get(attr);
             if (!range.isInRange(at.getItem(id.name))) {
@@ -5108,16 +5252,21 @@ public class DelvBasicDataSet implements DelvDataSet {
   void determineFilteredItems() {
     for (DelvItemId id: _itemIds) {
       boolean filter = true;
-      for (String filterAttr: _filteredRanges.keySet()) {
+      for (String filterAttr: _filterRanges.keySet()) {
         boolean attrFiltered = false;
         // to be filtered by this expression, must be true for one of the ranges for this attribute (OR)
         DelvAttribute at = _attributes.get(filterAttr);
         if (at != null) {
-          ArrayList< DelvRange > ranges = _filteredRanges.get(filterAttr);
-          if (ranges != null) {
-            for (DelvRange range: ranges) {
-              if (range.isInRange(at.getItem(id.name))) {
-                attrFiltered = true;
+          if (at.isCategorical() && at.isFiltered(id.name)) {
+            attrFiltered = true;
+          } else {
+            ArrayList< DelvRange > ranges = _filterRanges.get(filterAttr);
+            if (ranges != null) {
+              for (DelvRange range: ranges) {
+                if (range.isInRange(at.getItem(id.name))) {
+                  attrFiltered = true;
+                  break;
+                }
               }
             }
           }
@@ -5147,7 +5296,7 @@ public class DelvBasicDataSet implements DelvDataSet {
           return "";
         }
         DelvRange range = _hoverRange.getSecond();
-        String[] cats = range.getFilteredCategories();
+        String[] cats = ((DelvCategoricalRange)range).getFilteredCategories();
         if (cats.length > 0) {
           return cats[0]; // TODO should never be more than one category here
         } else {
@@ -5169,12 +5318,12 @@ public class DelvBasicDataSet implements DelvDataSet {
       } else {
         if (!attr.equals(_hoverRange.getFirst())) {
           // not the hovered attribute, so can't return the assoc range
-          return "";
+          return new String[0];
         }
         DelvRange range = _hoverRange.getSecond();
         String[] vals = new String[2];
-        vals[0] = range.getMin(); // TODO should be guaranteed to have both here, enforce/check?
-        vals[1] = range.getMax();
+        vals[0] = ""+((DelvContinuousRange)range).getMin(); // TODO should be guaranteed to have both here, enforce/check?
+        vals[1] = ""+((DelvContinuousRange)range).getMax();
         return vals;
       }
     } else {
@@ -5189,15 +5338,15 @@ public class DelvBasicDataSet implements DelvDataSet {
       for (HashMap< String, DelvRange > selectMap: selectList) {
         DelvRange range = selectMap.get(attr);
         if (range != null) {
-          String[] cts = range.getFilteredCategories();
+          String[] cts = ((DelvCategoricalRange)range).getFilteredCategories();
           for (int cat = 0; cat < cts.length; cat++) {
             cats.addCategory(cts[cat]);
           }
         }
         range = selectMap.get("__id__");
         if (range != null) {
-          String[] ids = range.getFilteredCategories();
-          for (int id = 0; id < ids.length; ids++) {
+          String[] ids = ((DelvCategoricalRange)range).getFilteredCategories();
+          for (int id = 0; id < ids.length; id++) {
             cats.addCategory(at.getItem(ids[id]));
           }
         }
@@ -5216,20 +5365,20 @@ public class DelvBasicDataSet implements DelvDataSet {
         DelvRange range = selectMap.get(attr);
         if (range != null) {
           String[] vals = new String[2];
-          vals[0] = range.getMin();
-          vals[1] = range.getMax();
+          vals[0] = ""+((DelvContinuousRange)range).getMin();
+          vals[1] = ""+((DelvContinuousRange)range).getMax();
           selectRanges.add(vals);
         }
         range = selectMap.get("__id__");
         if (range != null) {
-          String[] ids = range.getFilteredCategories();
+          String[] ids = ((DelvCategoricalRange)range).getFilteredCategories();
           DelvContinuousRange idrange = new DelvContinuousRange();
-          for (int id = 0; id < ids.length; ids++) {
-            idrange.update(at.getItem(ids[id]));
+          for (int id = 0; id < ids.length; id++) {
+            idrange.update(at.getItemAsFloat(ids[id]));
           }
           String[] vals = new String[2];
-          vals[0] = idrange.getMin();
-          vals[1] = idrange.getMax();
+          vals[0] = ""+idrange.getMin();
+          vals[1] = ""+idrange.getMax();
           selectRanges.add(vals);
         }
       }
@@ -5249,8 +5398,8 @@ public class DelvBasicDataSet implements DelvDataSet {
         DelvRange range = selectMap.get(attr);
         if (attr.equals("__id__")) {
           if (range != null) {
-            String[] cats = range.getFilteredCategories();
-            String[] vals = new String(cats.length+1);
+            String[] cats = ((DelvCategoricalRange)range).getFilteredCategories();
+            String[] vals = new String[cats.length+1];
             System.arraycopy(cats, 0, vals, 1, cats.length);
             vals[0] = "__id__";
             selectCrits[numMaps][numKeys] = vals;
@@ -5261,16 +5410,16 @@ public class DelvBasicDataSet implements DelvDataSet {
           DelvAttribute at = _attributes.get(attr);
           if (range != null && at != null) {
             if (at.isCategorical()) {
-              String[] cats = range.getFilteredCategories();
-              String[] vals = new String(cats.length+1);
+              String[] cats = ((DelvCategoricalRange)range).getFilteredCategories();
+              String[] vals = new String[cats.length+1];
               System.arraycopy(cats, 0, vals, 1, cats.length);
               vals[0] = attr;
               selectCrits[numMaps][numKeys] = vals;
             } else {
               String[] vals = new String[3];
               vals[0] = attr;
-              vals[1] = range.getMin();
-              vals[2] = range.getMax();
+              vals[1] = ""+((DelvContinuousRange)range).getMin();
+              vals[2] = ""+((DelvContinuousRange)range).getMax();
               selectCrits[numMaps][numKeys] = vals;
             }
           } else {
@@ -5286,68 +5435,67 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
 
   String[] getFilterCats(String attr) {
-    DelvCategoricalRange cats = new DelvCategoricalRange();
+    // TODO Doc how getting filtered categories for an attribute means getting all the categories
+    // that are present in the filtered data.  To get the criteria specifically, use getFilterCriteria
+    // TODO have an attribute-specific version of getFilterCriteria?
     DelvAttribute at = _attributes.get(attr);
     if (at != null && at.isCategorical()) {
-      for (DelvRange range: _filterRanges.get(attr)) {
-        if (range != null) {
-          String[] cts = range.getFilteredCategories();
-          for (int cat = 0; cat < cts.length; cat++) {
-            cats.addCategory(cts[cat]);
-          }
-        }
-      }
+      return at.getFilterCats();
+    } else {
+      return new String[0];
     }
-    // TODO not collapsing because the categories should be ANDED and ORED appropriately based on dimension
-    // TODO since single attribute, categories must be ORed together
-    return cats.getFilteredCategories();
   }
   String[][] getFilterRanges(String attr) {
     ArrayList<String[]> filterVals = new ArrayList<String[]>();
     DelvAttribute at = _attributes.get(attr);
+    ArrayList<DelvRange> ranges = _filterRanges.get(attr);
     if (at != null && !at.isCategorical()) {
-      for (DelvRange range: _filterRanges.get(attr)) {
-        if (range != null) {
-          String[] vals = new String[2];
-          vals[0] = range.getMin();
-          vals[1] = range.getMax();
-          filterVals.add(vals);
+      if (ranges != null) {
+        for (DelvRange range: ranges) {
+          if (range != null) {
+            String[] vals = new String[2];
+            vals[0] = ""+((DelvContinuousRange)range).getMin();
+            vals[1] = ""+((DelvContinuousRange)range).getMax();
+            filterVals.add(vals);
+          }
         }
+      } else {
+        // ranges not specified so return range of the data
+        String[] vals = new String[2];
+        vals[0] = at.getMinVal();
+        vals[1] = at.getMaxVal();
+        filterVals.add(vals);
       }
     }
     // TODO not collapsing because the ranges should be ORED appropriately based on dimension
     return filterVals.toArray(new String[filterVals.size()][]);
   }
 
-  }
   String[][] getFilterCriteria() {
     ArrayList<String[]> filterCrits = new ArrayList<String[]>();
-    for (String filterAttr: _filteredRanges.keySet()) {
-      DelvAttribute at = _attributes.get(filterAttr);
+    for (String attr: _filterRanges.keySet()) {
+      DelvAttribute at = _attributes.get(attr);
       if (at != null) {
-          ArrayList< DelvRange > ranges = _filteredRanges.get(filterAttr);
         if (at.isCategorical()) {
-          if (ranges != null) {
-            for (DelvRange range: ranges) {
-              String[] cats = range.getFilteredCategories();
-              String[] vals = new String(cats.length+1);
-              System.arraycopy(cats, 0, vals, 1, cats.length);
-              vals[0] = filterAttr;
-              filterCrits.add(vals);
-            }
-          }
+          String[] cats = at.getFilterCats();
+          String[] vals = new String[cats.length+1];
+          System.arraycopy(cats, 0, vals, 1, cats.length);
+          vals[0] = attr;
+          filterCrits.add(vals);
         } else {
+          ArrayList< DelvRange > ranges = _filterRanges.get(attr);
           if (ranges != null) {
             for (DelvRange range: ranges) {
-              String[] vals = new String(3);
-              vals[0] = filterAttr;
-              vals[1] = range.getMin();
-              vals[2] = range.getMax();
+              String[] vals = new String[3];
+              vals[0] = attr;
+              vals[1] = ""+((DelvContinuousRange)range).getMin();
+              vals[2] = ""+((DelvContinuousRange)range).getMax();
               filterCrits.add(vals);
             }
           }
         }
       }
+    }
     // TODO not collapsing because the ranges should be ANDed and ORed appropriately based on dimension
     return filterCrits.toArray(new String[filterCrits.size()][]);
   }
@@ -5389,7 +5537,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
   void clearHover() {
     _hoverCoord = new String[0];
-    _hoverRange = new DelvPair("", new DelvCategoricalRange());
+    _hoverRange = new DelvPair<String, DelvRange>("", new DelvCategoricalRange());
     for (DelvItemId id : _itemIds) {
       id.hovered = false;
     }
@@ -5410,24 +5558,18 @@ public class DelvBasicDataSet implements DelvDataSet {
   // TODO is this the right API to clear out all ranges/values for the specified coordinate/relationships?  written as is, this is really item selection
   void clearSelect(String selectType) {
     _selectRanges.put(selectType, new ArrayList< HashMap< String, DelvRange > >());
-    switch (selectType) {
-    case "PRIMARY":
+    if (selectType.equals("PRIMARY")) {
       for (DelvItemId id : _itemIds) {
         id.selectedPrimary = false;
       }
-      break;
-    case "SECONDARY":
+    } else if (selectType.equals("SECONDARY")) {
       for (DelvItemId id : _itemIds) {
         id.selectedSecondary = false;
       }
-      break;
-    case "TERTIARY":
+    } else if (selectType.equals("TERTIARY")) {
       for (DelvItemId id : _itemIds) {
         id.selectedTertiary = false;
       }
-      break;
-    default:
-      break;
     }
     // TODO clear relationship select structure
   }
@@ -5439,15 +5581,21 @@ public class DelvBasicDataSet implements DelvDataSet {
     notImplemented("DelvBasicDataSet","filterLike", "<coords>, <relationships>");
   }
   void clearFilter() {
-    _filterRanges = new ArrayList< DelvPair< String, ArrayList< DelvRange > > >();
+    _filterRanges = new HashMap< String, ArrayList< DelvRange > >();
     for (DelvItemId id : _itemIds) {
-      id.filtered = false;
+      id.filtered = true;
+    }
+    // TODO better to just loop through categorical attributes actually in filterRanges?
+    for (DelvAttribute at: _attributes.values()) {
+      if (at.isCategorical()) {
+        at.filterAll();
+      }
     }
     // TODO clear relationship filter structure
   }
 
   void navLike(String id, String relationship, String numLikeItems) {
-    notImplemented("DelvBasicDataSet","navLike", ids+", "+ relationship+", "+numLikeItems);
+    notImplemented("DelvBasicDataSet","navLike", id+", "+ relationship+", "+numLikeItems);
   }
   void navLike(String[] coord, String relationship, String numLikeItems) {
     notImplemented("DelvBasicDataSet","navLike", "<coord>, "+ relationship+", "+numLikeItems);
@@ -5457,7 +5605,7 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
 
   void panLike(String id, String relationship) {
-    notImplemented("DelvBasicDataSet","panLike", ids+", "+ relationship);
+    notImplemented("DelvBasicDataSet","panLike", id+", "+ relationship);
   }
   void panLike(String[] coord, String relationship) {
     notImplemented("DelvBasicDataSet","panLike", "<coord>, "+ relationship);
@@ -5485,29 +5633,46 @@ public class DelvBasicDataSet implements DelvDataSet {
   }
   String getNavLike() {
     notImplemented("DelvBasicDataSet","getNavLike", "");
-    return new String;
+    return "";
   }
   String getNumNavLike() {
     notImplemented("DelvBasicDataSet","getNumNavLike", "");
-    return new String;
+    return "";
   }
   String getLOD() {
     notImplemented("DelvBasicDataSet","getLOD", "");
-    return new String;
+    return "";
   }
 
   // color
   void hoverColor(String[] rgbaColor) {
     _hoverColor = rgbaColor;
+    _hoverColorSet = true;
   }
   void selectColor(String[] rgbaColor, String selectType) {
     _selectColors.put(selectType, rgbaColor);
+    _selectColorsSet.put(selectType, true);
   }
   void filterColor(String[] rgbaColor) {
     _filterColor = rgbaColor;
+    _filterColorSet = true;
   }
   void likeColor(String[] rgbaColor) {
     _likeColor = rgbaColor;
+    _likeColorSet = true;
+  }
+
+  void clearHoverColor() {
+    _hoverColorSet = false;
+  }
+  void clearSelectColor(String selectType) {
+    _selectColorsSet.put(selectType, false);
+  }
+  void clearFilterColor() {
+    _filterColorSet = false;
+  }
+  void clearLikeColor() {
+    _likeColorSet = false;
   }
 
   String[] getHoverColor() {
@@ -5833,12 +5998,19 @@ public class DelvBasicAttribute implements DelvAttribute {
       return new String[0];
     }
   }
+  String[] getFilterCats() {
+    if (_type.equals(AttributeType.CATEGORICAL)) {
+      return ((DelvCategoricalRange)_fullRange).getFilteredCategories();
+    } else {
+      return new String[0];
+    }
+  }
   String[] getCatColor(String cat) {
     color c = _colorMap.getColor(cat);
     return toRGBAString(c);
   }
-  String[][] getAllCatColors(){
-    String[] cats = getAllCategories();
+  String[][] getCatColors(){
+    String[] cats = getAllCats();
     String[][] colors = new String[cats.length][];
     for (int i = 0; i < cats.length; i++) {
       colors[i] = getCatColor(cats[i]);
@@ -5847,36 +6019,75 @@ public class DelvBasicAttribute implements DelvAttribute {
   }
   String[] getCatEncoding(String cat) {
     notImplemented("DelvBasicAttribute", "getCatEncoding", cat);
+    return new String[0];
   }
   String[][] getCatEncodings() {
-    String[] cats = getAllCategories();
+    String[] cats = getAllCats();
     String[][] encs = new String[cats.length][];
     for (int i = 0; i < cats.length; i++) {
-      encs[i] = getCatEncodings(cats[i]);
+      encs[i] = getCatEncoding(cats[i]);
     }
     return encs;
   }
+  String getMinVal() {
+    if (!isCategorical()) {
+      // TODO how to handle ordered categories?
+      return ""+((DelvContinuousRange)_fullRange).getMin();
+    } else {
+      return "";
+    }
+  }
+  String getMaxVal() {
+    if (!isCategorical()) {
+      // TODO how to handle ordered categories?
+      return ""+((DelvContinuousRange)_fullRange).getMax();
+    } else {
+      return "";
+    }
+  }
 
-  void colorCat(String cat, String[] rgbaColor);
+  void colorCat(String cat, String[] rgbaColor) {
+    if (_type.equals(AttributeType.CATEGORICAL)) {
+      _colorMap.setColor(cat, toP5Color(rgbaColor));
+    }
+  }
   // TODO how to define a glyph encoding in a cross-language manner?
   void encodeCat(String cat, String encoding) {
-    notImplemented("DelvBasicAttribute","encodeCat", attr+", "+cat+", "+encoding);
+    notImplemented("DelvBasicAttribute","encodeCat", cat+", "+encoding);
+  }
+
+  // all items pass filter
+  void filterAll() {
+    ((DelvCategoricalRange)_fullRange).filterAll();
+  }
+  // all items fail filter
+  void filterNone() {
+    ((DelvCategoricalRange)_fullRange).filterNone();
+  }
+  void toggleCatFilter(String cat) {
+    ((DelvCategoricalRange)_fullRange).toggleFiltered(cat);
+  }
+  boolean isFiltered(String id) {
+    return ((DelvCategoricalRange)_fullRange).isCategoryFiltered(getItem(id));
+  }
+  boolean isFiltered(String[] coord) {
+    return ((DelvCategoricalRange)_fullRange).isCategoryFiltered(getItem(coord));
   }
 
 } // end class DelvBasicAttribute
 
-public class DelvCSVData extends DelvBasicDataSet {
+public class DelvCSVDataSet extends DelvBasicDataSet {
   String _filename;
   String _dataset;
   String _old_dataset;
   String _delim;
   String _comment;
 
-  public DelvCSVData(String name) {
+  public DelvCSVDataSet(String name) {
     this("", "", name);
   }
 
-  public DelvCSVData(String filename, String dataset, String name) {
+  public DelvCSVDataSet(String filename, String dataset, String name) {
     super(name);
     _filename = filename;
     _dataset = dataset;
@@ -5891,7 +6102,7 @@ public class DelvCSVData extends DelvBasicDataSet {
     _comment = "#";
   }
 
-  public DelvData delim(String aDelim) {
+  public DelvDataSet delim(String aDelim) {
     _delim = aDelim;
     return this;
   }
@@ -5900,7 +6111,7 @@ public class DelvCSVData extends DelvBasicDataSet {
     return _delim;
   }
 
-  public DelvData comment(String aComment) {
+  public DelvDataSet comment(String aComment) {
     _comment = aComment;
     return this;
   }
@@ -5909,7 +6120,7 @@ public class DelvCSVData extends DelvBasicDataSet {
     return _comment;
   }
 
-  public DelvData newDataSetFromFile(String filename, String dataset) {
+  public DelvDataSet newDataSetFromFile(String filename, String dataset) {
     _old_dataset = _dataset;
     _dataset = dataset;
     _filename = filename;
@@ -5927,7 +6138,10 @@ public class DelvCSVData extends DelvBasicDataSet {
   }
 
   public void clearData() {
-    removeDataSet(_old_dataset);
+    // TODO right way to do this?  Better to have caller remove from Delv?
+    if (_delv != null) {
+      _delv.removeDataSet(_old_dataset);
+    }
   }
 
   public void createDataset() {
@@ -5982,10 +6196,10 @@ public class DelvCSVData extends DelvBasicDataSet {
       // now choose CONTINUOUS if length of attrs[ii] > 12
       if (attrs[ii].size() > 12) {
         println("Adding CONTINUOUS attribute " + header[ii].trim());
-        addAttribute(new DelvBasicAttribute(header[ii].trim(), AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
+        addAttr(new DelvBasicAttribute(header[ii].trim(), AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
       } else {
         println("Adding CATEGORICAL attribute " + header[ii].trim());
-        addAttribute(new DelvBasicAttribute(header[ii].trim(), AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
+        addAttr(new DelvBasicAttribute(header[ii].trim(), AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
       }
     }
   }
@@ -6020,7 +6234,7 @@ public class DelvCSVData extends DelvBasicDataSet {
     }
   }
 
-} // end class DelvCSVData
+} // end class DelvCSVDataSet
 
 
 public class DelvDiscreteColorMap implements DelvColorMap {
@@ -6332,7 +6546,7 @@ String[] toRGBString(color c) {
 color toP5Color(String[] rgbaColor) {
   int alpha = 255;
   if (rgbaColor.length > 3) {
-    alpha = rgbaColor[3];
+    alpha = int(rgbaColor[3]);
   }
   return color_(int(rgbaColor[0]), int(rgbaColor[1]), int(rgbaColor[2]), alpha);
 }
