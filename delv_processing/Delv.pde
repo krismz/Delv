@@ -38,6 +38,7 @@ interface Delv {
   ////////////////////
   // data attributes
   ////////////////////
+  void addAttr(String dataset, DelvAttribute attribute);
   Boolean hasAttr(String dataset, String attribute);
   String[] getAttrs(String dataset);
   String[] getAllCats(String dataset, String attribute);
@@ -76,6 +77,9 @@ interface Delv {
   Float[] getAllItemsAsFloat(String dataset, String attribute);
   float[][] getAllItemsAsFloatArray(String dataset, String attribute);
   String[][] getAllItemsAsStringArray(String dataset, String attribute);
+
+  String getMin(String dataset, String attribute);
+  String getMax(String dataset, String attribute);
 
   String[] getHoverItems(String dataset, String attribute);
   Float[] getHoverItemsAsFloat(String dataset, String attribute);
@@ -120,6 +124,9 @@ interface Delv {
   ////////////////////
   String[] getAllIds(String dataset, String attribute);
   String[][] getAllCoords(String dataset, String attribute);
+  boolean hasId(String dataset, String id);
+  boolean hasCoord(String dataset, String[] coord);
+
 
   ////////////////////
   // data as graph
@@ -421,7 +428,10 @@ interface DelvDataSet {
   Float[] getAllItemsAsFloat(String attr);
   float[][] getAllItemsAsFloatArray(String attr);
   String[][] getAllItemsAsStringArray(String attr);
-  
+
+  String getMin(String attr);
+  String getMax(String attr);
+
   String[] getHoverItems(String attr);
   Float[] getHoverItemsAsFloat(String attr);
   float[][] getHoverItemsAsFloatArray(String attr);
@@ -472,7 +482,7 @@ interface DelvDataSet {
 
   // attributes
   void clearAttributes();
-  void addAttr(DelvBasicAttribute attr);
+  void addAttr(DelvAttribute attr);
   Boolean hasAttr(String attr);
   String[] getAttrs();
   String[] getAllCats(String attr);
@@ -945,6 +955,14 @@ public class DelvImpl implements Delv {
   ////////////////////
   // data attributes
   ////////////////////
+  void addAttr(String dataset, DelvAttribute attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      ds.addAttr(attribute);
+    } else {
+      log("Warning in addAttr! Dataset <"+dataset+"> does not exist.");
+    }
+  }
   Boolean hasAttr(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -1205,6 +1223,25 @@ public class DelvImpl implements Delv {
     }
   }
 
+  String getMin(String dataset, String attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.getMin(attribute);
+    } else {
+      log("Warning in getMin! Dataset <"+dataset+"> does not exist.");
+      return "";
+    }
+  }
+  String getMax(String dataset, String attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.getMax(attribute);
+    } else {
+      log("Warning in getMax! Dataset <"+dataset+"> does not exist.");
+      return "";
+    }
+  }
+
   String[] getHoverItems(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -1455,6 +1492,26 @@ public class DelvImpl implements Delv {
       return new String[0][];
     }
   }
+
+  boolean hasId(String dataset, String id) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.hasId(id);
+    } else {
+      log("Warning in hasId! Dataset <"+dataset+"> does not exist.");
+      return false;
+    }
+  }
+  boolean hasCoord(String dataset, String[] coord) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.hasCoord(coord);
+    } else {
+      log("Warning in hasCoord! Dataset <"+dataset+"> does not exist.");
+      return false;
+    }
+  }
+
 
   ////////////////////
   // data as graph
@@ -4364,7 +4421,27 @@ public class DelvBasicDataSet implements DelvDataSet {
       return new String[0][];
     }
   }
-    String[] getHoverItems(String attr) {
+
+  String getMin(String attr) {
+    DelvAttribute at = _attributes.get(attr);
+    if (at != null) {
+      return at.getMinVal();
+    } else {
+       println("Warning in getMin! Attribute <"+attr+"> does not exist.");
+      return "";
+    }
+  }
+  String getMax(String attr) {
+    DelvAttribute at = _attributes.get(attr);
+    if (at != null) {
+      return at.getMaxVal();
+    } else {
+       println("Warning in getMax! Attribute <"+attr+"> does not exist.");
+      return "";
+    }
+  }
+
+  String[] getHoverItems(String attr) {
     DelvAttribute at = _attributes.get(attr);
     if (at != null) {
       ArrayList<String> hovered = new ArrayList<String>();
@@ -4608,17 +4685,18 @@ public class DelvBasicDataSet implements DelvDataSet {
       return _defaultColor;
     }
     DelvItemId item = _itemIds.get(idx);
-    if ( _hoverColorSet && item.hovered ) {
+    if ( item.hovered && _hoverColorSet  ) {
       return _hoverColor;
-    } else if ( _selectColorsSet.get("PRIMARY") && item.selectedPrimary ) {
+    } else if ( item.selectedPrimary && _selectColorsSet.get("PRIMARY") ) {
       return _selectColors.get("PRIMARY");
-    } else if ( _selectColorsSet.get("SECONDARY") && item.selectedSecondary ) {
+    } else if ( item.selectedSecondary && _selectColorsSet.get("SECONDARY") ) {
       return _selectColors.get("SECONDARY");
-    } else if ( _selectColorsSet.get("TERTIARY") && item.selectedTertiary ) {
+    } else if ( item.selectedTertiary && _selectColorsSet.get("TERTIARY") ) {
       return _selectColors.get("TERTIARY");
-    } else if ( _filterColorSet && item.filtered ) {
+    } else if ( item.filtered && _filterColorSet ) {
       return _filterColor;
-    } else if ( _likeColorSet && item.navigated ) {
+      // TODO mismatch between navigation and like here!!! 
+    } else if ( item.navigated && _likeColorSet ) {
       return _likeColor;
     } else {
       return getItemAttrColor(colorByAttr, id);
@@ -4775,6 +4853,7 @@ public class DelvBasicDataSet implements DelvDataSet {
       Integer idx = _itemIdHash.get(ids[ii]);
       if (idx != null) {
         _itemIds.get(idx).selectedPrimary = doSelect;
+        // TODO should this be added to the range if select is false?  Probably need to toggleFiltered based on that.  until this is dealt with, deselect is probably broken
         range.addCategory(ids[ii]);
       }
     }
@@ -4873,8 +4952,8 @@ public class DelvBasicDataSet implements DelvDataSet {
   void clearAttributes() {
     _attributes = new HashMap<String, DelvBasicAttribute>();
   }
-  void addAttr(DelvBasicAttribute attr) {
-    _attributes.put(attr._name, attr);
+  void addAttr(DelvAttribute attr) {
+    _attributes.put(attr.getName(), attr);
   }
   Boolean hasAttr(String attr) {
     return _attributes.containsKey(attr);
@@ -5016,7 +5095,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     }
     ArrayList< HashMap< String, DelvRange > > selectList = _selectRanges.get(selectType);
     HashMap< String, DelvRange > selectMap = new HashMap<String, DelvRange>();
-    DelvRange range = new DelvCategoricalRange();
+    DelvRange range = new DelvContinuousRange();
     for (int ii = 0; ii < attrs.length; ii++) {
       DelvAttribute at = _attributes.get(attrs[ii]);
       if (at != null) {
@@ -5026,10 +5105,10 @@ public class DelvBasicDataSet implements DelvDataSet {
         }
         ((DelvContinuousRange)range).setMin(parseFloat(mins[ii]));
         ((DelvContinuousRange)range).setMax(parseFloat(maxes[ii]));
+        selectMap.put(attrs[ii], range);
       } else {
-      println("Warning in selectRanges!  Attr< " + attrs[ii] + " not found!");
+        println("Warning in selectRanges!  Attr< " + attrs[ii] + " not found!");
       }
-      selectMap.put(attrs[ii], range);
     }
     selectList.add(selectMap);
     determineSelectedItems(selectType);
@@ -5066,8 +5145,10 @@ public class DelvBasicDataSet implements DelvDataSet {
     DelvAttribute at = _attributes.get(attr);
     if (at != null && at.isCategorical()) {
       at.toggleCatFilter(cat);
-    }else {
-      println("Warning in toggleCatFilter!  Attr <" +attr+"> not found!");
+      _filterRanges.put(attr, new ArrayList<DelvRange>());
+      determineFilteredItems();
+    } else {
+      println("Warning in toggleCatFilter!  Attr <" +attr+"> not found or is not categorical!");
     }
   }
   void filterRanges(String attr, String[] mins, String[] maxes) {
@@ -5162,11 +5243,13 @@ public class DelvBasicDataSet implements DelvDataSet {
     DelvAttribute at = _attributes.get(_hoverRange.getFirst());
     if (at != null) {
       DelvRange range = _hoverRange.getSecond();
-      for (DelvItemId id: _itemIds) {
-        if (range.isInRange(at.getItem(id.name))) {
-          id.hovered = true;
-        } else {
-          id.hovered = false;
+      if (range != null) {
+        for (DelvItemId id: _itemIds) {
+          if (range.isInRange(at.getItem(id.name))) {
+            id.hovered = true;
+          } else {
+            id.hovered = false;
+          }
         }
       }
     }
@@ -5767,6 +5850,7 @@ public class DelvBasicAttribute implements DelvAttribute {
     _floatArrayItems = new float[0][];
     _stringArrayItems = new HashMap<String, String[]>();
     _floatItems = new HashMap<String, Float>((int)Math.ceil(100000/.75));
+    _fullRange.clear();
   }
 
   void setItem(String id, String item) {
@@ -6642,7 +6726,7 @@ color lerp(color start, color end, float value) {
   // use algorithm from http://stackoverflow.com/questions/168838/color-scaling-function
   // convert everything to HSV
   // interpolate
-  // convert back to RGB
+  // convert back to RGBA
   float[] start_hsv = rgb2hsv(red_(start)/255.0, green_(start)/255.0, blue_(start)/255.0);
   float[] end_hsv = rgb2hsv(red_(end)/255.0, green_(end)/255.0, blue_(end)/255.0);
   float[] interp_hsv = interp3(start_hsv, end_hsv, value, 1);

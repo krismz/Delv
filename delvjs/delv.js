@@ -19,22 +19,33 @@ var vg = vg || {};
 (function( delv, Processing, $, vg, undefined ) {
 
   // private TODO is this available to extensions of delv in other files? Does it need to be?
+  var data = {};
   var views = {};
-
   var p5s = {};
-
-  var dataSources = {};
-
+  var _hoverColor = [];
+  var _selectColor = {};
+  var _filterColor = [];
+  var _likeColor = [];
+  var _hoverColorSet = false;
+  var _selectColorSet = {"PRIMARY": false, "SECONDARY": false, "TERTIARY": false};
+  var _filterColorSet = false;
+  var _likeColorSet = false;
+  
   // public
   delv.signalHandlers = {};
 
   // turn obj into a delv view
   delv.view = function() {
     this._name = "";
-    this._dataIF = {};
-    this.dataIF = function(dataIFName) {
-      this._dataIF = delv.getDataIF(dataIFName);
+    this._delv = {};
+    this._datasetName = "";
+    this.bindDelv(dlv) {
+      this._delv = dlv;
+      return this;
     };
+    this.dataSet(dataSetName) {
+      this._datasetName = dataSetName;
+    }
     this.getName = function() {
       return this._name;
     };
@@ -44,7 +55,7 @@ var vg = vg || {};
     };
     this.resize = function(w, h) {};
     this.connectSignals = function() {};
-    this.reloadData = function(source) {};
+    this.onDataChanged = function(source) {};
   }; // end delv.view
 
   // turn obj into a d3 view
@@ -95,15 +106,15 @@ var vg = vg || {};
     };
     newObj.connectSignals = function() {
       // TODO figure out how to handle joining id selection.  Can we assume that the ids match up, or do we need to follow a join relation for them first?
-      // delv.connectToSignal("selectedIdsChanged", this._name, "onSelectedIdsChanged");
-      delv.connectToSignal("categoryColorsChanged", this._name, "onCategoryColorsChanged");
+      // delv.connectToSignal("selectChanged", this._name, "onSelectChanged");
+      this._delv.connectToSignal("colorChanged", this._name, "onColorChanged");
       // TODO add other signals here.
 
     };
-    newObj.onCategoryColorsChanged = function(invoker, dataset, attribute) {
+    newObj.onColorChanged = function(invoker, dataset, attribute) {
       if (invoker !== this._name) {
         if (dataset === this._dataset1Name &&
-            attribute === this._dataset1Attr) {
+          attribute === this._dataset1Attr) {
           this.transferColors(this._dataset1Name, this._dataset1Attr, this._dataset2Name, this._dataset2Attr);
         } else if (dataset === this._dataset2Name &&
                    attribute === this._dataset2Attr) {
@@ -112,11 +123,11 @@ var vg = vg || {};
       }
     };
     newObj.transferColors = function(fromDS, fromAttr, toDS, toAttr) {
-      var cats = this._dataIF.getAllCategories(fromDS, fromAttr);
-      var colors = this._dataIF.getAllCategoryColors(fromDS, fromAttr);
+      var cats = this._delv.getAllCats(fromDS, fromAttr);
+      var colors = this._delv.getCatColors(fromDS, fromAttr);
       var ii;
       for (ii = 0; ii < cats.length; ii++) {
-        this._dataIF.updateCategoryColor(this._name, toDS, toAttr, cats[ii], colors[ii]);
+        this._delv.colorCat(this._name, toDS, toAttr, cats[ii], colors[ii]);
       }
     };
         
@@ -178,12 +189,12 @@ var vg = vg || {};
     };
 
     newObj.convertToHierarchy = function() {
-      var node_ids = this._dataIF.getAllIds(this._nodeDataset, this._nodeNameAttr);
-      var node_names = this._dataIF.getAllItems(this._nodeDataset, this._nodeNameAttr);
-      var node_sizes = this._dataIF.getAllItems(this._nodeDataset, this._nodeSizeAttr);
+      var node_ids = this._delv.getAllIds(this._nodeDataset, this._nodeNameAttr);
+      var node_names = this._delv.getAllItems(this._nodeDataset, this._nodeNameAttr);
+      var node_sizes = this._delv.getAllItems(this._nodeDataset, this._nodeSizeAttr);
 
-      var link_start = this._dataIF.getAllItems(this._linkDataset, this._linkStartAttr);
-      var link_end = this._dataIF.getAllItems(this._linkDataset, this._linkEndAttr);
+      var link_start = this._delv.getAllItems(this._linkDataset, this._linkStartAttr);
+      var link_end = this._delv.getAllItems(this._linkDataset, this._linkEndAttr);
 
       var nodes = {};
       var root_node = "";
@@ -402,8 +413,8 @@ var vg = vg || {};
 	      chartLoaded = true;
 	    }
 	    if (chartLoaded) {
-	      view.connectSignals();
 	      delv.addView(view, elemId);
+	      view.connectSignals();
 	      loadCompleteCallback(view, elemId);
 	    }
     }
@@ -443,8 +454,8 @@ var vg = vg || {};
         chartLoaded = false;
       }
       if (chartLoaded) {
-        view.connectSignals();
         delv.addView(view, elemId);
+        view.connectSignals();
         loadCompleteCallback(view, elemId);
       }
     }
@@ -515,8 +526,8 @@ var vg = vg || {};
 	        p.bindJavascript(delv);
 	        p.bound = true;
           p._view.name(canvasId);
-	        p._view.connectSignals();
 	        delv.addView(p._view, canvasId);
+	        p._view.connectSignals();
           delv.addP5Instance(p, canvasId);
 	        loadCompleteCallback(p._view, canvasId);
 	      }
@@ -598,6 +609,7 @@ var vg = vg || {};
   delv.addView = function (view, id) {
     delv.log("Adding view for " + id);
     delv.log("typeof view: " + typeof(view));
+    view.bindDelv(delv);
     views[id] = view;
     return delv;
   };
@@ -616,42 +628,32 @@ var vg = vg || {};
   };
   
   // a hacky function to deal with asychronicity between data load and view load
-  delv.giveDataIFToViews = function (dataIFName) {
-    var view;
-    for (view in views) {
-      if (views.hasOwnProperty(view)) {
-        views[view].dataIF(dataIFName);
-      }
-    }
-  };	
+  // delv.giveDataIFToViews = function (dataIFName) {
+  //   var view;
+  //   for (view in views) {
+  //     if (views.hasOwnProperty(view)) {
+  //       views[view].dataIF(dataIFName);
+  //     }
+  //   }
+  // };	
 
-  delv.connectToQt = function() {
-    // Use QtWebKit to connect.  This method should be called from the Qt side of the QtWebKit bridge
-    var dataIF;
-    for (dataIF in dataSources) {
-      if (dataSources.hasOwnProperty(dataIF)) {
-        dataSources[dataIF].categoryVisibilityChanged.connect(delv, delv.handleSignal);
-        dataSources[dataIF].categoryColorsChanged.connect(delv, delv.handleSignal);
-        dataSources[dataIF].hoveredCategoryChanged.connect(delv, delv.handleSignal);
-        dataSources[dataIF].highlightedCategoryChanged.connect(delv, delv.handleSignal);
+  // TODO redo this Qt connection with new signals and delv
+  // delv.connectToQt = function() {
+  //   // Use QtWebKit to connect.  This method should be called from the Qt side of the QtWebKit bridge
+  //   var dataIF;
+  //   for (dataIF in dataSources) {
+  //     if (dataSources.hasOwnProperty(dataIF)) {
+  //       dataSources[dataIF].categoryVisibilityChanged.connect(delv, delv.handleSignal);
+  //       dataSources[dataIF].categoryColorsChanged.connect(delv, delv.handleSignal);
+  //       dataSources[dataIF].hoveredCategoryChanged.connect(delv, delv.handleSignal);
+  //       dataSources[dataIF].highlightedCategoryChanged.connect(delv, delv.handleSignal);
 
-        dataSources[dataIF].selectedIdsChanged.connect(delv, delv.handleSignal);
-        dataSources[dataIF].highlightedIdChanged.connect(delv, delv.handleSignal);
-        dataSources[dataIF].hoveredIdChanged.connect(delv, delv.handleSignal);
-      }
-    }
-  };
-
-  delv.addDataIF = function (dataIF) {
-    console.log("Adding dataIF: " + dataIF.getName());
-    dataSources[dataIF.getName()] = dataIF;
-    // TODO, the current new way is to have the dataIF call delv.emitSignal, but this requires delv and dataIF to each know about the other.  Is it ok to have them so closely coupled?
-    return delv;
-  };
-
-  delv.getDataIF = function (id) {
-    return dataSources[id];
-  };
+  //       dataSources[dataIF].selectedIdsChanged.connect(delv, delv.handleSignal);
+  //       dataSources[dataIF].highlightedIdChanged.connect(delv, delv.handleSignal);
+  //       dataSources[dataIF].hoveredIdChanged.connect(delv, delv.handleSignal);
+  //     }
+  //   }
+  // };
 
   delv.emitEvent = function(name, detail) {
     $( document ).trigger(name, [name, detail]);
@@ -681,15 +683,16 @@ var vg = vg || {};
     }
   };
 
-  delv.handleSignal = function(signal, invoker, dataset, attribute) {
+  delv.handleSignal = function(signal, invoker, dataset, attribute, detail) {
     var key;
     var view;
     var method;
     var fullcall;
-    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + attribute + ")");
+    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + attribute + ", " + detail + ")");
     delv.log("typeof invoker: " + typeof(invoker));
     delv.log("typeof dataset: " + typeof(dataset));
     delv.log("typeof attribute: " + typeof(attribute));
+    delv.log("typeof detail: " + typeof(detail));
     try {
       for (key in delv.signalHandlers[signal]) {
         if (delv.signalHandlers[signal].hasOwnProperty(key)) {
@@ -698,7 +701,15 @@ var vg = vg || {};
             delv.log("key: " + key);
             delv.log("typeof view: " + typeof(view));
             method = delv.signalHandlers[signal][key];
-            fullcall = "view." + method + "(invoker, dataset, attribute)";
+            if (typeof(attribute) !== "undefined") {
+              if (typeof(detail) !== "undefined") {
+                fullcall = "view." + method + "(invoker, dataset, attribute, detail)";
+              } else {
+                fullcall = "view." + method + "(invoker, dataset, attribute)";
+              }
+            } else {
+              fullcall = "view." + method + "(invoker, dataset)";
+            }
             delv.log("calling eval(" + fullcall + ")");
             // TODO using eval to get around Java not being able to pass methods around
             eval(fullcall);
@@ -715,10 +726,10 @@ var vg = vg || {};
 
   delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 200, false);
 
-  delv.emitSignal = function(signal, invoker, dataset, attribute) {
+  delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
     // TODO, debounce here is not ideal, really want to think about more appropriate location
-    //delv.handleSignal(signal, invoker, dataset, attribute);
-    delv.debouncedHandleSignal(signal, invoker, dataset, attribute);
+    //delv.handleSignal(signal, invoker, dataset, coordination, detail);
+    delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
   };
 
   delv.exception = function(message) {
@@ -737,432 +748,875 @@ var vg = vg || {};
 
   delv.dataSetException.prototype = new delv.exception();
 
-  // a basic implementation of the delv data interface
-  delv.data = function(nm) {
-    var delvIF = {};
-    var data = {};
-    var name = nm;
+  delv.pair = function(frst, scnd) {
+    var first = frst;
+    var second = scnd;
 
-    this.setName = function(nm) {
-      name = nm;
-      return this;
-    };
-    this.getName = function() {
-      return name;
-    };
-
-    this.setDelvIF = function(dlv) {
-      delvIF = dlv;
-      return this;
-    };
-
-    this.addDataSet = function(name) {
-      var ds = new delv.dataSet(name);
-      data[name] = ds;
-      return ds;
-    };
-
-    this.addAttribute = function(dataset, attr) {
-      try {
-        data[dataset].addAttribute(attr);
-      } catch (e) {
-        return;
-      }
-    };
-
-    this.getDataSet = function(name) {
-      if (data.hasOwnProperty(name)) {
-        return data[name];
-      } else {
-        return {};
-      }
+    this.set = function(frst, scnd) {
+      first = frst;
+      second = scnd;
     }
-    
-    this.updateSelectedIds = function(invoker, dataset, ids) {
-      try {
-        data[dataset].updateSelectedIds(ids);
-        delvIF.emitSignal('selectedIdsChanged', invoker, dataset, ids);
-      } catch (e) {
-        return;
-      }
+
+    this.equals = function(other) {
+      return (first === other.first && second === other.second);
     };
-
-    this.updateHighlightedId = function(invoker, dataset, id) {
-      try {
-        data[dataset].updateHighlightedId(id);
-        delvIF.emitSignal('highlightedIdChanged', invoker, dataset, id);
-      } catch (e) {
-        return;
-      }
-    };
-
-    this.updateHoveredId = function(invoker, dataset, id) {
-      try {
-        data[dataset].updateHoveredId(id);
-        delvIF.emitSignal('hoveredIdChanged', invoker, dataset, id);
-      } catch (e) {
-        return;
-      }
-    };
-
-// TODO subtle here, decide how to track visibility changed this way correctly in DataSet
-//   this.updateItemVisibility = function(invoker, dataset, id) {
-//      data[dataset].updateItemVisibility(id);
-//       delvIF.emitSignal('itemVisibilityChanged', invoker, dataset, id);
-//  }
-
-    this.updateHighlightedCategory = function(invoker, dataset, attr, cat) {
-      try {
-        data[dataset].updateHighlightedCategory(attr, cat);
-        delvIF.emitSignal('highlightedCategoryChanged', invoker, dataset, attr);
-      } catch (e) {
-        return;
-      }
-    };
-
-    this.updateHoveredCategory = function(invoker, dataset, attr, cat) {
-      if (data.hasOwnProperty(dataset)) {
-        data[dataset].updateHoveredCategory(attr, cat);
-        delvIF.emitSignal('hoveredCategoryChanged', invoker, dataset, attr);
-      }
-    };
-
-    this.updateCategoryVisibility = function(invoker, dataset, attr, cat) {
-      if (data.hasOwnProperty(dataset)) {
-        data[dataset].updateCategoryVisibility(attr, cat);
-        delvIF.emitSignal('categoryVisibilityChanged', invoker, dataset, attr);
-      }
-    };
-
-  this.updateCategoryColor = function(invoker, dataset, attr, cat, color) {
-    if (color) {
-      data[dataset].updateCategoryColor(attr, cat, color);
-      delvIF.emitSignal('categoryColorsChanged', invoker, dataset, attr);
+  };
+  
+  // a basic implementation of the delv data interface
+  delv.addDataSet = function(name, dataset) {
+    dataset.bindDelv(this);
+    data[name] = dataset;
+    return;
+  };
+  delv.getDataSet = function(name) {
+    if (data.hasOwnProperty(name)) {
+      return data[name];
+    } else {
+      return {};
+    }
+  };
+  delv.hasDataSet = function(name) {
+    return data.hasOwnProperty(name);
+  };
+  delv.removeDataSet = function(name) {
+    if (data.hasOwnProperty(name)) {
+      delete data[name];
+    }
+  };
+  
+  delv.addAttr = function(dataset, attr) {
+    try {
+      data[dataset].addAttr(attr);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.hasAttr = function(dataset, attr) {
+    try {
+      return data[dataset].hasAttr(attr);
+    } catch (e) {
+      return false;
+    }
+  };
+  delv.getAttrs = function(dataset) {
+    try {
+      return data[dataset].getAttrs();
+    } catch (e) {
+      return [];
     }
   };
 
-    this.updateVisibleMin = function(invoker, dataset, attr, val) {
-      try {
-        if (data.hasOwnProperty(dataset)) {
-          data[dataset].updateVisibleMin(attr, val);
-          delvIF.emitSignal('dataVisibilityChanged', invoker, dataset, attr);
-        }
-      } catch (e) {
-        delvIF.log("updateVisibleMin received exception: " + e);
-      }
-    };
-    this.updateVisibleMax = function(invoker, dataset, attr, val) {
-      try {
-        if (data.hasOwnProperty(dataset)) {
-          data[dataset].updateVisibleMax(attr, val);
-          delvIF.emitSignal('dataVisibilityChanged', invoker, dataset, attr);
-        }
-      } catch (e) {
-        delvIF.log("updateVisibleMax received exception: " + e);
-      }
-    };
-
-    this.setItem = function(dataset, attr, id, item) {
-      if (data.hasOwnProperty(dataset)) {
-        data[dataset].setItem(attr, id, item);
-      }
-    };
-
-    this.getAllItems = function(dataset, attr) {
-      try {
-        return data[dataset].getAllItems(attr);
-      } catch (e) {
-        delv.log("getAllItems(" + dataset + ", " + attr + ") caught exception: " + e);
-        return [];
-      }
-    };
-
-    this.getAllItemsAsFloat = function(dataset, attr) {
-      if (data.hasOwnProperty(dataset)) {
-        return data[dataset].getAllItemsAsFloat(attr);
-      } else {
-        return [];
-      }
-    };
-
-    this.getAllIds = function(dataset, attr) {
-      if (data.hasOwnProperty(dataset)) {
-        return data[dataset].getAllIds(attr);
-      } else {
-        return [];
-      }
-    };
-
-    this.getSelectedItems = function(dataset, attr) {
-      if (data.hasOwnProperty(dataset)) {
-        return data[dataset].getSelectedItems(attr);
-      } else {
-        return [];
-      }
-    };
-
-    this.getItem = function(dataset, attr, id) {
-      if (data.hasOwnProperty(dataset)) {
-        return data[dataset].getItem(attr, id);
-      } else {
-        return "";
-      }
-    };
-
-    this.getItemAsFloat = function(dataset, attr, id) {
-      if (data.hasOwnProperty(dataset)) {
-        return data[dataset].getItemAsFloat(attr, id);
-      } else {
-        return null;
-      }
-    };
-
-    this.getAllCategories = function(dataset, attr) {
-      // return unique set of values from categorical data
-      try {
-        return data[dataset].getAllCategories(attr);
-      } catch (e) {
-        delvIF.log("getAllCategories received exception: " + e);
-        return [];
-      }
-    };
-
-    this.getVisibleCategories = function(dataset, attr) {
-      try {
-        return data[dataset].getVisibleCategories(attr);
-      } catch (e) {
-      delvIF.log("getVisibleCategories received exception: " + e);
-        return [];
-      }
-    };
-
-    this.getAllCategoryColors = function(dataset, attr) {
+  delv.getAllCats = function(dataset, attr) {
     // return unique set of values from categorical data
-      try {
-        return data[dataset].getAllCategoryColors(attr);
-      } catch (e) {
-        delvIF.log("getAllCategoryColors received exception: " + e);
-        return [];
-      }
-    };
-
-    this.getVisibleCategoryColors = function(dataset, attr) {
-      try {
-        return data[dataset].getVisibleCategoryColors(attr);
-      } catch (e) {
-        delvIF.log("getVisibleCategoryColors received exception: " + e);
-        return [];
-      }
-    };
-
-    this.getAllCategoryColorMaps = function(dataset, attr) {
+    try {
+      return data[dataset].getAllCats(attr);
+    } catch (e) {
+      delv.log("getAllCats received exception: " + e);
+      return [];
+    }
+  };
+  delv.getCatColor = function(dataset, attr, cat) {
+    // return color for one category of categorical data
+    try {
+      return data[dataset].getCatColor(attr, cat);
+    } catch (e) {
+      delv.log("getCatColor received exception: " + e);
+      return {};
+    }
+  };
+  delv.getCatColors = function(dataset, attr) {
     // return unique set of values from categorical data
-      try {
-        return data[dataset].getAllCategoryColorMaps(attr);
-      } catch (e) {
-        delvIF.log("getAllCategoryColorMaps received exception: " + e);
-        return [];
+    try {
+      return data[dataset].getCatColors(attr);
+    } catch (e) {
+      delv.log("getCatColors received exception: " + e);
+      return [];
+    }
+  };
+
+  delv.getFilterCatColors = function(dataset, attr) {
+    try {
+      return data[dataset].getFilterCatColors(attr);
+    } catch (e) {
+      delv.log("getFilterCatColors received exception: " + e);
+      return [];
+    }
+  };
+
+  delv.getCatEncoding = function(dataset, attr, cat) {
+    // return encoding for one category of categorical data
+    try {
+      return data[dataset].getCatEncoding(attr, cat);
+    } catch (e) {
+      delv.log("getCatEncoding received exception: " + e);
+      return {};
+    }
+  };
+  delv.getCatEncodings = function(dataset, attr) {
+    // return unique set of values from categorical data
+    try {
+      return data[dataset].getCatEncodings(attr);
+    } catch (e) {
+      delv.log("getCatEncodings received exception: " + e);
+      return [];
+    }
+  };
+
+  delv.clearItems = function(dataset) {
+    if (data.hasOwnProperty(dataset)) {
+      data[dataset].clearItems();
+    }
+  };
+  delv.setItem = function(dataset, attr, id, item) {
+    if (data.hasOwnProperty(dataset)) {
+      data[dataset].setItem(attr, id, item);
+    }
+  };
+
+  delv.getItem = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItem(attr, id);
+    } else {
+      return "";
+    }
+  };
+
+  delv.getItemAsFloat = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemAsFloat(attr, id);
+    } else {
+      return null;
+    }
+  };
+
+  // TODO add get/set FloatArray / StringArray methods
+  
+  delv.getAllItems = function(dataset, attr) {
+    try {
+      return data[dataset].getAllItems(attr);
+    } catch (e) {
+      delv.log("getAllItems(" + dataset + ", " + attr + ") caught exception: " + e);
+      return [];
+    }
+  };
+
+  delv.getAllItemsAsFloat = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getAllItemsAsFloat(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getHoverItems = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getHoverItems(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getSelectItems = function(dataset, attr, selectType) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getSelectItems(attr, selectType);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getFilterItems = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getFilterItems(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getNavItems = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getNavItems(attr);
+    } else {
+      return [];
+    }
+  };
+
+  // get color of item or items, applying precedence rules (highest to lowest precedence):
+  // hover color, select color, like color, filter color, attribute color
+  delv.getItemColor = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemColor(attr, id);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemColors = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemColors(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemEncoding = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemEncoding(attr, id);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemEncodings = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemEncodings(attr);
+    } else {
+      return [];
+    }
+  };
+
+  // get color of item or items based on attribute color map, ignoring any selection-based coloring
+  delv.getItemAttrColor = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemAttrColor(attr, id);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemAttrColors = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemAttrColors(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemAttrEncoding = function(dataset, attr, id) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemAttrEncoding(attr, id);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getItemAttrEncodings = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getItemAttrEncodings(attr);
+    } else {
+      return [];
+    }
+  };
+
+  delv.getAllIds = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getAllIds(attr);
+    } else {
+      return [];
+    }
+  };
+  delv.getAllCoords = function(dataset, attr) {
+    if (data.hasOwnProperty(dataset)) {
+      return data[dataset].getAllCoords(attr);
+    } else {
+      return [];
+    }
+  };
+  delv.hasId = function(dataset, id) {
+    return data[dataset].hasId(id);
+  };
+  delv.hasCoord = function(dataset, coord) {
+    return data[dataset].hasCoord(coord);
+  };
+
+
+  // TODO sort API
+
+  // TODO transform API
+
+  // TODO aggregate API
+
+  delv.hoverItem = function(invoker, dataset, id) {
+    try {
+      data[dataset].hoverItem(id);
+      delv.emitSignal('hoverChanged', invoker, dataset, "ITEM");
+    } catch (e) {
+      return;
+    }
+  };
+
+  delv.hoverCat = function(invoker, dataset, attr, cat) {
+    try {
+      data[dataset].hoverCat(attr, cat);
+      delv.emitSignal('hoverChanged', invoker, dataset, "CAT");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.hoverRange = function(invoker, dataset, attr, minVal, maxVal) {
+    try {
+      data[dataset].hoverRange(attr, minVal, maxVal);
+      delv.emitSignal('hoverChanged', invoker, dataset, "RANGE");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.hoverLike = function(invoker, dataset, id, relationship) {
+    try {
+      data[dataset].hoverLike(id, relationship);
+      delv.emitSignal('hoverChanged', invoker, dataset, "LIKE");
+    } catch (e) {
+      return;
+    }
+  };
+
+  delv.validateSelectType = function(selectType) {
+    // for now though, allow any select type, if empty, default to primary
+    if (selectType === "") {
+      return "PRIMARY";
+    } else {
+      return selectType.toUpperCase();
+    }
+  };
+
+  // TODO implement deselection
+  
+  delv.selectItems = function(invoker, dataset, ids, selectType) {
+    try {
+      data[dataset].selectItems(ids, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "ITEM", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
+    try {
+      data[dataset].selectCats(attrs, cats, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
+    try {
+      data[dataset].selectRanges(attrs, mins, maxes, selectType);
+      
+    }
+  };
+  delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
+    try {
+      data[dataset].selectCats(attrs, cats, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
+    try {
+      data[dataset].selectRanges(attrs, mins, maxes, selectType);
+      
+    }
+  };
+  delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
+    try {
+      data[dataset].selectCats(attrs, cats, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
+    try {
+      data[dataset].selectRanges(attrs, mins, maxes, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "RANGE", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.selectLike = function(invoker, dataset, ids, relationships, selectType) {
+    try {
+      data[dataset].selectLike(ids, relationships, selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "LIKE", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+
+  delv.clearSelect = function(invoker, dataset, selectType) {
+    try {
+      data[dataset].clearSelect(selectType);
+      delv.emitSignal('selectChanged', invoker, dataset, "CLEAR", selectType);
+    } catch (e) {
+      return;
+    }
+  };
+
+  delv.filterCats = function(invoker, dataset, attr, cats) {
+    try {
+      data[dataset].filterCats(attr, cats);
+      delv.emitSignal('filterChanged', invoker, dataset, "CAT");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.toggleCatFilter = function(invoker, dataset, attr, cat) {
+    try {
+      data[dataset].toggleCatFilter(attr, cat);
+      delv.emitSignal('filterChanged', invoker, dataset, "CAT");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.filterRanges = function(invoker, dataset, attr, mins, maxes) {
+    try {
+      data[dataset].filterRanges(attr, mins maxes);
+      delv.emitSignal('filterChanged', invoker, dataset, "RANGE");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.filterLike = function(invoker, dataset, ids, relationships) {
+    try {
+      data[dataset].filterLike(ids, relationships);
+      delv.emitSignal('filterChanged', invoker, dataset, "LIKE");
+    } catch (e) {
+      return;
+    }
+  };
+  delv.clearFilter = function(invoker, dataset) {
+    try {
+      data[dataset].clearFilter();
+      delv.emitSignal('filterChanged', invoker, dataset, "CLEAR");
+    } catch (e) {
+      return;
+    }
+  };
+
+  delv.colorCat = function(invoker, dataset, attr, cat, rgbaColor) {
+    try {
+      if (rgbaColor) {
+        data[dataset].colorCat(attr, cat, rgbaColor);
+        delv.emitSignal('colorChanged', invoker, dataset, attr);
       }
-    };
-
-    this.getHoveredCategory = function(dataset, attr) {
-      try {
-        return data[dataset].getHoveredCategory(attr);
-      } catch (e) {
-        delvIF.log("getHoveredCategory received exception: " + e);
-        return [];
+    } catch (e) {
+      return;
+    }
+  };
+  delv.encodeCat = function(invoker, dataset, attr, cat, encoding) {
+    try {
+      if (encoding) {
+        data[dataset].encodeCat(attr, cat, encoding);
+        delv.emitSignal('encodingChanged', invoker, dataset, attr);
       }
-    };
+    } catch (e) {
+      return;
+    }
+  };
 
-    this.getAttributes = function(dataset) {
-      return data[dataset].getAttributes();
-    };
+  // TODO navItem, navVal, navCat, navRange, navLike, clearNav
+  // TODO panItem, panVal, panCat, panRange, panLike
+  // TODO zoomItem, zoomVal, zoomCat, zoomRange, zoomLike
+  // TODO setLOD
 
-    this.getHighlightedId = function(dataset) {
-      return data[dataset].getHighlightedId();
-    };
+  delv.getHoverIds = function(dataset) {
+    try {
+      return data[dataset].getHoverIds();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getHoverCoords = function(dataset) {
+    try {
+      return data[dataset].getHoverCoords();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getHoverCat = function(dataset, attr) {
+    try {
+      return data[dataset].getHoverCat(attr);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getHoverRange = function(dataset, attr) {
+    try {
+      return data[dataset].getHoverRange(attr);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getHoverLike = function(dataset) {
+    try {
+      return data[dataset].getHoverLike();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectIds = function(dataset, selectType) {
+    try {
+      return data[dataset].getSelectIds(selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectCoords = function(dataset, selectType) {
+    try {
+      return data[dataset].getSelectCoords(selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectCats = function(dataset, attr, selectType) {
+    try {
+      return data[dataset].getSelectCats(attr, selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectRanges = function(dataset, attr, selectType) {
+    try {
+      return data[dataset].getSelectRanges(attr, selectType);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectLike = function(dataset, selectType) {
+    try {
+      return data[dataset].getSelectLike();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getSelectCriteria = function(dataset, selectType) {
+    try {
+      return data[dataset].getSelectCriteria();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterIds = function(dataset) {
+    try {
+      return data[dataset].getFilterIds();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterCoords = function(dataset) {
+    try {
+      return data[dataset].getFilterCoords();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterCats = function(dataset, attr) {
+    try {
+      return data[dataset].getFilterCats(attr);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterRanges = function(dataset, attr) {
+    try {
+      return data[dataset].getFilterRanges(attr);
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterLike = function(dataset) {
+    try {
+      return data[dataset].getFilterLike();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.getFilterCriteria = function(dataset) {
+    try {
+      return data[dataset].getFilterCriteria();
+    } catch (e) {
+      return;
+    }
+  };
 
-    this.getHoveredId = function(dataset) {
-      return data[dataset].getHoverId();
-    };
+  // TODO getNav info
+  // TODO getLOD
+   
+   
 
-    this.hasId = function(dataset, id) {
-      return data[dataset].hasId(id);
-    };
 
-    this.getVisibleMin = function(dataset, attr) {
-      try {
-        return data[dataset].getVisibleMin(attr);
-      } catch (e) {
-        delvIF.log("getVisibleMin received exception: " + e);
-        return {};
+  delv.getAllCatColorMaps = function(dataset, attr) {
+    // return unique set of values from categorical data
+    try {
+      return data[dataset].getAllCatColorMaps(attr);
+    } catch (e) {
+      delv.log("getAllCatColorMaps received exception: " + e);
+      return [];
+    }
+  };
+
+  delv.getMin = function(dataset, attr) {
+    try {
+      return data[dataset].getMin(attr);
+    } catch (e) {
+      delv.log("getMin received exception: " + e);
+      return {};
+    }
+  };
+  delv.getMax = function(dataset, attr) {
+    try {
+      return data[dataset].getMax(attr);
+    } catch (e) {
+      delv.log("getMax received exception: " + e);
+      return {};
+    }
+  };
+
+
+  delv.hoverColor = function(invoker, dataset, rgbaColor) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].hoverColor(rgbaColor);
+      delv.emitSignal('hoverColorChanged', invoker, dataset);
+    } else {
+      _hoverColor = rgbaColor;
+      _hoverColorSet = true;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].hoverColor(rgbaColor);
+          delv.emitSignal('hoverColorChanged', invoker, ds);
+        }
       }
-    };
-    this.getVisibleMax = function(dataset, attr) {
-      try {
-        return data[dataset].getVisibleMax(attr);
-      } catch (e) {
-        delvIF.log("getVisibleMax received exception: " + e);
-        return {};
+    }
+  };
+  delv.selectColor = function(invoker, dataset, rgbaColor, selectType) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].selectColor(rgbaColor, selectType);
+      delv.emitSignal('selectColorChanged', invoker, dataset, selectType);
+    } else {
+      _selectColor[selectType] = rgbaColor;
+      _selectColorSet[selectType] = true;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].selectColor(rgbaColor, selectType);
+          delv.emitSignal('selectColorChanged', invoker, ds, selectType);
+        }
       }
-    };
-    this.getMin = function(dataset, attr) {
-      try {
-        return data[dataset].getMin(attr);
-      } catch (e) {
-        delvIF.log("getMin received exception: " + e);
-        return {};
+    }
+  };
+  delv.filterColor = function(invoker, dataset, rgbaColor) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].filterColor(rgbaColor);
+      delv.emitSignal('filterColorChanged', invoker, dataset);
+    } else {
+      _filterColor = rgbaColor;
+      _filterColorSet = true;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].filterColor(rgbaColor);
+          delv.emitSignal('filterColorChanged', invoker, ds);
+        }
       }
-    };
-    this.getMax = function(dataset, attr) {
-      try {
-        return data[dataset].getMax(attr);
-      } catch (e) {
-        delvIF.log("getMax received exception: " + e);
-        return {};
+    }
+  };
+  delv.likeColor = function(invoker, dataset, rgbaColor) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].likeColor(rgbaColor);
+      delv.emitSignal('likeColorChanged', invoker, dataset);
+    } else {
+      _likeColor = rgbaColor;
+      _likeColorSet = true;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].likeColor(rgbaColor);
+          delv.emitSignal('likeColorChanged', invoker, ds);
+        }
       }
-    };
+    }
+  };
+  delv.clearHoverColor = function(invoker, dataset) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].clearHoverColor();
+      delv.emitSignal('hoverColorChanged', invoker, dataset);
+    } else {
+      _hoverColorSet = false;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].clearHoverColor();
+          delv.emitSignal('hoverColorChanged', invoker, ds);
+        }
+      }
+    }
+  };
+  delv.clearSelectColor = function(invoker, dataset, selectType) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].clearSelectColor(selectType);
+      delv.emitSignal('selectColorChanged', invoker, dataset, selectType);
+    } else {
+      _selectColorSet[selectType] = false;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].clearSelectColor(selectType);
+          delv.emitSignal('selectColorChanged', invoker, ds, selectType);
+        }
+      }
+    }
+  };
+  delv.clearFilterColor = function(invoker, dataset) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].clearFilterColor();
+      delv.emitSignal('filterColorChanged', invoker, dataset);
+    } else {
+      _filterColorSet = false;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].clearFilterColor();
+          delv.emitSignal('filterColorChanged', invoker, ds);
+        }
+      }
+    }
+  };
+  delv.clearLikeColor = function(invoker, dataset) {
+    if (delv.hasDataSet(dataset)) {
+      data[dataset].clearLikeColor();
+      delv.emitSignal('likeColorChanged', invoker, dataset);
+    } else {
+      _likeColorSet = false;
+      for (ds in data) {
+        if (data.hasOwnProperty(ds)) {
+          data[ds].clearLikeColor();
+          delv.emitSignal('likeColorChanged', invoker, ds);
+        }
+      }
+    }
+  };
 
-
-  }; // end delv.data
+  delv.isHoverColorSet = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      return data[dataset].isHoverColorSet();
+    } else {
+      return _hoverColorSet;
+    }
+  };
+  delv.getHoverColor = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      col = data[dataset].getHoverColor();
+      if (col.length < 1) {
+        return _hoverColor;
+      } else {
+        return col;
+      }
+    } else {
+      return _hoverColor;
+    }
+  };
+  delv.isSelectColorSet = function(dataset, selectType) {
+    if (delv.hasDataSet(dataset)) {
+      return data[dataset].isSelectColorSet(selectType);
+    } else {
+      return _selectColorSet[selectType];
+    }
+  };
+  delv.getSelectColor = function(dataset, selectType) {
+    if (delv.hasDataSet(dataset)) {
+      col = data[dataset].getSelectColor(selectType);
+      if (col.length < 1) {
+        return _selectColor[selectType];
+      } else {
+        return col;
+      }
+    } else {
+      return _selectColor[selectType];
+    }
+  };  
+  delv.isFilterColorSet = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      return data[dataset].isFilterColorSet();
+    } else {
+      return _filterColorSet;
+    }
+  };
+  delv.getFilterColor = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      col = data[dataset].getFilterColor();
+      if (col.length < 1) {
+        return _filterColor;
+      } else {
+        return col;
+      }
+    } else {
+      return _filterColor;
+    }
+  };
+  delv.isLikeColorSet = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      return data[dataset].isLikeColorSet();
+    } else {
+      return _likeColorSet;
+    }
+  };
+  delv.getLikeColor = function(dataset) {
+    if (delv.hasDataSet(dataset)) {
+      col = data[dataset].getLikeColor();
+      if (col.length < 1) {
+        return _likeColor;
+      } else {
+        return col;
+      }
+    } else {
+      return _likeColor;
+    }
+  };
 
   delv.dataSet = function(name) {
+    // TODO set colors via css
     var itemIds = [];
     var attributes = {};
-    var highlightedId = "";
-    var hoverId = "";
+    var _defaultEncoding = [];
+    var _defaultColor = [];
+    var _hoverColor = [];
+    var _selectColor = {};
+    var _filterColor = [];
+    var _likeColor = [];
+    var _defaultEncodingSet = false;
+    var _hoverColorSet = false;
+    var _selectColorSet = {"PRIMARY": false, "SECONDARY": false, "TERTIARY": false};
+    var _filterColorSet = false;
+    var _likeColorSet = false;
+    var _hoverId = [];
+    var _hoverRange = new delv.pair("",{});
+    var _selectRanges = {"PRIMARY": [], "SECONDARY": [], "TERTIARY": []};
+    var _filterRanges = {};
+
     this.name = name;
 
+    // TODO sort API
+    // TODO transform API
+    // TODO aggregate API
+
+    this.getIdx = function(id) {
+      var i = -1;
+      var val = delv.coordToId(id);
+      for (i = 0; i < itemIds.length; i++) {
+        if (itemIds[i].name === val) {
+          return i;
+        }
+      }
+      return i;
+    };
+    
     this.addId = function(id) {
       var newId = new delv.itemId(id);
       itemIds[itemIds.length] = newId;
     };
-
-    this.clearItems = function() {
-      for (attr in attributes) {
-        if (attributes.hasOwnProperty(attr)) {
-          attributes[attr].clear();
-        }
-      }
-      itemIds = [];
-    };
-    this.clearAttributes = function() {
-      attributes={};
-    };
-    
-    this.getSelectedIds = function() {
-      var ids = [];
-      var i;
-      var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
-        if (id.selected) {
-          ids[ids.length] = id.name;
-        }
-      }
-      return ids;
-    };
-
-    this.getVisibleIds = function() {
-      var ids = [];
-      var i;
-      var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
-        if (id.visible) {
-          ids[ids.length] = id.name;
-        }
-      }
-      return ids;
-    };
-
-    this.getHighlightedId = function() {
-      return highlightedId;
-    };
-
-    this.getHoverId = function() {
-      return hoverId;
-    };
-
     this.hasId = function(id) {
-      var i;
-      for (i = 0; i < itemIds.length; i++) {
-        if (itemIds[i].name === id) {
-          return true;
-        }
-      }
-      return false;
+      var i = getIdx(id);
+      return (i > -1);
     };
-
-    this.setItem = function(attrName, id, item) {
-      if (!this.hasId(id)) {
-        this.addId(id);
-      }
-      attributes[attrName].setItem(id, item);
+    this.addCoord = function(coord) {
+      var newCoord = new delv.itemId(coord);
+      itemCoords[itemCoords.length] = newCoord;
     };
-
-    this.addAttribute = function(attr) {
-      attributes[attr.name] = attr;
-    };
-
-    this.getAttributes = function() {
-      var keys = [];
-      var attr;
-      for (attr in attributes) {
-        if (attributes.hasOwnProperty(attr)) {
-          keys[keys.length] = attr;
-        }
-      }
-      return keys;
-    };
-
-    this.getAllCategories = function(attr) {
-      return attributes[attr].getAllCategories();
-    };
-
-    this.getVisibleCategories = function(attr) {
-      return attributes[attr].getVisibleCategories();
-    };
-  
-    this.getAllCategoryColors = function(attr) {
-      return attributes[attr].getAllCategoryColors();
-    };
-
-    this.getVisibleCategoryColors = function(attr) {
-      return attributes[attr].getVisibleCategoryColors();
-    };
-
-    this.getAllCategoryColorMaps = function(attr) {
-      return attributes[attr].getAllCategoryColorMaps();
-    };
-
-    this.getItemColor = function(attr, id) {
-      return attributes[attr].getItemColor(id);
-    };
-    this.getHighlightedCategory = function(attr) {
-      return attributes[attr].getHighlightedCategory();
-    };
-    this.getHoveredCategory = function(attr) {
-      return attributes[attr].getHoveredCategory();
-    };
-
-    this.getAllItems = function(attr) {
-      var items = [];
-      var i;
-      for (i = 0; i < itemIds.length; i++) {
-        items[i] = attributes[attr].getItem(itemIds[i].name);
-      }
-      return items;
-    };
-
-    this.getAllItemsAsFloat = function(attr) {
-      // TODO better to handle here, to keep order uniform based on ids?
-      var items = [];
-      var i;
-      for (i = 0; i < itemIds.length; i++) {
-        items[i] = attributes[attr].getItemAsFloat(itemIds[i].name);
-      }
-      return items;
+    this.hasCoord = function(coord) {
+      var i = getIdx(id);
+      return (i > -1);
     };
 
     this.getAllIds = function(attr) {
@@ -1175,109 +1629,1204 @@ var vg = vg || {};
       return ids;
     };
 
-    this.getAllItemsAndIds = function(attr) {
-      return attributes[attr].getAllIdsAndItems();
+    this.getAllCoords = function(attr) {
+      // TODO depending on how missing values are handled, returned ids may need to be adjusted
+      var ids = [];
+      var i;
+      for (i = 0; i < itemIds.length; i++) {
+        ids[ids.length] = delv.idToCoord(itemIds[i].name);
+      }
+      return ids;
     };
 
-    this.getSelectedItems = function(attr) {
-      var items=[];
+    this.getHoverIds = function() {
+      var ids = [];
+      var i;
+      for (i = 0; i < itemIds.length; i++) {
+        if (itemIds[i].hovered) {
+          ids[ids.length] = itemIds[i].name;
+        }
+      }
+      return ids;
+    };
+    this.getHoverCoords = function() {
+      var coords = [];
+      var i;
+      for (i = 0; i < itemIds.length; i++) {
+        if (itemIds[i].hovered) {
+          coords[coords.length] = delv.idToCoord(itemIds[i].name);
+        }
+      }
+      return ids;
+    };
+
+    this.getSelectIds = function(selectType) {
+      var ids = [];
+      switch (selectType) {
+      case "PRIMARY":
+        ids = this.getPrimaryIds();
+        break;
+      case "SECONDARY":
+        ids = this.getSecondaryIds();
+        break;
+      case "TERTIARY":
+        ids = this.getTertiaryIds();
+        break;
+      default:
+        break;
+      }
+      return ids;
+    };
+
+    this.getPrimaryIds = function() {
+      var ids = [];
       var i;
       var id;
       for (i = 0; i < itemIds.length; i++) {
         id = itemIds[i];
-        if (id.selected) {
-          items[items.length] = attributes[attr].getItem(id.name);
+        if (id.selectedPrimary) {
+          ids[ids.length] = id.name;
+        }
+      }
+      return ids;
+    };
+    this.getSecondaryIds = function() {
+      var ids = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selectedSecondary) {
+          ids[ids.length] = id.name;
+        }
+      }
+      return ids;
+    };
+    this.getTertiaryIds = function() {
+      var ids = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selectedTertiary) {
+          ids[ids.length] = id.name;
+        }
+      }
+      return ids;
+    };
+
+    this.getSelectCoords = function(selectType) {
+      var coords = [];
+      switch (selectType) {
+      case "PRIMARY":
+        coords = this.getPrimaryCoords();
+        break;
+      case "SECONDARY":
+        coords = this.getSecondaryCoords();
+        break;
+      case "TERTIARY":
+        coords = this.getTertiaryCoords();
+        break;
+      default:
+        break;
+      }
+      return coords;
+    };
+
+    this.getPrimaryCoords = function() {
+      var coords = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selectedPrimary) {
+          coords[coords.length] = delv.idToCoord(id.name);
+        }
+      }
+      return coords;
+    };
+    this.getSecondaryCoords = function() {
+      var coords = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selectedSecondary) {
+          coords[coords.length] = delv.idToCoord(id.name);
+        }
+      }
+      return coords;
+    };
+    this.getTertiaryCoords = function() {
+      var coords = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.selectedTertiary) {
+          coords[coords.length] = delv.idToCoord(id.name);
+        }
+      }
+      return coords;
+    };
+
+    this.getFilterIds = function() {
+      var ids = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.filtered) {
+          ids[ids.length] = id.name;
+        }
+      }
+      return ids;
+    };
+
+    this.getFilterCoords = function() {
+      var coords = [];
+      var i;
+      var id;
+      for (i = 0; i < itemIds.length; i++) {
+        id = itemIds[i];
+        if (id.filtered) {
+          coords[coords.length] = delv.idToCoord(id.name);
+        }
+      }
+      return coords;
+    };
+
+    // TODO implement get Nav info
+
+    this.getNumIds = function() {
+      return itemIds.length;
+    };
+    this.getNumCoords = function() {
+      return itemIds.length;
+    };
+
+
+    this.removeId = function(id) {
+      var i = getIdx(id);
+      if (i > -1) {
+        itemIds.splice(i, 1);
+      }
+    };
+
+    this.removeCoord = function(coord) {
+      var i = getIdx(coord);
+      if (i > -1) {
+        itemIds.splice(i, 1);
+      }
+    };
+
+    this.clearItems = function() {
+      for (attr in attributes) {
+        if (attributes.hasOwnProperty(attr)) {
+          attributes[attr].clear();
+        }
+      }
+      itemIds = [];
+    };
+
+    this.setItem = function(attr, id, item) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        if (!this.hasId(id)) {
+          this.addId(id);
+        }
+        at.setItem(id, item);
+      }
+    };
+
+    // TODO add setFloat, setFloatArray, setStringArray etc
+
+    this.getItem = function(attr, id) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getItem(id);
+      } else {
+        return "";
+      }
+    };
+
+    this.getItemAsFloat = function(attr, id) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getItemAsFloat(id);
+      } else {
+        return {};
+      }
+    };
+
+    // TODO add getItemAsFloatArray asStringArray etc
+
+    this.getAllItems = function(attr) {
+      var items = [];
+      var i;
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < itemIds.length; i++) {
+          items[i] = at.getItem(itemIds[i].name);
         }
       }
       return items;
     };
-    
-    this.getItem = function(attr, id) {
-      return attributes[attr].getItem(id);
+
+    this.getAllItemsAsFloat = function(attr) {
+      // TODO better to handle here, to keep order uniform based on ids?
+      var items = [];
+      var i;
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < itemIds.length; i++) {
+          items[i] = at.getItemAsFloat(itemIds[i].name);
+        }
+      }
+      return items;
     };
 
-    this.getItemAsFloat = function(attr, id) {
-      return attributes[attr].getItemAsFloat(id);
+    this.getMin = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getMin();
+      } else {
+        return "";
+      }
+    };
+    this.getMax = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getMax();
+      } else {
+        return "";
+      }
     };
 
-    this.updateCategoryVisibility = function(attr, category) {
-      attributes[attr].toggleVisibility(category);
-      determineItemVisibility();
+
+    this.getHoverItems = function(attr) {
+      var hovered = [];
+      var i;
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < itemIds.length; i++) {
+          if (itemIds[i].hovered) {
+            hovered[hovered.length] = at.getItem(itemIds[i].name);
+          }
+        }
+      }
+      return hovered;
     };
 
-    this.updateCategoryColor = function(attr, cat, rgbColor) {
-      attributes[attr].setCategoryColor(cat, rgbColor);
+    this.getSelectItems = function(attr, selectType) {
+      var ids = this.getSelectIds(selectType);
+      var items = [];
+      var i;
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < ids.length; i++) {
+          items[i] = at.getItem(ids[i]);
+        }
+      }
+      return items;
     };
 
-    this.updateHighlightedCategory = function(attr, cat) {
-      attributes[attr].updateHighlightedCategory(cat);
-    };
-
-    this.updateHoveredCategory = function(attr, cat) {
-      attributes[attr].updateHoveredCategory(cat);
-    };
-
-    this.determineItemVisibility = function() {
+    this.getFilterItems = function(attr) {
+      var items = [];
       var i;
       var id;
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < itemIds.length; i++) {
+          id = itemIds[i];
+          if (id.filtered) {
+            items[items.length] = at.getItem(id.name);
+          }
+        }
+      }
+      return items;
+    };
+
+    // TODO get nav items
+
+    this.getItemColor = function(attr, id) {
+      var idx = getIdx(id);
+      var item;
+      if (idx > -1) {
+        return getItemColorByIdx(attr, idx);
+      }
+      // item not found
+      return _defaultColor;
+    };
+    this.getItemColorByIdx = function(attr, idx) {
+      var item;
+      item = itemIds[idx];
+      if (item.hovered && _hoverColorSet) {
+        return _hoverColor;
+      } else if (item.selectedPrimary && _selectColorSet["PRIMARY"]) {
+        return _selectColors["PRIMARY"];
+      } else if (item.selectedSecondary && _selectColorSet["SECONDARY"]) {
+        return _selectColors["SECONDARY"];
+      } else if (item.selectedTertiary && _selectColorSet["TERTIARY"]) {
+        return _selectColors["TERTIARY"];
+      } else if (item.filtered && _filterColorSet) {
+        return _filterColor;
+      } else if (item.navigated && _likeColorSet) {
+        // TODO mismatch between navigation and like here!!! 
+        return _likeColor;
+      } else {
+        return getItemAttrColor(attr, id);
+      }
+    };
+
+    this.getItemColors = function(attr) {
+      var idx;
+      var cols = [];
+      for (idx = 0; idx < itemIds.length; idx++) {
+        cols[idx] = getItemColorByIdx(attr, idx);
+      }
+      return cols;
+    };
+
+    this.getItemAttrColor = function(attr, id) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getItemAttrColor(id);
+      } else {
+        return _defaultColor;
+      }
+    };
+
+    this.getItemAttrColors = function(attr) {
+      var i;
+      var colors = [];
+      var at = attributes[attr];
+      if (at !== undefined) {
+        for (i = 0; i < itemIds.length; i++) {
+          colors[i] = at.getItemAttrColor(itemIds[i].name);
+        }
+      }
+      return colors;
+    };
+
+    this.hoverItem = function(id) {
+      var idx = getIdx(id);
+      clearHover();
+      if (idx > -1) {
+        itemIds[idx].hovered = true;
+      }
+      _hoverCoords = delv.idToCoord(id);
+    };
+
+
+    this.selectPrimaryItems = function(ids, doSelect) {
+      var range = new delv.categoricalRange();
+      var i;
+      var idx;
+      var selectMap = {};
+      var ranges = selectRanges["PRIMARY"];
+      for (i = 0; i < ids.length; i++) {
+        idx = getIdx(ids[i]);
+        if (idx > -1) {
+          itemIds[idx].selectedPrimary = doSelect;
+          range.addCategory(ids[i]);
+        }
+      }
+      selectMap["__id__"] = range;
+      _selectRanges["PRIMARY"][ranges.length] = selectMap;
+    };
+    this.selectSecondaryItems = function(ids, doSelect) {
+      var range = new delv.categoricalRange();
+      var i;
+      var idx;
+      var selectMap = {};
+      var ranges = selectRanges["SECONDARY"];
+      for (i = 0; i < ids.length; i++) {
+        idx = getIdx(ids[i]);
+        if (idx > -1) {
+          itemIds[idx].selectedSecondary = doSelect;
+          range.addCategory(ids[i]);
+        }
+      }
+      selectMap["__id__"] = range;
+      _selectRanges["SECONDARY"][ranges.length] = selectMap;
+    };
+    this.selectTertiaryItems = function(ids, doSelect) {
+      var range = new delv.categoricalRange();
+      var i;
+      var idx;
+      var selectMap = {};
+      var ranges = selectRanges["TERTIARY"];
+      for (i = 0; i < ids.length; i++) {
+        idx = getIdx(ids[i]);
+        if (idx > -1) {
+          itemIds[idx].selectedTertiary = doSelect;
+          range.addCategory(ids[i]);
+        }
+      }
+      selectMap["__id__"] = range;
+      _selectRanges["TERTIARY"][ranges.length] = selectMap;
+    };
+
+    this.selectItems = function(ids, selectType) {
+      switch (selectType) {
+      case "PRIMARY":
+        this.selectPrimaryItems(ids, true);
+        break;
+      case "SECONDARY":
+        this.selectSecondaryItems(ids, true);
+        break;
+      case "TERTIARY":
+        this.selectTertiaryItems(ids, true);
+        break;
+      default:
+        break;
+      }
+    };
+
+    // TODO change clearAttributes to clearAttrs
+    this.clearAttributes = function() {
+      attributes={};
+    };
+      
+    this.addAttr = function(attr) {
+      attributes[attr.name] = attr;
+    };
+
+    this.hasAttr = function(attr) {
+      return attributes.hasOwnProperty(attr);
+    };
+
+    this.getAttrs = function() {
+      var keys = [];
       var attr;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
-        id.visible = true;
-        for (attr in attributes) {
-          if (attributes.hasOwnProperty(attr)) {
-            if (!attributes[attr].isItemVisible(id.name)) {
-              id.visible = false;
-              break;
+      for (attr in attributes) {
+        if (attributes.hasOwnProperty(attr)) {
+          keys[keys.length] = attr;
+        }
+      }
+      return keys;
+    };
+
+    // TODO establish consistency in checking whether an attribute exists
+    this.getAllCats = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getAllCats();
+      } else {
+        return [];
+      }
+    };
+
+    this.getCatColor = function(attr, cat) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getCatColor(cat);
+      } else {
+        return [];
+      }
+    };
+
+    this.getAllCatColors = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.getAllCatColors();
+      } else {
+        return [];
+      }
+    };
+    
+    this.getFilterCatColors = function(attr) {
+      var at = attributes[attr];
+      var cats;
+      var colors = [];
+      var i;
+      if (at !== undefined) {
+        cats = getFilterCats(attr);
+        for (i = 0; i < cats.length; cat++) {
+          colors[i] = at.getCatColor(cats[i]);
+        }
+      }
+      return colors;
+    };
+
+    this.hoverCat = function(attr, cat) {
+      var at = attributes[attr];
+      var range;
+      clearHover();
+      if (at !== undefined) {
+        if (at.isCategorical()) {
+          range = new delv.categoricalRange();
+          range.addCategory(cat);
+        } else {
+          range = delv.continuousRange();
+          range.update(parseFloat(cat));
+        }
+        _hoverRange.set(attr, range);
+        determineHoveredItems();
+      } else {
+        range = new delv.continuousRange();
+        _hoverRange.set("", range);
+      }
+    };
+
+    this.hoverRange = function(attr, minVal, maxVal) {
+      var at = attributes[attr];
+      var range;
+      clearHover();
+      if (at !== undefined) {
+        range = delv.continuousRange();
+        range.setMin(parseFloat(minVal));
+        range.setMax(parseFloat(maxVal));
+        _hoverRange.set(attr, range);
+        determineHoveredItems();
+      } else {
+        range = new delv.continuousRange();
+        _hoverRange.set("", range);
+      }
+    };
+
+    this.selectCats = function(attrs, cats, selectType) {
+      var selectList = _selectRanges[selectType];
+      var selectMap = {};
+      var range = {};
+      var i;
+      var at;
+      for (i = 0; i < attrs.length; i++) {
+        at = attributes[attrs[i]];
+        if (at !== undefined) {
+          range = selectMap[attrs[i]];
+          if (at.isCategorical()) {
+            if (range !== undefined) {
+              range = new delv.categoricalRange();
+            }
+            range.addCategory(cats[i]);
+          } else {
+            if (range !== undefined) {
+              range = new delv.continuousRange();
+            }
+            range.update(parseFloat(cats[i]));
+          }
+          selectMap[attrs[i]] = range;
+        }
+      }
+      selectList[selectList.length] = selectMap;
+      determineSelectedItems(selectType);
+    };
+
+    this.selectRanges = function(attrs, mins, maxes, selectType) {
+      var selectList = _selectRanges[selectType];
+      var selectMap = {};
+      var range = new delv.continuousRange();
+      var i;
+      var at;
+      for (i = 0; i < attrs.length; i++) {
+        at = attributes[attrs[i]];
+        if (at !== undefined) {
+          range = selectMap[attrs[i]];
+          if (range === undefined) {
+            range = new delv.continuousRange();
+          }
+          range.setMin(parseFloat(mins[i]));
+          range.setMax(parseFloat(maxes[i]));
+          selectMap[attrs[i]] = range;
+        }
+      }
+      selectList[selectList.length] = selectMap;
+      determineSelectedItems(selectType);
+    };
+    
+    this.filterCats = function(attr, cats) {
+      var at = attributes[attr];
+      var ranges = [];
+      var range;
+      var i;
+      if (at !== undefined) {
+        if (at.isCategorical()) {
+          at.filterNone();
+        }
+        for (i = 0; i < cats.length; i++) {
+          if (at.isCategorical()) {
+            at.toggleCatFilter(cats[i]);
+          } else {
+            range = new delv.continuousRange();
+            range.update(parseFloat(cats[i]));
+            ranges[ranges.length] = range;
+          }
+        }
+        _filterRanges[attr] = ranges;
+        determineFilteredItems();
+      }
+    };
+
+    this.toggleCatFilter = function(attr, cat) {
+      var at = attributes[attr];
+      if (at !== undefined && at.isCategorical()) {
+        at.toggleCatFilter(cat);
+        _filterRanges[attr] = [];
+        determineFilteredItems();
+      }
+    };
+
+    this.filterRanges = function(attr, mins, maxes) {
+      var at = attributes[attr];
+      var ranges = [];
+      var range;
+      var i;
+      if (at !== undefined) {
+        for (i = 0; i < mins.length; i++) {
+          range = new delv.continuousRange();
+          range.updateMin(parseFloat(mins[i]));
+          range.updateMax(parseFloat(maxes[i]));
+          ranges[ranges.length] = range;
+        }
+        _filterRanges[attr] = ranges;
+        determineFilteredItems();
+      }
+    };
+
+    this.colorCat = function(attr, cat, rgbaColor) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        at.colorCat(cat, rgbaColor);
+      }
+    };
+
+    this.determineHoveredItems = function() {
+      var at;
+      var range;
+      var id;
+      if (_hoverRange.first !== "") {
+        at = attributes[_hoverRange.first];
+        if (at !== undefined) {
+          range = _hoverRange.second;
+          if (range !== undefined) {
+            for (id = 0; id < itemIds.length; id++) {
+              if (range.isInRange(at.getItem(itemIds[id].name))) {
+                itemIds[id].hovered = true;
+              } else {
+                itemIds[id].hovered = false;
+              }
             }
           }
         }
       }
     };
-            
-    this.updateSelectedIds = function(ids) {
-      var i;
-      var id;
-      var obj = {};
-      for (i = 0; i < ids.length; i++) {
-        obj[ids[i]] = true;
+
+    this.determineSelectedItems = function(selectType) {
+      switch (selectType) {
+      case "PRIMARY":
+        determinePrimarySelection(_selectRanges[selectType]);
+        break;
+      case "SECONDARY":
+        determineSecondarySelection(_selectRanges[selectType]);
+        break;
+      case "TERTIARY":
+        determineTertiarySelection(_selectRanges[selectType]);
+        break;
+      default:
+        break;
       }
+    };
+
+    this.determinePrimarySelection = function(selectList) {
+      var id;
+      var smap;
+      var selectMap;
+      var attr;
+      var at;
+      var range;
+      var select;
+      for (id = 0; id < itemIds.length; id++) {
+        for (smap = 0; smap < selectList.length; smap++) {
+          select = true;
+          selectMap = selectList[smap];
+          // to be selected by this expression, must be true for all attributes in this map (AND)
+          for (attr in selectMap) {
+            if (selectMap.hasOwnProperty(attr)) {
+              at = attributes[attr];
+              if (at !== undefined) {
+                range = selectMap[attr];
+                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                  select = false;
+                  break;
+                }
+              }
+            }
+          }
+          // to be selected, OR the above result with the previous selection state for this item
+          if (select) {
+            itemIds[id].selectedPrimary = true;
+          }
+        }
+      }
+    };
+    this.determineSecondarySelection = function(selectList) {
+      var id;
+      var smap;
+      var selectMap;
+      var attr;
+      var at;
+      var range;
+      var select;
+      for (id = 0; id < itemIds.length; id++) {
+        for (smap = 0; smap < selectList.length; smap++) {
+          select = true;
+          selectMap = selectList[smap];
+          // to be selected by this expression, must be true for all attributes in this map (AND)
+          for (attr in selectMap) {
+            if (selectMap.hasOwnProperty(attr)) {
+              at = attributes[attr];
+              if (at !== undefined) {
+                range = selectMap[attr];
+                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                  select = false;
+                  break;
+                }
+              }
+            }
+          }
+          // to be selected, OR the above result with the previous selection state for this item
+          if (select) {
+            itemIds[id].selectedSecondary = true;
+          }
+        }
+      }
+    };
+    this.determineTertiarySelection = function(selectList) {
+      var id;
+      var smap;
+      var selectMap;
+      var attr;
+      var at;
+      var range;
+      var select;
+      for (id = 0; id < itemIds.length; id++) {
+        for (smap = 0; smap < selectList.length; smap++) {
+          select = true;
+          selectMap = selectList[smap];
+          // to be selected by this expression, must be true for all attributes in this map (AND)
+          for (attr in selectMap) {
+            if (selectMap.hasOwnProperty(attr)) {
+              at = attributes[attr];
+              if (at !== undefined) {
+                range = selectMap[attr];
+                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                  select = false;
+                  break;
+                }
+              }
+            }
+          }
+          // to be selected, OR the above result with the previous selection state for this item
+          if (select) {
+            itemIds[id].selectedTertiary = true;
+          }
+        }
+      }
+    };
+        
+    this.determineFilteredItems = function() {
+      var i;
+      var j;
+      var id;
+      var attr;
+      var attrFiltered;
+      var at;
+      var filter;
+      var ranges;
+      var range;
       for (i = 0; i < itemIds.length; i++) {
         id = itemIds[i];
-        if (obj.hasOwnProperty(id.name)) {
-          itemIds[i].selected = true;
+        filter = true;
+        for (attr in _filterRanges) {
+          if (_filterRanges.hasOwnProperty(attr)) {
+            attrFiltered = false;
+            // to be filtered by this expression, must be true for one of the ranges for this attribute (OR)
+            at = attributes[attr];
+            if (at !== undefined) {
+              if (at.isCategorical() && at.isFiltered(id.name)) {
+                attrFiltered = true;
+              } else {
+                ranges = _filterRanges[attr];
+                id (ranges !== undefined) {
+                  for (j = 0; j < ranges.length; j++) {
+                    if (ranges[j].isInRange(at.getItem(id.name))) {
+                      attrFiltered = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            // to be filtered, AND the above result with the previous filter state for this item
+            if (!attrFiltered) {
+              filter = false;
+              break;
+            }
+          }
+        }
+        id.filtered = filter;
+      }
+    };
+            
+    this.getHoverCat = function(attr) {
+      var at = attributes[attr];
+      var range;
+      var cats;
+      if (at !== undefined && at.isCategorical()) {
+        if (_hoverCoords.length > 0) {
+          return at.getItem(_hoverCoords);
         } else {
-          itemIds[i].selected = false;
+          if (attr !== _hoverRange.first) {
+            // not the hovered attribute, so can't return the assoc cat
+            return "";
+          }
+          range = _hoverRange.second;
+          cats = range.getFilteredCategories();
+          if (cats.length > 0) {
+            return cats[0]; // TODO should never be more than one category here
+          } else {
+            return "";
+          }
+        }
+      } else {
+        return "";
+      }
+    };
+
+    this.getHoverRange = function(attr) {
+      var at = attributes[attr];
+      var range;
+      var vals = [];
+      if (at !== undefined && !at.isCategorical()) {
+        if (_hoverCoords.length > 0) {
+          vals[0] = at.getItem(_hoverCoords);
+          vals[1] = vals[0];
+          return vals;
+        } else {
+          if (attr !== _hoverRange.first) {
+            // not the hovered attribute, so can't return the assoc cat
+            return vals;
+          }
+          range = _hoverRange.second;
+          vals[0] = "" + range.getMin();
+          vals[1] = "" + range.getMax();
+          return vals;
+        }
+      } else {
+        return vals;
+      }
+    };
+    
+    this.getSelectCats = function(attr, selectType) {
+      var cats = new delv.categoricalRange();
+      var selectList = _selectRanges.get(selectType);
+      var at = attributes[attr];
+      var smap;
+      var selectMap;
+      var range;
+      var cts;
+      var cat;
+      if (at !== undefined && at.isCategorical()) {
+        for (smap = 0; smap < selectList.length; smap++) {
+          selectMap = selectList[smap];
+          range = selectMap[attr];
+          if (range !== undefined) {
+            cts = range.getFilteredCategories();
+            for (cat = 0; cat < cts.length; cat++) {
+              cats.addCategory(cts[cat]);
+            }
+          }
+          range = selectMap["__id__"];
+          if (range !== undefined) {
+            cts = range.getFilteredCategories();
+            for (cat = 0; cat < cts.length; cat++) {
+              cats.addCategory(at.getItem(cts[cat]));
+            }
+          }
+        }
+      }
+      return cats.getFilteredCategories();
+    };
+
+    // TODO need to validate selectType everywhere
+    this.getSelectRanges = function(attr, selectType) {
+      var at = attributes[attr];
+      var selectList = _selectRanges[selectType];
+      var selectRanges = [];
+      var smap;
+      var selectMap = {};
+      var range;
+      var vals = [];
+      var ids = [];
+      var id;
+      var idrange;
+      if (at !== undefined && !at.isCategorical()) {
+        for (smap = 0; smap < selectList.length; smap++) {
+          selectMap = selectList[smap];
+          range = selectMap[attr];
+          vals = [];
+          if (range !== undefined) {
+            vals[0] = "" + range.getMin();
+            vals[1] = "" + range.getMax();
+            selectRanges[selectRanges.length] = vals;
+          }
+          range = selectMap["__id__"];
+          if (range !== undefined) {
+            ids = range.getFilteredCategories();
+            idrange = new delv.continuousRange();
+            for (id = 0; id < ids.length; id++) {
+              idrange.update(at.getItemAsFloat(ids[id]));
+            }
+            vals[0] = "" + idrange.getMin();
+            vals[1] = "" + idrange.getMax();
+            selectRanges[selectRanges.length] = vals;
+          }
+        }
+      }
+      return selectRanges;
+    };
+
+    this.getSelectCriteria = function(selectType) {
+      var selectList = _selectRanges[selectType];
+      var selectCrits = [];
+      var smap;
+      var selectMap = {};
+      var numKeys;
+      var numMaps = 0;
+      var attr;
+      var range;
+      var cats = [];
+      var vals = [];
+      var at;
+      for (smap = 0; smap < selectList.length; smap++) {
+        selectMap = selectList[smap];
+        selectCrits[numMaps] = [];
+        numKeys = 0;
+        for (attr in selectMap) {
+          if (selectMap.hasOwnProperty(attr)) {
+            range = selectMap[attr];
+            vals = [];
+            if (attr === "__id__") {
+              if (range !== undefined) {
+                cats = range.getFilteredCategories();
+                vals[0] = "__id__";
+                Array.prototype.push.apply(vals, cats);
+                selectCrits[numMaps][numKeys] = vals;
+              } else {
+                selectCrits[numMaps][numKeys] = [];
+              }
+            } else {
+              at = attributes[attr];
+              if (at !== undefined && range !== undefined) {
+                if (at.isCategorical()) {
+                  cats = range.getFilteredCategories();
+                  vals[0] = attr;
+                  Array.prototype.push.apply(vals, cats);
+                  selectCrits[numMaps][numKeys] = vals;
+                } else {
+                  vals[0] = attr;
+                  vals[1] = "" + range.getMin();
+                  vals[2] = "" + range.getMax();
+                  selectCrits[numMaps][numKeys] = vals;
+                }
+              } else {
+                selectCrits[numMaps][numKeys] = vals;
+              }
+            }
+            numKeys++;
+          }
+        }
+        numMaps++;
+      }
+      return selectCrits;
+    };
+              
+    this.getFilterCats = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined && at.isCategorical()) {
+        return at.getFilterCats();
+      } else {
+        return [];
+      }
+    };
+
+    this.getFilterRanges = function(attr) {
+      var filterVals = [];
+      var at = attributes[attr];
+      var ranges = _filterRanges[attr];
+      var range;
+      var i;
+      var vals = [];
+      if (at !== undefined && !at.isCategorical()) {
+        if (ranges !== undefined) {
+          for (i = 0; i < ranges.length; i++) {
+            range = ranges[i];
+            if (range !== undefined) {
+              vals = [];
+              vals[0] = "" + range.getMin();
+              vals[1] = "" + range.getMax();
+              filterVals[filterVals.length] = vals;
+            }
+          }
+        } else {
+          // ranges not specified, so return range of the data
+          vals = [];
+          vals[0] = at.getMinVal();
+          vals[1] = at.getMaxVal();
+          filterVals[filterVals.length] = vals;
+        }
+      }
+      return filterVals;
+    };
+
+    this.getFilterCriteria = function() {
+      var filterCrits = [];
+      var attr;
+      var at;
+      var cats = [];
+      var vals = [];
+      var ranges = [];
+      var range;
+      var i;
+      for (attr in _filterRanges) {
+        if (_filterRanges.hasOwnProperty(attr)) {
+          at = attributes[attr];
+          vals = [];
+          if (at !== undefined) {
+            if (at.isCategorical()) {
+              cats = at.getFilterCats();
+              vals[0] = attr;
+              Array.prototype.push.apply(vals, cats);
+              filterCrits.add(vals);
+            } else {
+              ranges = _filterRanges[attr];
+              if (ranges !== undefined) {
+                for (i = 0; i < ranges.length; i++) {
+                  range = ranges[i];
+                  vals = [];
+                  vals[0] = attr;
+                  vals[1] = "" + range.getMin();
+                  vals[2] = "" + range.getMax();
+                  filterCrits[filterCrits.length] = vals;
+                }
+              }
+            }
+          }
+        }
+      }
+      return filterCrits;
+    };
+
+    this.clearHover = function() {
+      var id;
+      _hoverCoords = [];
+      _hoverRange.set("", new delv.categoricalRange);
+      for (id = 0; id < itemIds.length; id++){
+        itemIds[id].hovered = false;
+      }
+    };
+
+    this.clearSelect = function(selectType) {
+      var id;
+      _selectRanges[selectType] = [];
+      switch (selectType) {
+      case "PRIMARY":
+        for (id = 0; id < itemIds.length; id++) {
+          itemIds[id].selectedPrimary = false;
+        }
+        break;
+      case "SECONDARY":
+        for (id = 0; id < itemIds.length; id++) {
+          itemIds[id].selectedSecondary = false;
+        }
+        break;
+      case "TERTIARY":
+        for (id = 0; id < itemIds.length; id++) {
+          itemIds[id].selectedTertiary = false;
+        }
+        break;
+      default:
+        break;
+      }
+    };
+
+    this.clearFilter = function() {
+      var id;
+      var attr;
+      _filterRanges = {};
+      for (id = 0; id < itemIds.length; id++) {
+        id.filtered = true;
+      }
+      for (attr in attributes) {
+        if (attributes.hasOwnProperty(attr)) {
+          if (attributes[attr].isCategorical()) {
+            attributes[attr].filterAll();
+          }
         }
       }
     };
 
-    this.updateHighlightedId = function(id) {
-      highlightedId = id;
+    this.hoverColor = function(rgbaColor) {
+      _hoverColor = rgbaColor;
+      _hoverColorSet = true;
+    };
+    this.selectColor = function(rgbaColor, selectType) {
+      _selectColor[selectType] = rgbaColor;
+      _selectColorSet[selectType] = true;
+    };
+    this.filterColor = function(rgbaColor) {
+      _filterColor = rgbaColor;
+      _filterColorSet = true;
+    };
+    this.likeColor = function(rgbaColor) {
+      _likeColor = rgbaColor;
+      _likeColorSet = true;
     };
 
-    this.updateHoveredId = function(id) {
-      hoveredId = id;
+    this.clearHoverColor = function() {
+      _hoverColorSet = false;
+    };
+    this.clearSelectColor = function(selectType) {
+      _selectColorSet[selectType] = false;
+    };
+    this.clearFilterColor = function() {
+      _filterColorSet = false;
+    };
+    this.clearLikeColor = function() {
+      _likeColorSet = false;
     };
 
-    this.updateVisibleMin = function(attr, val) {
-      attributes[attr].updateVisibleMin(val);
+    this.getHoverColor = function() {
+      return _hoverColorSet ? _hoverColor : _defaultColor;
     };
-    this.updateVisibleMax = function(attr, val) {
-      attributes[attr].updateVisibleMax(val);
+    this.getSelectColor = function(selectType) {
+      return _selectColorSet[selectType] ? _selectColor[selectType] : _defaultColor;
     };
-    this.getVisibleMin = function(attr) {
-      return attributes[attr].getVisibleMin();
+    this.getFilterColor = function() {
+      return _filterColorSet ? _filterColor : _defaultColor;
+    }; 
+    this.getLikeColor = function() {
+      return _likeColorSet ? _likeColor : _defaultColor;
     };
-    this.getVisibleMax = function(attr) {
-      return attributes[attr].getVisibleMax();
+    
+    this.getAllCatColorMaps = function(attr) {
+      return attributes[attr].getAllCatColorMaps();
     };
-    this.getMin = function(attr) {
-      return attributes[attr].getMin();
-    };
-    this.getMax = function(attr) {
-      return attributes[attr].getMax();
-    };
+
+    // this.updateFilterMin = function(attr, val) {
+    //   attributes[attr].updateFilterMin(val);
+    // };
+    // this.updateFilterMax = function(attr, val) {
+    //   attributes[attr].updateFilterMax(val);
+    // };
+    // this.getFilterMin = function(attr) {
+    //   return attributes[attr].getFilterMin();
+    // };
+    // this.getFilterMax = function(attr) {
+    //   return attributes[attr].getFilterMax();
+    // };
 
   }; // end delv.dataSet
 
@@ -1287,7 +2836,7 @@ var vg = vg || {};
     CATEGORICAL: {name: "CATEGORICAL"},
     CATEGORICAL_LIST: {name: "CATEGORICAL_LIST"},
     CONTINUOUS: {name: "CONTINUOUS"},
-    DATETIME: {name: "DATETIME"}
+    DATETIME: {name: "DATETIME"},
     FLOAT_ARRAY: {name: "FLOAT_ARRAY"}
   }; 
 
@@ -1299,11 +2848,13 @@ var vg = vg || {};
     var type = attr_type;
     var colorMap = color_map;
     var fullRange = data_range;
-    var visibleRange = data_range;
-    var highlightCategory = "";
-    var hoverCategory = "";
     this.name = attr_name;
 
+    this.isCategorical = function() {
+      return (type.equals(delv.AttributeType.CATEGORICAL) ||
+              type.equals(delv.AttributeType.CATEGORICAL_LIST));
+    };
+    
     this.clear = function() {
       items = {};
       floatItems = {};
@@ -1311,15 +2862,39 @@ var vg = vg || {};
       floatArrayMap = {};
       // TODO add these range interfaces to Processing implementation as well
       fullRange.clear();
-      visibleRange.clear();
+    };
+
+    this.clearItems = function() {
+      clear();
     };
     
-    this.setItem = function(id, item) {
+    this.removeItem = function(coord) {
+      var id = delv.coordToId(id);
+      var idx;
+      var anId;
+      var anIdx;
+      items.remove(id);
+      floatItems.remove(id);
+      if (type.equals(delv.AttributeType.FLOAT_ARRAY)) {
+        idx = floatArrayMap(id);
+        floatArrayItems.splice(idx, 1);
+        delete floatArrayMap[id];
+        // and now update the indexes in the map
+        for (anId in floatArrayMap) {
+          anIdx = floatArrayMap[anId];
+          if (anIdx > idx) {
+            floatArrayMap[anId] = anIdx-1;
+          }
+        }
+      }
+    };
+    
+    this.setItem = function(coord, item) {
+      var id = delv.coordToId(coord);
       var val;
       if (type === delv.AttributeType.CATEGORICAL) {
         items[id] = item;
         fullRange.addCategory(item);
-        visibleRange.addCategory(item);
       } else if (type === delv.AttributeType.DATETIME) {
         // TODO decide how best to store it, this is storing 2!!! copies
         if (typeof(item) === "number") {
@@ -1329,30 +2904,30 @@ var vg = vg || {};
         }
         floatItems[id] = val;
         items[id] = item;
-        visibleRange.update(val);
         fullRange.update(val);
       } else if (type === delv.AttributeType.CONTINUOUS) {
         val = parseFloat(item);
         floatItems[id] = val;
-        visibleRange.update(val);
         fullRange.update(val);
       } else if (type === delv.AttributeType.FLOAT_ARRAY) {
         // TODO fix this
         delv.log("Cannot set a FLOAT_ARRAY from String");
       } else {
         items[id] = "" + item;
-        // TODO handle fullRange / visibleRange for unstructured data
+        // TODO handle fullRange for unstructured data
       }
     };
 
-    this.setFloatItem = function(id, item) {
+    this.setFloatItem = function(coord, item) {
+      var id = delv.coordToId(coord);
       if (type === delv.AttributeType.CONTINUOUS) {
         floatItems[id] = item;
         fullRange.update(item);
       }
     };
 
-    this.setFloatArrayItem = function(id, item) {
+    this.setFloatArrayItem = function(coord, item) {
+      var id = delv.coordToId(coord);
       var idx;
       if (type === delv.AttributeType.FLOAT_ARRAY) {
         if (floatArrayMap.hasOwnProperty(id)) {
@@ -1365,7 +2940,8 @@ var vg = vg || {};
       }
     };
     
-    this.getItem = function(id) {
+    this.getItem = function(coord) {
+      var id = delv.coordToId(coord);
       if (type === delv.AttributeType.CONTINUOUS) {
         return "" + floatItems[id];
       } else {
@@ -1377,7 +2953,8 @@ var vg = vg || {};
       }
     };
 
-    this.getItemAsFloat = function(id) {
+    this.getItemAsFloat = function(coord) {
+      var id = delv.coordToId(coord);
       if (type === delv.AttributeType.CONTINUOUS) {
         return floatItems[id];
       } else if (type === delv.AttributeType.DATETIME) {
@@ -1394,7 +2971,8 @@ var vg = vg || {};
       }
     };
 
-    this.getItemAsFloatArray = function(id) {
+    this.getItemAsFloatArray = function(coord) {
+      var id = delv.coordToId(coord);
       var idx;
       var item;
       var vals;
@@ -1494,60 +3072,33 @@ var vg = vg || {};
       return [];
     };
 
-    this.updateHighlightedCategory = function(cat) {
-      highlightCategory = cat;
+    this.getItemAttrColor = function(id) {
+      return colorMap.getColor(getItem(id));
     };
 
-    this.updateHoveredCategory = function(cat) {
-      hoverCategory = cat;
-    };
-
-    this.getHighlightedCategory = function() {
-      return highlightCategory;
-    };
-
-    this.getHoveredCategory = function() {
-      return hoverCategory;
-    };
-
-    this.toggleVisibility = function(cat) {
-      if (type === delv.AttributeType.CATEGORICAL) {
-        visibleRange.toggleVisibility(cat);
-      }
-    };
-
-    this.getAllCategories = function() {
+    this.getAllCats = function() {
       if (type === delv.AttributeType.CATEGORICAL) {
         return fullRange.getCategories();
       } else {
       return [];
       }
     };
-
-    this.getVisibleCategories = function() {
+    
+    this.getFilterCats = function() {
       if (type === delv.AttributeType.CATEGORICAL) {
-        return visibleRange.getVisibleCategories();
+        return fullRange.getFilteredCategories();
       } else {
         return [];
       }
     };
 
-    this.getAllCategoryColors = function() {
-      var cats = this.getAllCategories();
-      var colors = [];
-      var i;
-      var c;
-      for (i = 0; i < cats.length; i++) {
-        colors[i] = colorMap.getColor(cats[i]);
-      }
-      return colors;
+    this.getCatColor = function(cat) {
+      return colorMap.getColor(cat);
     };
-
-    this.getVisibleCategoryColors = function() {
-      var cats = this.getVisibleCategories();
+    
+    this.getCatColors = function() {
+      var cats = this.getAllCats();
       var colors = [];
-      var cat;
-      var c;
       var i;
       for (i = 0; i < cats.length; i++) {
         colors[i] = colorMap.getColor(cats[i]);
@@ -1555,122 +3106,150 @@ var vg = vg || {};
       return colors;
     };
 
-    this.getAllCategoryColorMaps = function() {
-      // TODO return colorMap or return colorMap.getColor?
-      // for now return getColor, see how this works when playing with Processing/Java
-      return colorMap.getColor;
+    this.getMinVal = function() {
+      if (!isCategorical()) {
+        return fullRange.getMin();
+      } else {
+        return "";
+      }
     };
-
-    this.getItemColor = function(id) {
-      return colorMap.getColor(getItem(id));
+    this.getMaxVal = function() {
+      if (!isCategorical()) {
+        return fullRange.getMax();
+      } else {
+        return "";
+      }
     };
 
     // TODO right way to construct color obj?
-    this.setCategoryColor = function(cat, rgbColor) {
+    this.colorCat = function(cat, rgbaColor) {
       if (type === delv.AttributeType.CATEGORICAL) {
-        colorMap.setColor(cat, [rgbColor[0].toString(), rgbColor[1].toString(), rgbColor[2].toString()]);
+        colorMap.setColor(cat, rgbaColor);
       }
     };
 
-    this.updateVisibility = function(item) {
-      if (type === delv.AttributeType.CONTINUOUS) {
-        visibleRange.update(parseFloat(item));
-      } else if (type === delv.AttributeType.DATETIME) {
-        if (typeof(item) === "number") {
-          visibleRange.update(new Date(item));
-        } else {
-          visibleRange.update(new Date(Date.parse(item)));
-        }
+    this.filterAll = function() {
+      fullRange.filterAll();
+    };
+    this.filterNone = function() {
+      fullRange.filterNone();
+    };
+    
+    this.toggleCatFilter = function(cat) {
+      if (type === delv.AttributeType.CATEGORICAL) {
+        fullRange.toggleFiltered(cat);
       }
     };
 
-    // this.getVisibleRange = function() {
-    //   if (type === delv.AttributeType.CONTINUOUS) {
-    //     return visibleRange;
-    //   }
-    // }
-
-  // this.setVisibleRange = function(vrange) {
-  //   if (type = delv.AttributeType.CONTINUOUS) {
-  //     visibleRange = vrange;
-  //   }
-  // }
-
-    this.isItemVisible = function(id) {
+    this.isFiltered = function(coord) {
+      var id = delv.coordToId(coord);
       if (type === delv.AttributeType.CATEGORICAL) {
-      return visibleRange.isCategoryVisible(items[id]);
-      } else if (type === delv.AttributeType.CONTINUOUS) {
-        return visibleRange.isInRange(floatItems[id]);
-      } else if (type === delv.AttributeType.DATETIME) {
-        // TODO note this requires datetimes stored in float items
-        return visibleRange.isInRange(floatItems[id]);
+        return fullRange.isCategoryFiltered(getItem(id));
       } else {
         // TODO fix this, UNSTRUCTURED data is always visible for now
         return true;
       }
     };
 
-    this.updateVisibleMin = function(val) {
-      if (type === delv.AttributeType.CONTINUOUS) {
-        visibleRange.setMin(parseFloat(val));
-      } else if (type === delv.AttributeType.DATETIME) {
-        if (typeof(val) === "number") {
-          visibleRange.setMin(new Date(val));
-        } else {
-          visibleRange.setMin(new Date(Date.parse(val)));
-        }
-      }
-      //visibleRange.setMin(val);
+    this.getAllCatColorMaps = function() {
+      // TODO return colorMap or return colorMap.getColor?
+      // for now return getColor, see how this works when playing with Processing/Java
+      return colorMap.getColor;
     };
-    this.updateVisibleMax = function(val) {
-      if (type === delv.AttributeType.CONTINUOUS) {
-        visibleRange.setMax(parseFloat(val));
-      } else if (type === delv.AttributeType.DATETIME) {
-        if (typeof(val) === "number") {
-          visibleRange.setMax(new Date(val));
-        } else {
-          visibleRange.setMax(new Date(Date.parse(val)));
-        }
-      }
-      //visibleRange.setMax(val);
-    };
-    this.getVisibleMin = function() {
-      return visibleRange.getMin();
-    };
-    this.getVisibleMax = function() {
-      return visibleRange.getMax();
-    };
-    this.getMin = function() {
-      return fullRange.getMin();
-    };
-    this.getMax = function() {
-      return fullRange.getMax();
-    };
+
+    // this.updateVisibleMin = function(val) {
+    //   if (type === delv.AttributeType.CONTINUOUS) {
+    //     visibleRange.setMin(parseFloat(val));
+    //   } else if (type === delv.AttributeType.DATETIME) {
+    //     if (typeof(val) === "number") {
+    //       visibleRange.setMin(new Date(val));
+    //     } else {
+    //       visibleRange.setMin(new Date(Date.parse(val)));
+    //     }
+    //   }
+    //   //visibleRange.setMin(val);
+    // };
+    // this.updateVisibleMax = function(val) {
+    //   if (type === delv.AttributeType.CONTINUOUS) {
+    //     visibleRange.setMax(parseFloat(val));
+    //   } else if (type === delv.AttributeType.DATETIME) {
+    //     if (typeof(val) === "number") {
+    //       visibleRange.setMax(new Date(val));
+    //     } else {
+    //       visibleRange.setMax(new Date(Date.parse(val)));
+    //     }
+    //   }
+    //   //visibleRange.setMax(val);
+    // };
+    // this.getVisibleMin = function() {
+    //   return visibleRange.getMin();
+    // };
+    // this.getVisibleMax = function() {
+    //   return visibleRange.getMax();
+    // };
     
   }; // end delv.attribute
 
+  delv.coordToId = function(coord) {
+    var id = "";
+    var cc;
+    if (coord.length == 0) {
+      return id;
+    } else {
+      id = coord[0];
+      for (cc = 1; cc < coord.length; cc++) {
+        id = id + ";" + coord[cc];
+      }
+      return id;
+    }
+  };
+
+  delv.idToCoord(id) {
+    // TODO perhaps unhardcode separator
+    return id.split(";");
+  };
+
+  
   delv.itemId = function(id) {
     // want these all to be public
-    this.name = id;
-    this.visible = true;
-    this.selected = false;
+    this.name = delv.coordToId(id);
+    this.hovered = false;
+    this.selectedPrimary = false;
+    this.selectedSecondary = false;
+    this.selectedTertiary = false;
+    this.filtered = true;
+    this.navigated = true;
 
-    this.toggleVisibility = function() {
-      visible = !visible;
+    
+    this.toggleHovered = function() {
+      hovered = !hovered;
     };
 
-    this.toggleSelection = function() {
-      selected = !selected;
+    this.togglePrimarySelection = function() {
+      selectedPrimary = !selectedPrimary;
+    };
+    this.toggleSecondarySelection = function() {
+      selectedSecondary = !selectedSecondary;
+    };
+    this.toggleTertiarySelection = function() {
+      selectedTertiary = !selectedTertiary;
+    };
+    
+    this.toggleFiltered = function() {
+      filtered = !filtered;
+    };
+    this.toggleNavigated = function() {
+      navigated = !navigated;
     };
   }; // end delv.itemId
 
-  delv.dataRange = function() {
+  delv.categoricalRange = function() {
     var categories = [];
-    var visible = {};
+    var filtered = {};
 
     this.clear = function() {
       var categories = [];
-      var visible = {};
+      var filtered = {};
     };
     
     this.addCategory = function(cat) {
@@ -1685,46 +3264,59 @@ var vg = vg || {};
       if (!found) {
         categories[categories.length] = cat;
       }
-      visible[cat] = true;
+      filtered[cat] = true;
     };
 
+    this.filterAll = function() {
+      var filt;
+      for (filt in filtered) {
+        if (filtered.hasOwnProperty(filt)) {
+          filtered[filt] = true;
+        }
+      }
+    };
+    this.filterNone = function() {
+      var filt;
+      for (filt in filtered) {
+        if (filtered.hasOwnProperty(filt)) {
+          filtered[filt] = false;
+        }
+      }
+    };
+    
     this.getCategories = function() {
       return categories;
     };
 
-    this.getVisibleCategories = function() {
-      var vis = [];
+    this.getFilteredCategories = function() {
+      var filt = [];
       var cat;
       var i;
       for (i = 0; i < categories.length; i++) {
         cat = categories[i];
-        if (visible[cat]) {
-          vis[vis.length] = cat;
+        if (filtered[cat]) {
+          filt[filt.length] = cat;
         }
       }
-      return vis;
+      return filt;
     };
 
-    this.getInvisibleCategories = function() {
-      var vis = [];
-      var cat;
-      var i;
-      for (i = 0; i < categories.length; i++) {
-        cat = categories[i];
-        if (!visible[cat]) {
-          vis[vis.length] = cat;
-        }
+    this.toggleFiltered = function(cat) {
+      filtered[cat] = !filtered[cat];
+    };
+
+    this.isInRange = function(val) {
+      return isCategoryFiltered(val);
+    };
+    
+    this.isCategoryFiltered = function(cat) {
+      var filt = filtered[cat];
+      if (filt === undefined) {
+        return false;
       }
-      return vis;
+      return filt;
     };
-
-    this.toggleVisibility = function(cat) {
-      visible[cat] = !visible[cat];
-    };
-
-    this.isCategoryVisible = function(cat) {
-      return visible[cat];
-    };
+    
   }; // end delv.dataRange
 
 
@@ -2044,11 +3636,21 @@ var vg = vg || {};
   delv.interp3 = function(start, end, value, maximum) {
     var r = [];
     // TODO use some nice jquery type map syntax
-    // TODO what about alpha?  Should color be 4 values, not 3?
     if (start.length >= 3 && end.length >= 3) {
       r[0] = interp1(start[0], end[0], value, maximum);
       r[1] = interp1(start[1], end[1], value, maximum);
       r[2] = interp1(start[2], end[2], value, maximum);
+    }
+    return r;
+  };
+  delv.interp4 = function(start, end, value, maximum) {
+    var r = [];
+    // TODO use some nice jquery type map syntax
+    if (start.length >= 4 && end.length >= 4) {
+      r[0] = interp1(start[0], end[0], value, maximum);
+      r[1] = interp1(start[1], end[1], value, maximum);
+      r[2] = interp1(start[2], end[2], value, maximum);
+      r[3] = interp1(start[3], end[3], value, maximum);
     }
     return r;
   };
@@ -2124,20 +3726,22 @@ var vg = vg || {};
   };
 
   delv.lerp = function(start, end, value) {
-    // assumes inputs are RGB arrays
+    // assumes inputs are RGBA arrays
     // use algorithm from http://stackoverflow.com/questions/168838/color-scaling-function
     // convert everything to HSV
     // interpolate
-    // convert back to RGB
+    // convert back to RGBA
     var start_hsv = rgb2hsv(red(start)/255.0,green(start)/255.0,blue(start)/255.0);
     var end_hsv = rgb2hsv(red(end)/255.0,green(end)/255.0,blue(end)/255.0);
     var interp_hsv = interp3(start_hsv, end_hsv, value, 1);
     var interp_rgb = hsv2rgb(interp_hsv[0], interp_hsv[1], interp_hsv[2]);
+    var interp_alpha = interp1(alpha(start)/255.0,alpha(end)/255.0, value, 1);
     // TODO how to handle color object?
-    var rgb = color( Math.round(interp_rgb[0] * 255),
-                     Math.round(interp_rgb[1] * 255),
-                     Math.round(interp_rgb[2] * 255) );
-    return rgb;
+    var rgba = color( Math.round(interp_rgb[0] * 255),
+                      Math.round(interp_rgb[1] * 255),
+                      Math.round(interp_rgb[2] * 255),
+                      Math.round(interp_alpha * 255) );
+    return rgba;
   };
 
   // TODO create some default color functions here
@@ -2175,6 +3779,15 @@ var vg = vg || {};
     if (rgb[0] === '#') {
         return rgb;
     }
+    // for hex, alpha comes first (aRGB)
+    if (rgb.length > 3) {
+      val = parseInt(rgb[3]);
+      valstr = val.toString(16);
+      result += valstr;
+      if (val < 10) {
+        result += valstr;
+      }
+    }
     val = parseInt(rgb[0]);
     valstr = val.toString(16);
     result += valstr;
@@ -2205,6 +3818,14 @@ var vg = vg || {};
       return r + r + g + g + b + b;
     });
 
+    result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result) {
+        return [ parseInt(result[1], 16),
+                 parseInt(result[2], 16),
+                 parseInt(result[3], 16),
+                 parseInt(result[4], 16) ];
+    }
+    
     result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? [parseInt(result[1], 16),
                      parseInt(result[2], 16),
@@ -2273,7 +3894,7 @@ var vg = vg || {};
                 "A6CEE3",   // lt blue
                 "B2DF8A",   // lt green
                 "FB9A99",   // lt red
-                "FDBF6F",   // lt orange
+                "FDBF6F",   // lt orangea
                 "CAB2D6",   // lt purple
                 "010101"]; // clear all colors (FEATURE_CLEAR_COLOR
     return cmap;

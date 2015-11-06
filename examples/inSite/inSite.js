@@ -145,7 +145,7 @@ function readRegionFiles(files) {
 function finishLoadingData() {
   var p = Processing.getInstanceById(dataCanvasId);
   try {
-	  pDataIF = new p.InSiteData("inSite");
+	  pDataSet = new p.InSiteDataSet("inSite");
 	  dataLoaded = true;
 	  delv.log("Test data initialized!!!");
   } catch (e) {
@@ -155,11 +155,11 @@ function finishLoadingData() {
   }
   if (dataLoaded) {
     // TODO add any initialization or customization here
-    //pDataIF.clearRegionFiles();
-    pDataIF.loadData();
-    pDataIF.setDelvIF(delv);
-    delv.addDataIF(pDataIF);
-    delv.giveDataIFToViews("inSite");
+    //pDataSet.clearRegionFiles();
+    pDataSet.loadData();
+    pDataSet.bindDelv(delv);
+    delv.addDataSet("inSite", pDataSet);
+    //delv.giveDataIFToViews("inSite");
     delv.reloadData();
 
   }  
@@ -191,18 +191,18 @@ function initProcessingSketch(view, canvasId) {
 
   } else if (canvasId == "DropDown") {
     view.name("inSiteDropDown")
-        .datasetName("Regions")
-        .cat1Attr("Species")
+        .dataSet("Regions")
+        .catAttr("Species")
         .label("Species");
 
   } else if (canvasId == "ColorPickerLegend") {
     view.name("inSiteColorPickerLegend")
-        .datasetName("Regions")
+        .dataSet("Regions")
         .dataAttr("motif_type");
 
   } else if (canvasId == "ColorLegendWithDropdown") {
     view.name("inSiteColorLegendWithDropdown")
-        .datasetName("Regions")
+        .dataSet("Regions")
         .dataAttr("motif_type")
         .label("TF");
 
@@ -211,18 +211,19 @@ function initProcessingSketch(view, canvasId) {
 
   } else if (canvasId == "BarHeight") {
     view.name("inSiteBarHeight")
-        .datasetName("Regions")
+        .dataSet("Regions")
         .dim1Attr("strength")
         .dim2Attr("motif_type");
   } else {}
 
   if (dataLoaded) {
-      view.dataIF("inSite");
-      view.reloadData("inSite.js");
+      //view.dataIF("inSite");
+      view.onDataChanged("inSite.js");
   }
   else {
 	  delv.log("Data hasn't been loaded yet!!!");
   }
+  delv.addView(view);
   delv.resizeAll();
 }
 
