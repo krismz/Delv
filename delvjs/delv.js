@@ -39,19 +39,20 @@ var vg = vg || {};
     this._name = "";
     this._delv = {};
     this._datasetName = "";
-    this.bindDelv(dlv) {
+    this.bindDelv = function(dlv) {
       this._delv = dlv;
       return this;
     };
-    this.dataSet(dataSetName) {
+    this.dataSet = function(dataSetName) {
       this._datasetName = dataSetName;
     }
-    this.getName = function() {
-      return this._name;
-    };
-    this.setName = function(name) {
-      this._name = name;
-      return this;
+    this.name = function(name) {
+      if (name !== undefined) {
+        this._name = name;
+        return this;
+      } else {
+        return this._name;
+      }
     };
     this.resize = function(w, h) {};
     this.connectSignals = function() {};
@@ -413,7 +414,7 @@ var vg = vg || {};
 	      chartLoaded = true;
 	    }
 	    if (chartLoaded) {
-	      delv.addView(view, elemId);
+	      delv.addView(view);
 	      view.connectSignals();
 	      loadCompleteCallback(view, elemId);
 	    }
@@ -454,7 +455,7 @@ var vg = vg || {};
         chartLoaded = false;
       }
       if (chartLoaded) {
-        delv.addView(view, elemId);
+        delv.addView(view);
         view.connectSignals();
         loadCompleteCallback(view, elemId);
       }
@@ -526,7 +527,7 @@ var vg = vg || {};
 	        p.bindJavascript(delv);
 	        p.bound = true;
           p._view.name(canvasId);
-	        delv.addView(p._view, canvasId);
+	        delv.addView(p._view);
 	        p._view.connectSignals();
           delv.addP5Instance(p, canvasId);
 	        loadCompleteCallback(p._view, canvasId);
@@ -595,7 +596,7 @@ var vg = vg || {};
     var p5;
     for (view in views) {
       if (views.hasOwnProperty(view)) {
-        views[view].reloadData("delv.js");
+        views[view].onDataChanged("delv.js");
       }
     }
     for (p5 in p5s) {
@@ -606,11 +607,11 @@ var vg = vg || {};
   };
 
 
-  delv.addView = function (view, id) {
-    delv.log("Adding view for " + id);
+  delv.addView = function (view) {
+    delv.log("Adding view for " + view.name());
     delv.log("typeof view: " + typeof(view));
     view.bindDelv(delv);
-    views[id] = view;
+    views[view.name()] = view;
     return delv;
   };
 
@@ -728,8 +729,8 @@ var vg = vg || {};
 
   delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
     // TODO, debounce here is not ideal, really want to think about more appropriate location
-    //delv.handleSignal(signal, invoker, dataset, coordination, detail);
-    delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
+    delv.handleSignal(signal, invoker, dataset, coordination, detail);
+    //delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
   };
 
   delv.exception = function(message) {
@@ -1099,34 +1100,6 @@ var vg = vg || {};
   delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
     try {
       data[dataset].selectRanges(attrs, mins, maxes, selectType);
-      
-    }
-  };
-  delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
-    try {
-      data[dataset].selectCats(attrs, cats, selectType);
-      delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
-    } catch (e) {
-      return;
-    }
-  };
-  delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
-    try {
-      data[dataset].selectRanges(attrs, mins, maxes, selectType);
-      
-    }
-  };
-  delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
-    try {
-      data[dataset].selectCats(attrs, cats, selectType);
-      delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
-    } catch (e) {
-      return;
-    }
-  };
-  delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
-    try {
-      data[dataset].selectRanges(attrs, mins, maxes, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "RANGE", selectType);
     } catch (e) {
       return;
@@ -1168,7 +1141,7 @@ var vg = vg || {};
   };
   delv.filterRanges = function(invoker, dataset, attr, mins, maxes) {
     try {
-      data[dataset].filterRanges(attr, mins maxes);
+      data[dataset].filterRanges(attr, mins, maxes);
       delv.emitSignal('filterChanged', invoker, dataset, "RANGE");
     } catch (e) {
       return;
@@ -1228,6 +1201,7 @@ var vg = vg || {};
     try {
       return data[dataset].getHoverCoords();
     } catch (e) {
+      delv.log("delv.getHoverCoords(" + dataset + ") caught exception: " + e);
       return;
     }
   };
@@ -1312,6 +1286,7 @@ var vg = vg || {};
     try {
       return data[dataset].getFilterCats(attr);
     } catch (e) {
+      delv.log("delv.getFilterCats(" + dataset + ", " + attr + ") caught exception: " + e);
       return;
     }
   };
@@ -1338,6 +1313,14 @@ var vg = vg || {};
   };
 
   // TODO getNav info
+  delv.getNavCoords = function(dataset) {
+    try {
+      return data[dataset].getNavCoords();
+    } catch (e) {
+      return;
+    }
+  };
+
   // TODO getLOD
    
    
@@ -1797,6 +1780,9 @@ var vg = vg || {};
     };
 
     // TODO implement get Nav info
+    this.getNavCoords = function() {
+      return [];
+    };
 
     this.getNumIds = function() {
       return itemIds.length;
@@ -2449,7 +2435,7 @@ var vg = vg || {};
                 attrFiltered = true;
               } else {
                 ranges = _filterRanges[attr];
-                id (ranges !== undefined) {
+                if (ranges !== undefined) {
                   for (j = 0; j < ranges.length; j++) {
                     if (ranges[j].isInRange(at.getItem(id.name))) {
                       attrFiltered = true;
@@ -3204,7 +3190,7 @@ var vg = vg || {};
     }
   };
 
-  delv.idToCoord(id) {
+  delv.idToCoord = function(id) {
     // TODO perhaps unhardcode separator
     return id.split(";");
   };

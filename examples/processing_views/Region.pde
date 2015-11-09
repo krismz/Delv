@@ -430,6 +430,9 @@ class RegionView extends DelvBasicView {
         regIdx = i;
       }
       Region curReg = regionMap.get(regions[regIdx]);
+      if (curReg == null) {
+        continue;
+      }
       curReg.start(0);
       int t = -1;
       if (haveBarTypes) {

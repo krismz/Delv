@@ -83,7 +83,7 @@ function readRegionFile(a_file) {
   reader.onload = function(evt) {
     try {
       delv.log("reading Region text");
-      pDataIF.readRegionText(evt.target.result);
+      pDataSet.readRegionText(evt.target.result);
       d.resolve();
     } catch (e) {
       d.reject();
@@ -96,7 +96,7 @@ function readRegionFile(a_file) {
 function readRegionFiles(files) {
   if (typeof(files) !== "undefined") {
     var regionPromises=[];
-    pDataIF.clearRegionFiles();
+    pDataSet.clearRegionFiles();
     for (var j = 0; j < files.length; j++) {
       regionPromises[j] = readRegionFile(files[j]);
     }
@@ -113,7 +113,7 @@ function readRegionFiles(files) {
 //     var reader = new FileReader();
 //     reader.onload = function(evt) {
 //       try {
-//         pDataIF.readRegionText(evt.target.result);
+//         pDataSet.readRegionText(evt.target.result);
 //         resolve("region has been read");
 //       } catch (e) {
 //         reject(e);
@@ -126,7 +126,7 @@ function readRegionFiles(files) {
 // function readRegionFiles(files) {
 //   if (typeof(files) !== "undefined") {
 //     var regionPromises=[];
-//     pDataIF.clearRegionFiles();
+//     pDataSet.clearRegionFiles();
 //     for (var j = 0; j < files.length; j++) {
 //       regionPromises[j] = readRegionFile(files[j]);
 //     }
@@ -223,7 +223,6 @@ function initProcessingSketch(view, canvasId) {
   else {
 	  delv.log("Data hasn't been loaded yet!!!");
   }
-  delv.addView(view);
   delv.resizeAll();
 }
 

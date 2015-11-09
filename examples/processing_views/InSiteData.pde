@@ -37,9 +37,7 @@ public class InSiteDataSet extends DelvBasicDataSet {
 
     // set up datasets
     color def_col = color_( 210 );
-    if (_delv != null) {
-      _delv.removeDataSet("Regions");
-    }
+
     DelvBasicDataSet ds = new DelvBasicDataSet("Regions");
     ds.addAttr(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttr(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
@@ -50,10 +48,10 @@ public class InSiteDataSet extends DelvBasicDataSet {
     ds.addAttr(new DelvBasicAttribute("strength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
     ds.addAttr(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
     _regions = ds;
-
     if (_delv != null) {
-      _delv.removeDataSet("Annotations");
+      _delv.addDataSet("Regions", _regions);
     }
+
     ds = new DelvBasicDataSet("Annotations");
     ds.addAttr(new DelvBasicAttribute("Species", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttr(new DelvBasicAttribute("Phenotype", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
@@ -63,6 +61,10 @@ public class InSiteDataSet extends DelvBasicDataSet {
     ds.addAttr(new DelvBasicAttribute("description", AttributeType.CATEGORICAL, new DelvDiscreteColorMap(def_col), new DelvCategoricalRange()));
     ds.addAttr(new DelvBasicAttribute("totalLength", AttributeType.CONTINUOUS, new DelvContinuousColorMap(def_col), new DelvContinuousRange()));
     _annotations = ds;
+    if (_delv != null) {
+      _delv.addDataSet("Annotations", _annotations);
+    }
+
   }
 
   public void addRegionFile(String filename) {

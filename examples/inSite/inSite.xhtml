@@ -9,8 +9,8 @@
 <head>
 <title>InSite</title>
 <script type="text/ecmascript" id="jquery.script" src="./delvjs/jquery-1.7.2.js"></script>
-<script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.0.js"></script>
--<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
+<script type="text/ecmascript" id="processing.script" src="./delvjs/processing-1.4.8.js"></script>
+<script type="text/ecmascript" id="delv.script" src="./delvjs/delv.js"></script>
 <script type="text/ecmascript" id="insite.script" src="./inSite.js"></script>
 </head>
 <body onload="init()" onresize="delv.resizeAll()">
@@ -43,10 +43,10 @@
 <div
   id="legendDiv"
   style="overflow:hidden;zindex:1;top:9.5%;left:85.5%;width:12%;height:88%;position:absolute">
-  <!-- because the following divs have height less than 95% (height of -->
-  <!-- all the other divs), they need to be wrapped within a div that -->
-  <!-- has the same width as themselves and the same height as the -->
-  <!-- other divs -->
+<!-- because the following divs have height less than 95% (height of --> 
+<!-- all the other divs), they need to be wrapped within a div that --> 
+<!-- has the same width as themselves and the same height as the -->
+<!-- other divs -->
   <div
     id ="AlignmentContainer"
     style="overflow:hidden;zindex:1;top:0px;left:0px;width:100%;height:45px;position:absolute">
@@ -61,16 +61,16 @@
 </div>
   <div
     id="ColorLegendWithDropdownContainer"
-    style="overflow:hidden;zindex:3;top:150px;left:0px;width:100%;height:100%;position:absolute">
+    style="overflow:hidden;zindex:3;top:150px;left:0px;width:100%;height:300px;position:absolute">
     <canvas
     id="ColorLegendWithDropdown"/>
   </div>
+</div>
   <div
     id="DataInterfaceContainer">
     <canvas
     id="DataInterface"/>
-    </div>
-</div>
+  </div>
 </div>
 </body>
 </html>
