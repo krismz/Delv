@@ -24,40 +24,43 @@ d3WrapperNS.partition_sunburst_zoom_view = function ( svgElemId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    delv.connectToSignal("selectedIdsChanged", this.svgElem, "onSelectedIdsChanged");
+    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
-    delv.log("partition_sunburst_zoom_view.selectionChanged(" + selection + ")");
+    this._delv.log("partition_sunburst_zoom_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._dataIF.updateSelectedIds(this.svgElem, this._nodeDataset, ids);
+    // TODO better to explicitly clear and implicitly append selections?  OR better to implicitly clear,
+    // explicitly append selections?
+    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
+    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 
-  newObj.onSelectedIdsChanged = function(invoker, dataset, ids) {
+  newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
     if (invoker === this.svgElem) {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by self");
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by "+invoker);
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by "+invoker);
       if (dataset === this._nodeDataset) {
-	      if (ids.length !== 1) {
-	        // TODO figure out what to do in this case
-	        delv.log("partition_sunburst_zoom_view can only handle single selections!!!");
-	      }
-	      else {
-	        selectItem(ids[0]);
-	      }
+	      if (selectType === "PRIMARY") {
+          items = this._delv.getSelectCoords(this._nodeDataset, selectType);
+	        if (items.length > 1) {
+	          // TODO figure out what to do in this case
+	          this._delv.log("partition_sunburst_zoom_view can only handle single selections!!!");
+	        }
+	        else {
+	          selectItem(items[0]);
+	        }
+        }
       }
     }
   };
 
-  newObj.reloadData = function() {
-    delv.log("sunburst enter reloadData");
+  newObj.onDataChanged = function() {
     var hierarchy = this.convertToHierarchy();
-    delv.log("sunburst bindData to view");
     bindData(hierarchy);
-    delv.log("sunburst exit reloadData");
   };
 
   // TODO figure out how to resize this
@@ -125,14 +128,15 @@ newObj.resize = function (w, h) {
   }
 };
 
-function isEmpty(obj) {
-  for (var o in obj) {
-    if (obj.hasOwnProperty(o)) {
-      return false;
+  function isEmpty(obj) {
+    var o;
+    for (o in obj) {
+      if (obj.hasOwnProperty(o)) {
+        return false;
+      }
     }
+    return true;
   }
-  return true;
-};
 
 // TODO: added hard-coded stroke and fill-rule for now, need to figure out a better way to handle style
 // TODO: easiest to determine selected item by just setting the id appropriately.  Alternatively, you could figure out
@@ -142,13 +146,11 @@ function bindData(json) {
   if (isEmpty(json)) {
     return;
   }
-  delv.log("bindData constructing path");
   var path = vis.data([json]).selectAll("path")
     .data(partition.nodes)
     .enter().append("path")
     .attr("d", arc)
     .attr("id", function(d) { return svgElemId+"_"+d.name; })
-    .attr("pathvar", path)
     .style("fill", function(d) { return color((d.children ? d : d.parent).name); })
     .style("stroke", "#fff")
     .style("fill-rule", "evenodd")
@@ -162,7 +164,7 @@ function bindData(json) {
   delv.log("bindData partitioning nodes");
   prev_node = partition.nodes(root)[0];
   delv.log("bindData exiting");
-};
+}
 
 function get_path(source, target) {
   var nodes = partition.nodes(root);
@@ -174,10 +176,10 @@ function get_path(source, target) {
   var paths = {};
 
   for (n = 0; n < nodes.length; n++) {
-    if (nodes[n].name === source) {
+    if (nodes[n].name == source) {
       link.source = nodes[n];
       source_node_found = true;
-    } else if (nodes[n].name === target) {
+    } else if (nodes[n].name == target) {
       link.target = nodes[n];
       target_node_found = true;
     }
@@ -201,7 +203,7 @@ function selectItem(item) {
     going_down = true;
     cur_node = node_path[0];
     for (i = 1; i < node_path.length; i++) {
-      if (node_path[i].name === cur_node.parent) {
+      if (node_path[i].name == cur_node.parent) {
 	      going_down = false;
       }
       if (going_down) {
@@ -215,7 +217,7 @@ function selectItem(item) {
       cur_node = node_path[i];
     }
   }
-};
+}
 
 // Interpolate the scales!
 function arcTween(d) {

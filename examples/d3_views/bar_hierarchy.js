@@ -11,8 +11,8 @@ var d3WrapperNS = d3WrapperNS || {};
 //              View             //
 ///////////////////////////////////
 
-d3WrapperNS.bar_hierarchy_view = function ( svgElemId ) {
-  var newObj = new delv.d3HierarchyView(svgElemId);
+d3WrapperNS.bar_hierarchy_view = function ( svgId ) {
+  var newObj = new delv.d3HierarchyView(svgId);
 
   newObj.init = function() {
 
@@ -20,37 +20,42 @@ d3WrapperNS.bar_hierarchy_view = function ( svgElemId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    delv.connectToSignal("selectedIdsChanged", this.svgElem, "onSelectedIdsChanged");
+    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
     ids = [];
     ids[0] = selection;
-    this._dataIF.updateSelectedIds(this.svgElem, this._nodeDataset, ids);
+    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
+    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 
-  newObj.onSelectedIdsChanged = function(invoker, dataset, ids) {
-    if (invoker == this.svgElem) {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by self");
+  newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
+    var items = [];
+    if (invoker === this.svgElem) {
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by "+invoker);
-      if (dataset == this._nodeDataset) {
-	if (ids.length != 1) {
-	  // TODO figure out what to do in this case
-	  delv.log("bar_hierarchy_view can only handle single selections!!!");
-	}
-	else {
-	  selectItem(ids[0]);
-	}
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by "+invoker);
+      if (dataset === this._nodeDataset) {
+        if (selectType === "PRIMARY") {
+          items = this._delv.getSelectCoords(this._nodeDataset, selectType);
+	        if (items.length > 1) {
+	          // TODO figure out what to do in this case
+	          this._delv.log("bar_hierarchy_view can only handle single selections!!!");
+	        }
+	        else {
+	          selectItem(items[0]);
+	        }
+        }
       }
     }
   };
 
-  newObj.reloadData = function() {
+  newObj.onDataChanged = function() {
     var hierarchy = this.convertToHierarchy();
     bindData(hierarchy);
-  }
+  };
 
 
 // TODO left margin should really be based on the max width of a node name
@@ -81,7 +86,7 @@ var xAxis = d3.svg.axis()
     .orient("top");
 
 var svgElem;
-var svgElemId = svgElemId;
+var svgElemId = svgId;
 
 function createSvgElem() {
   if (svgElemId) {
@@ -89,7 +94,7 @@ function createSvgElem() {
   } else {
     svgElem = d3.select("body").append("svg");
   }
-}; 
+} 
 createSvgElem();
 
 
@@ -139,14 +144,15 @@ function bindData(json) {
   nodes = hierarchy.nodes(root);
   x.domain([0, root.value]).nice();
   down(root, 0);
-};
+}
 
 function get_path(source, target) {
   var links = [];
   var link = {};
   var source_node_found = false;
   var target_node_found = false;
-  for (var n = 0; n < nodes.length; n++) {
+  var n;
+  for (n = 0; n < nodes.length; n++) {
     if (nodes[n].name == source) {
       link.source = nodes[n];
       source_node_found = true;
@@ -165,7 +171,7 @@ function get_path(source, target) {
 }
 
 function down(d, i) {
-  if (!d.children || this.__transition__) return;
+  if (!d.children || this.__transition__) { return; }
   var end = duration + d.children.length * delay;
 
   // Mark any currently-displayed bars as exiting.
@@ -220,7 +226,7 @@ function down(d, i) {
 }
 
 function up(d) {
-  if (!d.parent || this.__transition__) return;
+  if (!d.parent || this.__transition__) { return; }
   var end = duration + d.children.length * delay;
 
   // Mark any currently-displayed bars as exiting.
@@ -253,7 +259,7 @@ function up(d) {
   // When the entering parent rect is done, make it visible!
   enterTransition.select("rect")
       .attr("width", function(d) { return x(d.value); })
-      .each("end", function(p) { if (p === d) d3.select(this).style("fill-opacity", null); });
+    .each("end", function(p) { if (p === d) { d3.select(this).style("fill-opacity", null); } });
 
   // Transition exiting bars to the parent's position.
   var exitTransition = exit.selectAll("g").transition()
@@ -274,7 +280,7 @@ function up(d) {
   exit.transition().duration(end).remove();
 
   // Rebind the current parent to the background.
-  svg.select(".background").data([d.parent]).transition().duration(end);;
+  svg.select(".background").data([d.parent]).transition().duration(end);
 
   newObj.selectionChanged(d.name);
 }
@@ -287,17 +293,18 @@ function selectItem(item) {
       var path = get_path(d.name, item);
       if (typeof(path) !== "undefined") {
 	var going_down = true;
-	var cur_node = path[0];
-	for (var i = 1; i < path.length; i++) {
-	  if (path[i].name == cur_node.parent) {
+	      var cur_node = path[0];
+        var j;
+	for (j = 1; j < path.length; j++) {
+	  if (path[j].name == cur_node.parent) {
 	    going_down = false;
 	  }
 	  if (going_down) {
-	    down(path[i]);
+	    down(path[j]);
 	  } else {
 	    up(cur_node);
 	  }
-	  cur_node = path[i];
+	  cur_node = path[j];
 	}
       }
     } );
@@ -310,7 +317,7 @@ function click_down(d) {
 
 // Creates a set of bars for the given data node, at the specified index.
 function bar(d) {
-  var bar = svg.insert("g", ".y.axis")
+  var br = svg.insert("g", ".y.axis")
       .attr("class", "enter")
       .attr("transform", "translate(0,5)")
     .selectAll("g")
@@ -319,7 +326,7 @@ function bar(d) {
       .style("cursor", function(d) { return !d.children ? null : "pointer"; })
       .on("click", click_down);
 
-  bar.append("text")
+  br.append("text")
       .attr("x", -6)
       .attr("y", y / 2)
       .attr("dy", ".35em")
@@ -327,12 +334,12 @@ function bar(d) {
       .style("font", "10px sans-serif")
       .text(function(d) { return d.tag; });
 
-  bar.append("rect")
+  br.append("rect")
   .attr("id", function(d) { return svgElemId+"_"+d.name; })
       .attr("width", function(d) { return x(d.value); })
       .attr("height", y);
 
-  return bar;
+  return br;
 }
 
 // A stateful closure for stacking bars horizontally.

@@ -11,10 +11,8 @@ var d3WrapperNS = d3WrapperNS || {};
 //              View             //
 ///////////////////////////////////
 
-d3WrapperNS.force_collapsible_view = function ( svgElemId ) {
-  var newObj = new delv.d3HierarchyView(svgElemId);
-  
-
+d3WrapperNS.force_collapsible_view = function ( svgId ) {
+  var newObj = new delv.d3HierarchyView(svgId);
   //newObj._internal = this;
 
   newObj.init = function() {
@@ -23,38 +21,42 @@ d3WrapperNS.force_collapsible_view = function ( svgElemId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    delv.connectToSignal("selectedIdsChanged", this.svgElem, "onSelectedIdsChanged");
+    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
-    delv.log("force_collapsible_view.selectionChanged(" + selection + ")");
+    this._delv.log("force_collapsible_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._dataIF.updateSelectedIds(this.svgElem, this._nodeDataset, ids);
+    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
+    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 
-  newObj.onSelectedIdsChanged = function(invoker, dataset, ids) {
-    if (invoker == this.svgElem) {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by self");
+  newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
+    if (invoker === this.svgElem) {
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by "+invoker);
-      if (dataset == this._nodeDataset) {
-	if (ids.length != 1) {
-	  // TODO figure out what to do in this case
-	  delv.log("force_collapsible_view can only handle single selections!!!");
-	}
-	else {
-	  selectItem(ids[0]);
-	}
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by "+invoker);
+      if (dataset === this._nodeDataset) {
+	      if (selectType === "PRIMARY") {
+          items = this._delv.getSelectCoords(this._nodeDataset, selectType);
+	        if (items.length > 1) {
+	          // TODO figure out what to do in this case
+	          this._delv.log("force_collapsible_view can only handle single selections!!!");
+	        }
+	        else {
+	          selectItem(items[0]);
+	        }
+        }
       }
     }
   };
 
-  newObj.reloadData = function() {
+  newObj.onDataChanged = function() {
     var hierarchy = this.convertToHierarchy();
     bindData(hierarchy);
-  }
+  };
 
 
   // TODO: figure out how to resize this
@@ -75,7 +77,7 @@ var bundle = d3.layout.bundle();
 var all_nodes;
 
 var svgElem;
-var svgElemId = svgElemId;
+var svgElemId = svgId;
 
 function createSvgElem() {
   if (svgElemId) {
@@ -83,7 +85,7 @@ function createSvgElem() {
   } else {
     svgElem = d3.select("#chart").append("svg");
   }
-}; 
+} 
 createSvgElem();
 
 var vis = svgElem.attr("width", width)
@@ -119,7 +121,7 @@ function bindData(json) {
   collapse(root, 1);
   selectedId = root.name;
   update();
-};
+}
 
 // hide all children below level relative to node
 function collapse(root_node, level) {
@@ -150,7 +152,7 @@ function update() {
 
   var filt_links = links.filter( function (d) { return !d.source.hide_children; } );
 
-  // Update the links…
+  // Update the links
   link = vis.selectAll("line.link")
       .data(filt_links, function(d) { return d.target.id; });
 
@@ -169,7 +171,7 @@ function update() {
   // Exit any old links.
   link.exit().remove();
 
-  // Update the nodes…
+  // Update the nodes
   node = vis.selectAll("circle.node")
       .data(nodes, function(d) { return d.id; })
       .style("fill", color);
@@ -209,12 +211,13 @@ function update() {
 // Color leaf nodes orange, and packages white or blue.
 // color selected node red
 function color(d) {
-  return d.name == selectedId ? "#e6550d" : d.hide_children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
+  return d.name === selectedId ? "#e6550d" : d.hide_children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
 }
 
 function get_node(name) {
-  for (var n = 0; n < all_nodes.length; n++) {
-    if (all_nodes[n].name == name) {
+  var n;
+  for (n = 0; n < all_nodes.length; n++) {
+    if (all_nodes[n].name === name) {
       return all_nodes[n];
     }
   }
@@ -274,8 +277,8 @@ function flatten(root) {
     if (typeof(node.hide_children) === "undefined") {
       node.hide_children = false;
     }
-    if (node.children && !node.hide_children) node.size = node.children.reduce(function(p, v) { return p + recurse(v, node.name); }, 0);
-    if (!node.id) node.id = ++i;
+    if (node.children && !node.hide_children) { node.size = node.children.reduce(function(p, v) { return p + recurse(v, node.name); }, 0); }
+    if (!node.id) { node.id = ++i; }
     node.parent = parent;
     nodes.push(node);
     return node.size;

@@ -159,7 +159,6 @@ function finishLoadingData() {
     pDataSet.loadData();
     pDataSet.bindDelv(delv);
     delv.addDataSet("inSite", pDataSet);
-    //delv.giveDataIFToViews("inSite");
     delv.reloadData();
 
   }  

@@ -38,13 +38,13 @@ function init() {
   // otherwise when mouse is moved back into that view, the view will be behaving as if the mouse is still pressed
 
 
-  console.log("Initializing dataIF");
+  console.log("Initializing dataSet");
   // To use data from pyqt, go to the else branch of the following commented-out if statement
   // The following uses a javascript data interface
-  //if (typeof(dataIF) === "undefined") {
-    console.log("dataIF undefined, so creating from d3_demo_data");
-    dataIF = new d3WrapperNS.d3_demo_data("d3Demo");
-    dataIF.load_data(finishLoadingJSData);
+  //if (typeof(dataSet) === "undefined") {
+    console.log("dataSet undefined, so creating from d3_demo_data");
+    dataSet = new d3WrapperNS.d3_demo_data("d3Demo");
+    dataSet.load_data(finishLoadingJSData);
     
   // } else {
   //   console.log("dataIF exists, so just adding it");
@@ -55,16 +55,17 @@ function init() {
 }
 
 function finishLoadingJSData() {
-    console.log("finishLoadingJSData called");
-    delv.giveDataIFToViews("d3Demo");
-    delv.reloadData("d3Demo");
+  console.log("finishLoadingJSData called");
+  dataLoaded = true;
+  //delv.giveDataIFToViews("d3Demo");
+  delv.reloadData();
 }
 
   
 function finishLoadingData() {
   p = Processing.getInstanceById(dataCanvasId);
   try {
-	  pDataIF = new p.d3DemoData("d3Demo");
+	  pDataSet = new p.d3DemoData("d3Demo");
 	  dataLoaded = true;
 	  delv.log("Test data initialized!!!");
   } catch (e) {
@@ -73,19 +74,16 @@ function finishLoadingData() {
 	  dataLoaded = false;
   }
   if (dataLoaded) {
-    pDataIF.loadData();
-    pDataIF.setDelvIF(delv);
-    delv.addDataIF(pDataIF);
-    delv.giveDataIFToViews("d3Demo");
-    delv.reloadData("d3Demo");
+    pDataSet.loadData();
+    pDataSet.bindDelv(delv);
+    delv.addDataSet("inSite", pDataSet);
+    delv.reloadData();
   }  
 }
 function init_view_instance(view, elemId) {
   delv.log("init_view_instance(" + view + ", " + elemId + ")");
-  view.dataIF("d3Demo");
   if (elemId == "Region") {
   delv.log("init_view_instance Region setup");
-    view.name("d3Demo.Region");
     aboveDataset = view.createDataset("Nodes");
     aboveDataset.barStartAttr("size")
                 .barTagAttr("name")
@@ -97,47 +95,43 @@ function init_view_instance(view, elemId) {
     view.addDataset(aboveDataset, false);
 
   } else if (elemId == "partition_sunburst_zoom") {
-    view.setName("d3Demo.partition_sunburst_zoom")
-            .setNodeDatasetName("Nodes")
-            .setLinkDatasetName("Links")
-            .setNodeSizeAttr("size")
-            .setNodeNameAttr("name")
-            .setLinkStartAttr("StartNode")
-            .setLinkEndAttr("EndNode");
+    view.setNodeDatasetName("Nodes")
+        .setLinkDatasetName("Links")
+        .setNodeSizeAttr("size")
+        .setNodeNameAttr("name")
+        .setLinkStartAttr("StartNode")
+        .setLinkEndAttr("EndNode");
 
   } else if (elemId == "force_collapsible") {
-    view.setName("d3Demo.force_collapsible")
-            .setNodeDatasetName("Nodes")
-            .setLinkDatasetName("Links")
-            .setNodeSizeAttr("size")
-            .setNodeNameAttr("name")
-            .setLinkStartAttr("StartNode")
-            .setLinkEndAttr("EndNode");
+    view.setNodeDatasetName("Nodes")
+        .setLinkDatasetName("Links")
+        .setNodeSizeAttr("size")
+        .setNodeNameAttr("name")
+        .setLinkStartAttr("StartNode")
+        .setLinkEndAttr("EndNode");
 
   } else if (elemId == "bar_hierarchy") {
-    view.setName("d3Demo.bar_hierarchy")
-            .setNodeDatasetName("Nodes")
-            .setLinkDatasetName("Links")
-            .setNodeSizeAttr("size")
-            .setNodeNameAttr("name")
-            .setLinkStartAttr("StartNode")
-            .setLinkEndAttr("EndNode");
+    view.setNodeDatasetName("Nodes")
+        .setLinkDatasetName("Links")
+        .setNodeSizeAttr("size")
+        .setNodeNameAttr("name")
+        .setLinkStartAttr("StartNode")
+        .setLinkEndAttr("EndNode");
 
   } else if (elemId == "tree_interactive") {
-    view.setName("d3Demo.tree_interactive")
-            .setNodeDatasetName("Nodes")
-            .setLinkDatasetName("Links")
-            .setNodeSizeAttr("size")
-            .setNodeNameAttr("name")
-            .setLinkStartAttr("StartNode")
-            .setLinkEndAttr("EndNode");
+    view.setNodeDatasetName("Nodes")
+        .setLinkDatasetName("Links")
+        .setNodeSizeAttr("size")
+        .setNodeNameAttr("name")
+        .setLinkStartAttr("StartNode")
+        .setLinkEndAttr("EndNode");
   }
-  // if (dataLoaded) {
-    delv.log("init_view_instance reloadData");
-    view.reloadData("d3Demo.js");
-  // }
-  delv.log("init_view_instance resizeAll");
-  resizeAll();
+  if (dataLoaded) {
+    delv.log("init_view_instance onDataChanged");
+    view.onDataChanged("d3Demo.js");
+    delv.log("init_view_instance resizeAll");
+    resizeAll();
+  }
 }
 
 function logEvent(evt) {

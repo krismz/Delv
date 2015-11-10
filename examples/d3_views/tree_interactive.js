@@ -20,38 +20,42 @@ d3WrapperNS.tree_interactive_view = function ( svgElemId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    delv.connectToSignal("selectedIdsChanged", this.svgElem, "onSelectedIdsChanged");
+    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
-    delv.log("tree_interactive_view.selectionChanged(" + selection + ")");
+    this._delv.log("tree_interactive_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._dataIF.updateSelectedIds(this.svgElem, this._nodeDataset, ids);
+    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
+    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 
-  newObj.onSelectedIdsChanged = function(invoker, dataset, ids) {
-    if (invoker == this.svgElem) {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by self");
+  newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
+    if (invoker === this.svgElem) {
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {
-      delv.log(this._name + ".onSelectedIdsChanged("+dataset+", "+ids+") triggered by "+invoker);
-      if (dataset == this._nodeDataset) {
-	if (ids.length != 1) {
-	  // TODO figure out what to do in this case
-	  delv.log("tree_interactive_view can only handle single selections!!!");
-	}
-	else {
-	  selectItem(ids[0]);
-	}
+      this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by "+invoker);
+      if (dataset === this._nodeDataset) {
+	      if (selectType === "PRIMARY") {
+          items = this._delv.getSelectCoords(this._nodeDataset, selectType);
+	        if (items.length > 1) {
+	          // TODO figure out what to do in this case
+	          this._delv.log("tree_interactive_view can only handle single selections!!!");
+	        }
+	        else {
+	          selectItem(items[0]);
+	        }
+        }
       }
     }
   };
 
-  newObj.reloadData = function() {
+  newObj.onDataChanged = function() {
     var hierarchy = this.convertToHierarchy();
     bindData(hierarchy);
-  }
+  };
 
 // TODO left margin should really be based on the max width of the root node name
 var margin = {top: 20, right: 20, bottom: 20, left: 50},
@@ -68,7 +72,7 @@ var prev_selection;
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
-newObj.resize = function(w, h) {
+  newObj.resize = function(w, h) {
   width = w - margin.right - margin.left;
   height = h - margin.top - margin.bottom;
   tree = d3.layout.tree()
@@ -91,7 +95,7 @@ function createSvgElem() {
   } else {
     svgElem = d3.select("body").append("svg");
   }
-}; 
+}
 createSvgElem();
 
 
@@ -116,7 +120,7 @@ function bindData(json) {
 
   root.children.forEach(collapse);
   update(root);
-};
+}
 
 function update(source) {
 
@@ -127,7 +131,7 @@ function update(source) {
 //   nodes.forEach(function(d) { d.y = d.depth * 180; });
   nodes.forEach(function(d) { d.y = d.depth * 115; });
 
-  // Update the nodes…
+  // Update the nodes
   var node = vis.selectAll("g.node")
       .data(nodes, function(d) { return d.id || (d.id = ++i); });
 
@@ -144,7 +148,7 @@ function update(source) {
     .style("cursor","pointer")
     .style("stroke","steelblue")
     .style("stroke-width", "1.5px")
-    .style("fill", function(d) { return d.name == source.name ? "#e6550d" : d._children ? "lightsteelblue" : "#fff"; });
+    .style("fill", function(d) { return d.name === source.name ? "#e6550d" : d._children ? "lightsteelblue" : "#fff"; });
 
   nodeEnter.append("text")
        .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
@@ -162,7 +166,7 @@ function update(source) {
 
   nodeUpdate.select("circle")
       .attr("r", 4.5)
-      .style("fill", function(d) { return d.name == source.name ? "#e6550d" : d._children ? "lightsteelblue" : "#fff"; });
+      .style("fill", function(d) { return d.name === source.name ? "#e6550d" : d._children ? "lightsteelblue" : "#fff"; });
 
   nodeUpdate.select("text")
       .style("fill-opacity", 1);
@@ -179,7 +183,7 @@ function update(source) {
   nodeExit.select("text")
       .style("fill-opacity", 1e-6);
 
-  // Update the links…
+  // Update the links
   var link = vis.selectAll("path.link")
       .data(tree.links(nodes), function(d) { return d.target.id; });
 
@@ -217,9 +221,10 @@ function update(source) {
   prev_selection = source;
 }
 
-function get_node(name) {
-  for (var n = 0; n < all_nodes.length; n++) {
-    if (all_nodes[n].name == name) {
+  function get_node(name) {
+    var n;
+  for (n = 0; n < all_nodes.length; n++) {
+    if (all_nodes[n].name === name) {
       return all_nodes[n];
     }
   }

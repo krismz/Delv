@@ -414,6 +414,7 @@ var vg = vg || {};
 	      chartLoaded = true;
 	    }
 	    if (chartLoaded) {
+        view.name(elemId);
 	      delv.addView(view);
 	      view.connectSignals();
 	      loadCompleteCallback(view, elemId);
@@ -455,6 +456,7 @@ var vg = vg || {};
         chartLoaded = false;
       }
       if (chartLoaded) {
+        view.name(elemId);
         delv.addView(view);
         view.connectSignals();
         loadCompleteCallback(view, elemId);
@@ -1086,6 +1088,7 @@ var vg = vg || {};
       data[dataset].selectItems(ids, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "ITEM", selectType);
     } catch (e) {
+      delv.log("delv.selectItems(" + invoker + ", " + dataset + ", " + ids + ", " + selectType + ") caught exception: " + e);
       return;
     }
   };
@@ -1567,12 +1570,18 @@ var vg = vg || {};
     var _hoverRange = new delv.pair("",{});
     var _selectRanges = {"PRIMARY": [], "SECONDARY": [], "TERTIARY": []};
     var _filterRanges = {};
+    var _delv = {};
 
     this.name = name;
 
     // TODO sort API
     // TODO transform API
     // TODO aggregate API
+
+    this.bindDelv = function(dlv) {
+      _delv = dlv;
+      return this;
+    };
 
     this.getIdx = function(id) {
       var i = -1;
@@ -1590,7 +1599,7 @@ var vg = vg || {};
       itemIds[itemIds.length] = newId;
     };
     this.hasId = function(id) {
-      var i = getIdx(id);
+      var i = this.getIdx(id);
       return (i > -1);
     };
     this.addCoord = function(coord) {
@@ -1598,7 +1607,7 @@ var vg = vg || {};
       itemCoords[itemCoords.length] = newCoord;
     };
     this.hasCoord = function(coord) {
-      var i = getIdx(id);
+      var i = this.getIdx(id);
       return (i > -1);
     };
 
@@ -1793,14 +1802,14 @@ var vg = vg || {};
 
 
     this.removeId = function(id) {
-      var i = getIdx(id);
+      var i = this.getIdx(id);
       if (i > -1) {
         itemIds.splice(i, 1);
       }
     };
 
     this.removeCoord = function(coord) {
-      var i = getIdx(coord);
+      var i = this.getIdx(coord);
       if (i > -1) {
         itemIds.splice(i, 1);
       }
@@ -1936,7 +1945,7 @@ var vg = vg || {};
     // TODO get nav items
 
     this.getItemColor = function(attr, id) {
-      var idx = getIdx(id);
+      var idx = this.getIdx(id);
       var item;
       if (idx > -1) {
         return getItemColorByIdx(attr, idx);
@@ -1996,7 +2005,7 @@ var vg = vg || {};
     };
 
     this.hoverItem = function(id) {
-      var idx = getIdx(id);
+      var idx = this.getIdx(id);
       clearHover();
       if (idx > -1) {
         itemIds[idx].hovered = true;
@@ -2010,9 +2019,9 @@ var vg = vg || {};
       var i;
       var idx;
       var selectMap = {};
-      var ranges = selectRanges["PRIMARY"];
+      var ranges = _selectRanges["PRIMARY"];
       for (i = 0; i < ids.length; i++) {
-        idx = getIdx(ids[i]);
+        idx = this.getIdx(ids[i]);
         if (idx > -1) {
           itemIds[idx].selectedPrimary = doSelect;
           range.addCategory(ids[i]);
@@ -2026,9 +2035,9 @@ var vg = vg || {};
       var i;
       var idx;
       var selectMap = {};
-      var ranges = selectRanges["SECONDARY"];
+      var ranges = _selectRanges["SECONDARY"];
       for (i = 0; i < ids.length; i++) {
-        idx = getIdx(ids[i]);
+        idx = this.getIdx(ids[i]);
         if (idx > -1) {
           itemIds[idx].selectedSecondary = doSelect;
           range.addCategory(ids[i]);
@@ -2042,9 +2051,9 @@ var vg = vg || {};
       var i;
       var idx;
       var selectMap = {};
-      var ranges = selectRanges["TERTIARY"];
+      var ranges = _selectRanges["TERTIARY"];
       for (i = 0; i < ids.length; i++) {
-        idx = getIdx(ids[i]);
+        idx = this.getIdx(ids[i]);
         if (idx > -1) {
           itemIds[idx].selectedTertiary = doSelect;
           range.addCategory(ids[i]);
@@ -3176,23 +3185,31 @@ var vg = vg || {};
     
   }; // end delv.attribute
 
+  delv.isArray = function(obj) {
+    return (Object.prototype.toString.call( obj ) === '[object Array]');
+  }
+
   delv.coordToId = function(coord) {
     var id = "";
     var cc;
-    if (coord.length == 0) {
-      return id;
-    } else {
+    if (delv.isArray(coord)) {
       id = coord[0];
       for (cc = 1; cc < coord.length; cc++) {
         id = id + ";" + coord[cc];
       }
       return id;
+    } else {
+      return coord;
     }
   };
 
   delv.idToCoord = function(id) {
-    // TODO perhaps unhardcode separator
-    return id.split(";");
+    if (delv.isArray(id)) {
+      return id;
+    } else {
+      // TODO perhaps unhardcode separator
+      return id.split(";");
+    }
   };
 
   

@@ -12,9 +12,7 @@ var d3WrapperNS = d3WrapperNS || {};
 ///////////////////////////////////
 
 d3WrapperNS.d3_demo_data = function ( name ) {
-  var newObj = new delv.data(name);
-  newObj.setDelvIF(delv);
-  delv.addDataIF(newObj);
+  var newObj = new delv.dataSet(name);
 
   newObj.load_data = function(when_finished) {
     delv.log("Loading data from file: " + "test_data/flare.json");
@@ -34,13 +32,15 @@ d3WrapperNS.d3_demo_data = function ( name ) {
 
 
 d3WrapperNS.convert_to_nodes_links = function(json, name) {
-  var dataIF = delv.getDataIF(name);
-  var nodes = dataIF.addDataSet("Nodes");
-  var links = dataIF.addDataSet("Links");
+  var nodes = new delv.dataSet("Nodes");
+  var links = new delv.dataSet("Links");
   var def_color = ["210", "210", "210"];
   var total_size;
   var linkId = 0;
   var nodeId = 0;
+
+  delv.addDataSet("Nodes", nodes);
+  delv.addDataSet("Links", links);
 
   add_node = function(id, name, size) {
     nodes.addId(id);
@@ -78,19 +78,19 @@ d3WrapperNS.convert_to_nodes_links = function(json, name) {
     return node_size;
   };
 
-  nodes.addAttribute( new delv.attribute("name", delv.AttributeType.UNSTRUCTURED,
-                                         new delv.colorMap(def_color),
-                                         new delv.dataRange()) );
-  nodes.addAttribute( new delv.attribute("size", delv.AttributeType.CONTINUOUS,
-                                         new delv.continuousColorMap(def_color),
-                                         new delv.continuousRange()) );
+  nodes.addAttr( new delv.attribute("name", delv.AttributeType.UNSTRUCTURED,
+                                    new delv.colorMap(def_color),
+                                    new delv.categoricalRange()) );
+  nodes.addAttr( new delv.attribute("size", delv.AttributeType.CONTINUOUS,
+                                    new delv.continuousColorMap(def_color),
+                                    new delv.continuousRange()) );
 
-  links.addAttribute( new delv.attribute("StartNode", delv.AttributeType.UNSTRUCTURED,
-                                           new delv.colorMap(def_color),
-                                           new delv.dataRange()) );
-  links.addAttribute( new delv.attribute("EndNode", delv.AttributeType.UNSTRUCTURED,
-                                           new delv.colorMap(def_color),
-                                           new delv.dataRange()) );
+  links.addAttr( new delv.attribute("StartNode", delv.AttributeType.UNSTRUCTURED,
+                                    new delv.colorMap(def_color),
+                                    new delv.categoricalRange()) );
+  links.addAttr( new delv.attribute("EndNode", delv.AttributeType.UNSTRUCTURED,
+                                    new delv.colorMap(def_color),
+                                    new delv.categoricalRange()) );
 
   total_size = convert_one_level(json, 0, "");
 

@@ -262,15 +262,20 @@ class RegionView extends DelvBasicView {
           !(coordsEqual(coords[0],_hoverCoords[0]))) {
         _hoverCoords = coords;
         _delv.hoverItem(_name, _above_dataset.name(), coords[0]);
-        _delv.hoverItem(_name, _below_dataset.name(), new String[0]);
+        if (_below_dataset != null) {
+          _delv.hoverItem(_name, _below_dataset.name(), new String[0]);
+        }
 
         // TODO remove this, just done for d3 demo
         String[] selections = new String[1];
         selections[0] = id;
+        _delv.clearSelect(_name, _above_dataset.name(), "PRIMARY");
         _delv.selectItems(_name, _above_dataset.name(), selections, "PRIMARY");
       }
     } else {
-      _delv.hoverItem(_name, _below_dataset.name(), coords[0]);
+      if (_below_dataset != null) {
+        _delv.hoverItem(_name, _below_dataset.name(), coords[0]);
+      }
       _delv.hoverItem(_name, _above_dataset.name(), new String[0]);
     }
     if (doDraw) {
