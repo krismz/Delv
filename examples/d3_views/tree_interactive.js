@@ -27,7 +27,6 @@ d3WrapperNS.tree_interactive_view = function ( svgElemId ) {
     this._delv.log("tree_interactive_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
     this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 

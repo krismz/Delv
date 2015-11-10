@@ -269,7 +269,6 @@ class RegionView extends DelvBasicView {
         // TODO remove this, just done for d3 demo
         String[] selections = new String[1];
         selections[0] = id;
-        _delv.clearSelect(_name, _above_dataset.name(), "PRIMARY");
         _delv.selectItems(_name, _above_dataset.name(), selections, "PRIMARY");
       }
     } else {

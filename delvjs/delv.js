@@ -30,6 +30,8 @@ var vg = vg || {};
   var _selectColorSet = {"PRIMARY": false, "SECONDARY": false, "TERTIARY": false};
   var _filterColorSet = false;
   var _likeColorSet = false;
+  var _overwriteSelections = {"PRIMARY": true, "SECONDARY": true, "TERTIARY": true};
+  var _overwriteFilters = true;
   
   // public
   delv.signalHandlers = {};
@@ -764,7 +766,20 @@ var vg = vg || {};
       return (first === other.first && second === other.second);
     };
   };
-  
+
+  delv.overwriteSelections = function(selectType) {
+    this._overwriteSelections[selectType] = true;
+  }
+  delv.appendSelections = function(selectType) {
+    this._overwriteSelections[selectType] = false;
+  }
+  delv.overwriteFilters = function() {
+    this._overwriteFilters = true;
+  }
+  delv.appendFilters = function() {
+    this._overwriteFilters = false;
+  }
+
   // a basic implementation of the delv data interface
   delv.addDataSet = function(name, dataset) {
     dataset.bindDelv(this);
@@ -1085,6 +1100,9 @@ var vg = vg || {};
   
   delv.selectItems = function(invoker, dataset, ids, selectType) {
     try {
+      if (_overwriteSelections[selectType]) {
+        data[dataset].clearSelect(selectType);
+      }
       data[dataset].selectItems(ids, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "ITEM", selectType);
     } catch (e) {
@@ -1094,6 +1112,9 @@ var vg = vg || {};
   };
   delv.selectCats = function(invoker, dataset, attrs, cats, selectType) {
     try {
+      if (_overwriteSelections[selectType]) {
+        data[dataset].clearSelect(selectType);
+      }
       data[dataset].selectCats(attrs, cats, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "CAT", selectType);
     } catch (e) {
@@ -1102,6 +1123,9 @@ var vg = vg || {};
   };
   delv.selectRanges = function(invoker, dataset, attrs, mins, maxes, selectType) {
     try {
+      if (_overwriteSelections[selectType]) {
+        data[dataset].clearSelect(selectType);
+      }
       data[dataset].selectRanges(attrs, mins, maxes, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "RANGE", selectType);
     } catch (e) {
@@ -1110,6 +1134,9 @@ var vg = vg || {};
   };
   delv.selectLike = function(invoker, dataset, ids, relationships, selectType) {
     try {
+      if (_overwriteSelections[selectType]) {
+        data[dataset].clearSelect(selectType);
+      }
       data[dataset].selectLike(ids, relationships, selectType);
       delv.emitSignal('selectChanged', invoker, dataset, "LIKE", selectType);
     } catch (e) {
@@ -1128,6 +1155,9 @@ var vg = vg || {};
 
   delv.filterCats = function(invoker, dataset, attr, cats) {
     try {
+      if (_overwriteFilters) {
+        data[dataset].clearFilter();
+      }
       data[dataset].filterCats(attr, cats);
       delv.emitSignal('filterChanged', invoker, dataset, "CAT");
     } catch (e) {
@@ -1144,6 +1174,9 @@ var vg = vg || {};
   };
   delv.filterRanges = function(invoker, dataset, attr, mins, maxes) {
     try {
+      if (_overwriteFilters) {
+        data[dataset].clearFilter();
+      }
       data[dataset].filterRanges(attr, mins, maxes);
       delv.emitSignal('filterChanged', invoker, dataset, "RANGE");
     } catch (e) {
@@ -1152,6 +1185,9 @@ var vg = vg || {};
   };
   delv.filterLike = function(invoker, dataset, ids, relationships) {
     try {
+      if (_overwriteFilters) {
+        data[dataset].clearFilter();
+      }
       data[dataset].filterLike(ids, relationships);
       delv.emitSignal('filterChanged', invoker, dataset, "LIKE");
     } catch (e) {

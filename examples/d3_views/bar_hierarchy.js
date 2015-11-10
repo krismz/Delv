@@ -26,7 +26,6 @@ d3WrapperNS.bar_hierarchy_view = function ( svgId ) {
   newObj.selectionChanged = function( selection ) {
     ids = [];
     ids[0] = selection;
-    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
     this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 

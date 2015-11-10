@@ -28,7 +28,6 @@ d3WrapperNS.force_collapsible_view = function ( svgId ) {
     this._delv.log("force_collapsible_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
     this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 

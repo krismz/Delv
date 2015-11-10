@@ -27,6 +27,15 @@ interface Delv {
   void addView(DelvView view);
   void runInThread(Object obj, String name);
 
+  ///////////////////////
+  // configure policies
+  ///////////////////////
+  // TODO describe these policies in documentation -- IE this is application-level behavior configuration
+  void overwriteSelections(String selectType);
+  void appendSelections(String selectType);
+  void overwriteFilters();
+  void appendFilters();
+
   ////////////////////
   // data sets
   ////////////////////
@@ -687,6 +696,8 @@ public class DelvImpl implements Delv {
   boolean _hoverColorSet;
   boolean _filterColorSet;
   boolean _likeColorSet;
+  HashMap< String, Boolean > _overwriteSelections;
+  boolean _overwriteFilters;
 
   public DelvImpl() {
     _datasets = new HashMap<String, DelvDataSet>();
@@ -707,6 +718,10 @@ public class DelvImpl implements Delv {
     _hoverColorSet = false;
     _filterColorSet = false;
     _likeColorSet = false;
+    _overwriteSelections.put( "PRIMARY", true );
+    _overwriteSelections.put( "SECONDARY", true );
+    _overwriteSelections.put( "TERTIARY", true );
+    _overwriteFilters = true;
   }
 
   void log(String msg) {
@@ -936,6 +951,19 @@ public class DelvImpl implements Delv {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  void overwriteSelections(String selectType) {
+    _overwriteSelections.put(selectType, true);
+  }
+  void appendSelections(String selectType) {
+    _overwriteSelections.put(selectType, false);
+  }
+  void overwriteFilters() {
+    _overwriteFilters = true;
+  }
+  void appendFilters() {
+    _overwriteFilters = false;
   }
 
   void addDataSet(String name, DelvDataSet dataset) {
@@ -1654,6 +1682,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectItems(identifiers, selectType);
       emitSignal("selectChanged", invoker, dataset, "ITEM", selectType);
     } else {
@@ -1664,6 +1695,7 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      // TODO how to handle overwrite vs append with deselect?
       ds.deselectItems(identifiers, selectType);
       emitSignal("selectChanged", invoker, dataset, "ITEM", selectType);
     } else {
@@ -1674,6 +1706,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectItems(coordinates, selectType);
       emitSignal("selectChanged", invoker, dataset, "ITEM", selectType);
     } else {
@@ -1697,6 +1732,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectCats(attributes, categories, selectType);
       emitSignal("selectChanged", invoker, dataset, "CAT", selectType);
     } else {
@@ -1717,6 +1755,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectRanges(attributes, mins, maxes, selectType);
       emitSignal("selectChanged", invoker, dataset, "RANGE", selectType);
     } else {
@@ -1737,6 +1778,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectLike(identifiers, relationships, selectType);
       emitSignal("selectChanged", invoker, dataset, "LIKE", selectType);
     } else {
@@ -1757,6 +1801,9 @@ public class DelvImpl implements Delv {
     selectType = validateSelectType(selectType);
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteSelections.get(selectType)) {
+        ds.clearSelect(selectType);
+      }
       ds.selectLike(coordinates, relationships, selectType);
       emitSignal("selectChanged", invoker, dataset, "LIKE", selectType);
     } else {
@@ -1789,6 +1836,9 @@ public class DelvImpl implements Delv {
   void filterCats(String invoker, String dataset, String attribute, String[] categories) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteFilters) {
+        ds.clearFilter();
+      }
       ds.filterCats(attribute, categories);
       emitSignal("filterChanged", invoker, dataset, "CAT");
     } else {
@@ -1808,6 +1858,9 @@ public class DelvImpl implements Delv {
   void filterRanges(String invoker, String dataset, String attribute, String[] mins, String[] maxes) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteFilters) {
+        ds.clearFilter();
+      }
       ds.filterRanges(attribute, mins, maxes);
       emitSignal("filterChanged", invoker, dataset, "RANGE");
     } else {
@@ -1818,6 +1871,9 @@ public class DelvImpl implements Delv {
   void filterLike(String invoker, String dataset, String[] identifiers, String[] relationships) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteFilters) {
+        ds.clearFilter();
+      }
       ds.filterLike(identifiers, relationships);
       emitSignal("filterChanged", invoker, dataset, "LIKE");
     } else {
@@ -1827,6 +1883,9 @@ public class DelvImpl implements Delv {
   void filterLike(String invoker, String dataset, String[][] coordinates, String[] relationships) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
+      if (_overwriteFilters) {
+        ds.clearFilter();
+      }
       ds.filterLike(coordinates, relationships);
       emitSignal("filterChanged", invoker, dataset, "LIKE");
     } else {

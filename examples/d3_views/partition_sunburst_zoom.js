@@ -31,9 +31,6 @@ d3WrapperNS.partition_sunburst_zoom_view = function ( svgElemId ) {
     this._delv.log("partition_sunburst_zoom_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    // TODO better to explicitly clear and implicitly append selections?  OR better to implicitly clear,
-    // explicitly append selections?
-    this._delv.clearSelect(this.svgElem, this._nodeDataset, "PRIMARY");
     this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
   };
 
