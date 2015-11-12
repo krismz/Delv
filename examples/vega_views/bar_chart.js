@@ -10,6 +10,8 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
   newObj._xIsDate = false;
   newObj.xStart;
   newObj.xEnd;
+  newObj.minX = "";
+  newObj.maxX = "";
 
   newObj.getDatasetName = function() {
     return this._dataset;
@@ -34,7 +36,7 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
   };
   newObj.getTitle = function() {
     return this._title;
-  }
+  };
   newObj.setTitle = function(title, doParse) {
     this._title = title;
     this.updateSignal("title", {"init":this._title}, doParse);
@@ -67,7 +69,7 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
   };
   newObj.getXDomain = function() {
     return this._xDomain;
-  }
+  };
   newObj.setXDomain = function(domain, doParse) {
     this._xDomain = domain;
     this.mixinSpec();
@@ -101,12 +103,13 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
 
   };
 
-  newObj.reloadData = function( source ) {
-    this.idAll = this._dataIF.getAllIds(this._dataset, this._xAttr);
-    this.xAll = this._dataIF.getAllItems(this._dataset, this._xAttr);
-    this.yAll = this._dataIF.getAllItemsAsFloat(this._dataset, this._yAttr);
+  newObj.onDataChanged = function( source ) {
     var vals = [];
-    for (var ii=0; ii < this.idAll.length; ii++) {
+    var ii;
+    this.idAll = this._delv.getAllIds(this._dataset, this._xAttr);
+    this.xAll = this._delv.getAllItems(this._dataset, this._xAttr);
+    this.yAll = this._delv.getAllItemsAsFloat(this._dataset, this._yAttr);
+    for (ii=0; ii < this.idAll.length; ii++) {
       vals[ii] = { "x": this.xAll[ii], "y": this.yAll[ii] };
     }
 
@@ -126,11 +129,13 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
 
   newObj.xListener = function(view, sig, val) {
     if (sig === "minX") {
+      view.minX = val;
       // update min range
-      view._dataIF.updateVisibleMin(view._name, view._dataset, view._xAttr, val);
+      view._delv.filterRanges(view._name, view._dataset, view._xAttr, [view.minX], [view.maxX]);
     } else if (sig === "maxX") {
+      view.maxX = val;
       // update max range
-      view._dataIF.updateVisibleMax(view._name, view._dataset, view._xAttr, val);
+      view._delv.filterRanges(view._name, view._dataset, view._xAttr, [view.minX], [view.maxX]);
     }
   };
 
@@ -156,4 +161,4 @@ vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
   };
   
   return newObj;
-}
+};

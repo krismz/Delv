@@ -31,11 +31,20 @@ var vg = vg || {};
   var _filterColorSet = false;
   var _likeColorSet = false;
   var _overwriteSelections = {"PRIMARY": true, "SECONDARY": true, "TERTIARY": true};
-  var _overwriteFilters = true;
+  var _overwriteFilters = false;
   
   // public
   delv.signalHandlers = {};
 
+  delv.mixin = function(dest, source) {
+    var prop;
+    for (prop in source) {
+      if (source.hasOwnProperty(prop)) {
+        dest[prop] = source[prop];
+      }
+    }
+  }; // end delv.mixin
+  
   // turn obj into a delv view
   delv.view = function() {
     this._name = "";
@@ -668,6 +677,14 @@ var vg = vg || {};
     console.log(msg);
   };
 
+  delv.noLog = function() {
+    delv.log = function(msg) {};
+  };
+
+  delv.doLog = function() {
+    delv.log = function(msg) { console.log(msg); };
+  };
+  
   delv.connectToSignal = function (signal, name, method) {
     delv.log("ConnectToSignal(" + signal + ", " + name + ", " + method + ")");
     if (delv.signalHandlers.hasOwnProperty(signal)) {
@@ -688,15 +705,15 @@ var vg = vg || {};
     }
   };
 
-  delv.handleSignal = function(signal, invoker, dataset, attribute, detail) {
+  delv.handleSignal = function(signal, invoker, dataset, coordination, detail) {
     var key;
     var view;
     var method;
     var fullcall;
-    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + attribute + ", " + detail + ")");
+    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + coordination + ", " + detail + ")");
     delv.log("typeof invoker: " + typeof(invoker));
     delv.log("typeof dataset: " + typeof(dataset));
-    delv.log("typeof attribute: " + typeof(attribute));
+    delv.log("typeof coordination: " + typeof(coordination));
     delv.log("typeof detail: " + typeof(detail));
     try {
       for (key in delv.signalHandlers[signal]) {
@@ -706,11 +723,11 @@ var vg = vg || {};
             delv.log("key: " + key);
             delv.log("typeof view: " + typeof(view));
             method = delv.signalHandlers[signal][key];
-            if (typeof(attribute) !== "undefined") {
+            if (typeof(coordination) !== "undefined") {
               if (typeof(detail) !== "undefined") {
-                fullcall = "view." + method + "(invoker, dataset, attribute, detail)";
+                fullcall = "view." + method + "(invoker, dataset, coordination, detail)";
               } else {
-                fullcall = "view." + method + "(invoker, dataset, attribute)";
+                fullcall = "view." + method + "(invoker, dataset, coordination)";
               }
             } else {
               fullcall = "view." + method + "(invoker, dataset)";
@@ -729,12 +746,28 @@ var vg = vg || {};
     }
   };
 
-  delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 200, false);
+  delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, 75, false);
 
   delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
     // TODO, debounce here is not ideal, really want to think about more appropriate location
     delv.handleSignal(signal, invoker, dataset, coordination, detail);
     //delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
+  };
+
+  delv.doSignalDebounce = function(duration) {
+    if (duration === undefined) {
+      duration = 75;
+    }
+    delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, duration, false );
+    delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
+      delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
+    };
+  };
+
+  delv.noSignalDebounce = function() {
+    delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
+      delv.handleSignal(signal, invoker, dataset, coordination, detail);
+    };
   };
 
   delv.exception = function(message) {
@@ -1065,7 +1098,7 @@ var vg = vg || {};
   delv.hoverCat = function(invoker, dataset, attr, cat) {
     try {
       data[dataset].hoverCat(attr, cat);
-      delv.emitSignal('hoverChanged', invoker, dataset, "CAT");
+      delv.emitSignal('hoverChanged', invoker, dataset, "CAT", attr);
     } catch (e) {
       return;
     }
@@ -1073,7 +1106,7 @@ var vg = vg || {};
   delv.hoverRange = function(invoker, dataset, attr, minVal, maxVal) {
     try {
       data[dataset].hoverRange(attr, minVal, maxVal);
-      delv.emitSignal('hoverChanged', invoker, dataset, "RANGE");
+      delv.emitSignal('hoverChanged', invoker, dataset, "RANGE", attr);
     } catch (e) {
       return;
     }
@@ -1159,7 +1192,7 @@ var vg = vg || {};
         data[dataset].clearFilter();
       }
       data[dataset].filterCats(attr, cats);
-      delv.emitSignal('filterChanged', invoker, dataset, "CAT");
+      delv.emitSignal('filterChanged', invoker, dataset, "CAT", attr);
     } catch (e) {
       return;
     }
@@ -1167,7 +1200,7 @@ var vg = vg || {};
   delv.toggleCatFilter = function(invoker, dataset, attr, cat) {
     try {
       data[dataset].toggleCatFilter(attr, cat);
-      delv.emitSignal('filterChanged', invoker, dataset, "CAT");
+      delv.emitSignal('filterChanged', invoker, dataset, "CAT", attr);
     } catch (e) {
       return;
     }
@@ -1178,7 +1211,7 @@ var vg = vg || {};
         data[dataset].clearFilter();
       }
       data[dataset].filterRanges(attr, mins, maxes);
-      delv.emitSignal('filterChanged', invoker, dataset, "RANGE");
+      delv.emitSignal('filterChanged', invoker, dataset, "RANGE", attr);
     } catch (e) {
       return;
     }
@@ -1388,6 +1421,22 @@ var vg = vg || {};
       return data[dataset].getMax(attr);
     } catch (e) {
       delv.log("getMax received exception: " + e);
+      return {};
+    }
+  };
+  delv.getFilterMin = function(dataset, attr) {
+    try {
+      return data[dataset].getFilterMin(attr);
+    } catch (e) {
+      delv.log("getFilterMin received exception: " + e);
+      return {};
+    }
+  };
+  delv.getFilterMax = function(dataset, attr) {
+    try {
+      return data[dataset].getFilterMax(attr);
+    } catch (e) {
+      delv.log("getFilterMax received exception: " + e);
       return {};
     }
   };
@@ -1934,6 +1983,63 @@ var vg = vg || {};
       }
     };
 
+    this.getFilterMin = function(attr) {
+      var at = attributes[attr];
+      var minVal = 0;
+      var i;
+      var val;
+      var none = true;
+      var ranges = [];
+      if (at !== undefined && !at.isCategorical()) {
+        ranges = _filterRanges[attr];
+        if (ranges !== undefined && ranges.length > 0) {
+          none = false;
+          minVal = ranges[0].getMin();
+          for (i = 1; i < ranges.length; i++) {
+            val = ranges[i].getMin();
+            if (val < minVal) {
+              minVal = val;
+            }
+          }
+        } else {
+          none = false;
+          minVal = at.getMinVal();
+        }
+      }
+      if (none) {
+        return "";
+      } else {
+        return minVal;
+      }
+    };
+    this.getFilterMax = function(attr) {
+      var at = attributes[attr];
+      var maxVal = 0;
+      var i;
+      var val;
+      var none = true;
+      if (at !== undefined && !at.isCategorical()) {
+        ranges = _filterRanges[attr];
+        if (ranges !== undefined && ranges.length > 0) {
+          none = false;
+          maxVal = ranges[0].getMax();
+          for (i = 1; i < ranges.length; i++) {
+            val = ranges[i].getMax();
+            if (val > maxVal) {
+              maxVal = val;
+            }
+          }
+        } else {
+          none = false;
+          maxVal = at.getMaxVal();
+        }
+      }
+      if (none) {
+        return "";
+      } else {
+        return maxVal;
+      }
+    };
 
     this.getHoverItems = function(attr) {
       var hovered = [];
@@ -2184,7 +2290,7 @@ var vg = vg || {};
     this.hoverCat = function(attr, cat) {
       var at = attributes[attr];
       var range;
-      clearHover();
+      this.clearHover();
       if (at !== undefined) {
         if (at.isCategorical()) {
           range = new delv.categoricalRange();
@@ -2194,7 +2300,7 @@ var vg = vg || {};
           range.update(parseFloat(cat));
         }
         _hoverRange.set(attr, range);
-        determineHoveredItems();
+        this.determineHoveredItems();
       } else {
         range = new delv.continuousRange();
         _hoverRange.set("", range);
@@ -2204,13 +2310,13 @@ var vg = vg || {};
     this.hoverRange = function(attr, minVal, maxVal) {
       var at = attributes[attr];
       var range;
-      clearHover();
+      this.clearHover();
       if (at !== undefined) {
         range = delv.continuousRange();
         range.setMin(parseFloat(minVal));
         range.setMax(parseFloat(maxVal));
         _hoverRange.set(attr, range);
-        determineHoveredItems();
+        this.determineHoveredItems();
       } else {
         range = new delv.continuousRange();
         _hoverRange.set("", range);
@@ -2242,7 +2348,7 @@ var vg = vg || {};
         }
       }
       selectList[selectList.length] = selectMap;
-      determineSelectedItems(selectType);
+      this.determineSelectedItems(selectType);
     };
 
     this.selectRanges = function(attrs, mins, maxes, selectType) {
@@ -2264,7 +2370,7 @@ var vg = vg || {};
         }
       }
       selectList[selectList.length] = selectMap;
-      determineSelectedItems(selectType);
+      this.determineSelectedItems(selectType);
     };
     
     this.filterCats = function(attr, cats) {
@@ -2286,7 +2392,7 @@ var vg = vg || {};
           }
         }
         _filterRanges[attr] = ranges;
-        determineFilteredItems();
+        this.determineFilteredItems();
       }
     };
 
@@ -2295,7 +2401,7 @@ var vg = vg || {};
       if (at !== undefined && at.isCategorical()) {
         at.toggleCatFilter(cat);
         _filterRanges[attr] = [];
-        determineFilteredItems();
+        this.determineFilteredItems();
       }
     };
 
@@ -2304,15 +2410,26 @@ var vg = vg || {};
       var ranges = [];
       var range;
       var i;
+      var val;
       if (at !== undefined) {
         for (i = 0; i < mins.length; i++) {
           range = new delv.continuousRange();
-          range.updateMin(parseFloat(mins[i]));
-          range.updateMax(parseFloat(maxes[i]));
+          if (at.type === delv.AttributeType.CONTINUOUS) {
+            range.setMin(parseFloat(mins[i]));
+            range.setMax(parseFloat(maxes[i]));
+          } else if (at.type === delv.AttributeType.DATETIME) {
+            if (typeof(mins[i]) === "number") {
+              range.setMin(new Date(mins[i]));
+              range.setMax(new Date(maxes[i]));
+            } else {
+              range.setMin(new Date(Date.parse(mins[i])));
+              range.setMax(new Date(Date.parse(maxes[i])));
+            }
+          }
           ranges[ranges.length] = range;
         }
         _filterRanges[attr] = ranges;
-        determineFilteredItems();
+        this.determineFilteredItems();
       }
     };
 
@@ -2347,13 +2464,13 @@ var vg = vg || {};
     this.determineSelectedItems = function(selectType) {
       switch (selectType) {
       case "PRIMARY":
-        determinePrimarySelection(_selectRanges[selectType]);
+        this.determinePrimarySelection(_selectRanges[selectType]);
         break;
       case "SECONDARY":
-        determineSecondarySelection(_selectRanges[selectType]);
+        this.determineSecondarySelection(_selectRanges[selectType]);
         break;
       case "TERTIARY":
-        determineTertiarySelection(_selectRanges[selectType]);
+        this.determineTertiarySelection(_selectRanges[selectType]);
         break;
       default:
         break;
@@ -2876,14 +2993,14 @@ var vg = vg || {};
     var floatItems = {};
     var floatArrayItems = [];
     var floatArrayMap = {};
-    var type = attr_type;
     var colorMap = color_map;
     var fullRange = data_range;
+    this.type = attr_type;
     this.name = attr_name;
 
     this.isCategorical = function() {
-      return (type.equals(delv.AttributeType.CATEGORICAL) ||
-              type.equals(delv.AttributeType.CATEGORICAL_LIST));
+      return (this.type === delv.AttributeType.CATEGORICAL ||
+              this.type === delv.AttributeType.CATEGORICAL_LIST);
     };
     
     this.clear = function() {
@@ -2923,10 +3040,10 @@ var vg = vg || {};
     this.setItem = function(coord, item) {
       var id = delv.coordToId(coord);
       var val;
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         items[id] = item;
         fullRange.addCategory(item);
-      } else if (type === delv.AttributeType.DATETIME) {
+      } else if (this.type === delv.AttributeType.DATETIME) {
         // TODO decide how best to store it, this is storing 2!!! copies
         if (typeof(item) === "number") {
           val = new Date(item);
@@ -2936,11 +3053,11 @@ var vg = vg || {};
         floatItems[id] = val;
         items[id] = item;
         fullRange.update(val);
-      } else if (type === delv.AttributeType.CONTINUOUS) {
+      } else if (this.type === delv.AttributeType.CONTINUOUS) {
         val = parseFloat(item);
         floatItems[id] = val;
         fullRange.update(val);
-      } else if (type === delv.AttributeType.FLOAT_ARRAY) {
+      } else if (this.type === delv.AttributeType.FLOAT_ARRAY) {
         // TODO fix this
         delv.log("Cannot set a FLOAT_ARRAY from String");
       } else {
@@ -2951,7 +3068,7 @@ var vg = vg || {};
 
     this.setFloatItem = function(coord, item) {
       var id = delv.coordToId(coord);
-      if (type === delv.AttributeType.CONTINUOUS) {
+      if (this.type === delv.AttributeType.CONTINUOUS) {
         floatItems[id] = item;
         fullRange.update(item);
       }
@@ -2960,7 +3077,7 @@ var vg = vg || {};
     this.setFloatArrayItem = function(coord, item) {
       var id = delv.coordToId(coord);
       var idx;
-      if (type === delv.AttributeType.FLOAT_ARRAY) {
+      if (this.type === delv.AttributeType.FLOAT_ARRAY) {
         if (floatArrayMap.hasOwnProperty(id)) {
           idx = floatArrayMap[id];
         } else {
@@ -2973,7 +3090,7 @@ var vg = vg || {};
     
     this.getItem = function(coord) {
       var id = delv.coordToId(coord);
-      if (type === delv.AttributeType.CONTINUOUS) {
+      if (this.type === delv.AttributeType.CONTINUOUS) {
         return "" + floatItems[id];
       } else {
         if (items.hasOwnProperty(id)) {
@@ -2986,12 +3103,12 @@ var vg = vg || {};
 
     this.getItemAsFloat = function(coord) {
       var id = delv.coordToId(coord);
-      if (type === delv.AttributeType.CONTINUOUS) {
+      if (this.type === delv.AttributeType.CONTINUOUS) {
         return floatItems[id];
-      } else if (type === delv.AttributeType.DATETIME) {
+      } else if (this.type === delv.AttributeType.DATETIME) {
         // TODO do this here? or separate getItemAsDate 
         return floatItems[id];
-      } else if (type === delv.AttributeType.CATEGORICAL) {
+      } else if (this.type === delv.AttributeType.CATEGORICAL) {
         if (items.hasOwnProperty(id)) {
           return parseFloat(items[id]);
         } else {
@@ -3009,11 +3126,11 @@ var vg = vg || {};
       var vals;
       var nums;
       var i;
-      if (type === delv.AttributeType.FLOAT_ARRAY) {
+      if (this.type === delv.AttributeType.FLOAT_ARRAY) {
         idx = floatArrayMap[id];
         return floatArrayItems[idx];
         // TODO does this make sense for any other type?
-      } else if (type === delv.AttributeType.CATEGORICAL) {
+      } else if (this.type === delv.AttributeType.CATEGORICAL) {
         if (items.hasOwnProperty(id)) {
           item = items[id];
           vals = item.split(",");
@@ -3033,7 +3150,7 @@ var vg = vg || {};
     this.getAllItems = function() {
       var its = [];
       var item;
-      if (type === delv.AttributeType.CONTINUOUS) {
+      if (this.type === delv.AttributeType.CONTINUOUS) {
         its = [];
         for (item in floatItems) {
           if (floatItems.hasOwnProperty(item)) {
@@ -3055,8 +3172,8 @@ var vg = vg || {};
     this.getAllItemsAsFloat = function() {
       var its;
       var item;
-      if (type === delv.AttributeType.CONTINUOUS ||
-          type === delv.AttributeType.DATETIME) {
+      if (this.type === delv.AttributeType.CONTINUOUS ||
+          this.type === delv.AttributeType.DATETIME) {
         its = [];
         for (item in floatItems) {
           if (floatItems.hasOwnProperty(item)) {
@@ -3064,7 +3181,7 @@ var vg = vg || {};
           }
         }
         return its;
-      } else if (type === delv.AttributeType.CATEGORICAL) {
+      } else if (this.type === delv.AttributeType.CATEGORICAL) {
         // TODO handle case where type doesn't convert well better
         its = [];
         for (item in items) {
@@ -3083,10 +3200,10 @@ var vg = vg || {};
       var vals;
       var nums;
       var i;
-      if (type === AttributeType.FLOAT_ARRAY) {
+      if (this.type === AttributeType.FLOAT_ARRAY) {
         return floatArrayItems;
         // TODO does this make sense for any other type?
-      } else if (type === AttributeType.CATEGORICAL) {
+      } else if (this.type === AttributeType.CATEGORICAL) {
         its = [];
         for (item in items) {
           if (items.hasOwnProperty(item)) {
@@ -3108,7 +3225,7 @@ var vg = vg || {};
     };
 
     this.getAllCats = function() {
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         return fullRange.getCategories();
       } else {
       return [];
@@ -3116,7 +3233,7 @@ var vg = vg || {};
     };
     
     this.getFilterCats = function() {
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         return fullRange.getFilteredCategories();
       } else {
         return [];
@@ -3138,14 +3255,14 @@ var vg = vg || {};
     };
 
     this.getMinVal = function() {
-      if (!isCategorical()) {
+      if (!this.isCategorical()) {
         return fullRange.getMin();
       } else {
         return "";
       }
     };
     this.getMaxVal = function() {
-      if (!isCategorical()) {
+      if (!this.isCategorical()) {
         return fullRange.getMax();
       } else {
         return "";
@@ -3154,7 +3271,7 @@ var vg = vg || {};
 
     // TODO right way to construct color obj?
     this.colorCat = function(cat, rgbaColor) {
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         colorMap.setColor(cat, rgbaColor);
       }
     };
@@ -3167,14 +3284,14 @@ var vg = vg || {};
     };
     
     this.toggleCatFilter = function(cat) {
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         fullRange.toggleFiltered(cat);
       }
     };
 
     this.isFiltered = function(coord) {
       var id = delv.coordToId(coord);
-      if (type === delv.AttributeType.CATEGORICAL) {
+      if (this.type === delv.AttributeType.CATEGORICAL) {
         return fullRange.isCategoryFiltered(getItem(id));
       } else {
         // TODO fix this, UNSTRUCTURED data is always visible for now
@@ -3189,9 +3306,9 @@ var vg = vg || {};
     };
 
     // this.updateVisibleMin = function(val) {
-    //   if (type === delv.AttributeType.CONTINUOUS) {
+    //   if (this.type === delv.AttributeType.CONTINUOUS) {
     //     visibleRange.setMin(parseFloat(val));
-    //   } else if (type === delv.AttributeType.DATETIME) {
+    //   } else if (this.type === delv.AttributeType.DATETIME) {
     //     if (typeof(val) === "number") {
     //       visibleRange.setMin(new Date(val));
     //     } else {
@@ -3201,9 +3318,9 @@ var vg = vg || {};
     //   //visibleRange.setMin(val);
     // };
     // this.updateVisibleMax = function(val) {
-    //   if (type === delv.AttributeType.CONTINUOUS) {
+    //   if (this.type === delv.AttributeType.CONTINUOUS) {
     //     visibleRange.setMax(parseFloat(val));
-    //   } else if (type === delv.AttributeType.DATETIME) {
+    //   } else if (this.type === delv.AttributeType.DATETIME) {
     //     if (typeof(val) === "number") {
     //       visibleRange.setMax(new Date(val));
     //     } else {
@@ -3211,12 +3328,6 @@ var vg = vg || {};
     //     }
     //   }
     //   //visibleRange.setMax(val);
-    // };
-    // this.getVisibleMin = function() {
-    //   return visibleRange.getMin();
-    // };
-    // this.getVisibleMax = function() {
-    //   return visibleRange.getMax();
     // };
     
   }; // end delv.attribute

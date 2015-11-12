@@ -31,6 +31,8 @@ interface Delv {
   // configure policies
   ///////////////////////
   // TODO describe these policies in documentation -- IE this is application-level behavior configuration
+  void doLog();
+  void noLog();
   void overwriteSelections(String selectType);
   void appendSelections(String selectType);
   void overwriteFilters();
@@ -89,6 +91,9 @@ interface Delv {
 
   String getMin(String dataset, String attribute);
   String getMax(String dataset, String attribute);
+  String getFilterMin(String dataset, String attribute);
+  String getFilterMax(String dataset, String attribute);
+  // TODO add a more general API to get common statistics for a subset of the data
 
   String[] getHoverItems(String dataset, String attribute);
   Float[] getHoverItemsAsFloat(String dataset, String attribute);
@@ -440,7 +445,9 @@ interface DelvDataSet {
 
   String getMin(String attr);
   String getMax(String attr);
-
+  String getFilterMin(String attr);
+  String getFilterMax(String attr);
+  
   String[] getHoverItems(String attr);
   Float[] getHoverItemsAsFloat(String attr);
   float[][] getHoverItemsAsFloatArray(String attr);
@@ -698,6 +705,7 @@ public class DelvImpl implements Delv {
   boolean _likeColorSet;
   HashMap< String, Boolean > _overwriteSelections;
   boolean _overwriteFilters;
+  boolean _doLog;
 
   public DelvImpl() {
     _datasets = new HashMap<String, DelvDataSet>();
@@ -718,16 +726,26 @@ public class DelvImpl implements Delv {
     _hoverColorSet = false;
     _filterColorSet = false;
     _likeColorSet = false;
+    _overwriteSelections = new HashMap< String, Boolean >();
     _overwriteSelections.put( "PRIMARY", true );
     _overwriteSelections.put( "SECONDARY", true );
     _overwriteSelections.put( "TERTIARY", true );
-    _overwriteFilters = true;
+    _overwriteFilters = false;
+    _doLog = true;
   }
 
   void log(String msg) {
-    println(msg);
+    if (_doLog) {
+      println(msg);
+    }
   }
 
+  void noLog() {
+    _doLog = false;
+  }
+  void doLog() {
+    _doLog = true;
+  }
   void emitEvent(String name, String detail) {
     notImplemented("DelvImpl","emitEvent", name +", " + detail);
   }
@@ -1270,6 +1288,26 @@ public class DelvImpl implements Delv {
     }
   }
 
+    String getFilterMin(String dataset, String attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.getFilterMin(attribute);
+    } else {
+      log("Warning in getFilterMin! Dataset <"+dataset+"> does not exist.");
+      return "";
+    }
+  }
+  String getFilterMax(String dataset, String attribute) {
+    DelvDataSet ds = getDataSet(dataset);
+    if (ds != null) {
+      return ds.getFilterMax(attribute);
+    } else {
+      log("Warning in getFilterMax! Dataset <"+dataset+"> does not exist.");
+      return "";
+    }
+  }
+
+
   String[] getHoverItems(String dataset, String attribute) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -1613,7 +1651,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverItem(identifier);
-      emitSignal("hoverChanged", invoker, dataset, "ITEM");
+      emitSignal("hoverChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in hoverItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -1622,7 +1660,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverItem(coordinate);
-      emitSignal("hoverChanged", invoker, dataset, "ITEM");
+      emitSignal("hoverChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in hoverItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -1631,7 +1669,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverCat(attribute, category);
-      emitSignal("hoverChanged", invoker, dataset, "CAT");
+      emitSignal("hoverChanged", invoker, dataset, "CAT", attribute);
     } else {
       log("Warning in hoverCat! Dataset <"+dataset+"> does not exist.");
     }
@@ -1640,7 +1678,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverRange(attribute, minVal, maxVal);
-      emitSignal("hoverChanged", invoker, dataset, "RANGE");
+      emitSignal("hoverChanged", invoker, dataset, "RANGE", attribute);
     } else {
       log("Warning in hoverRange! Dataset <"+dataset+"> does not exist.");
     }
@@ -1651,7 +1689,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.hoverLike(identifier, relationship);
-      emitSignal("hoverChanged", invoker, dataset, "LIKE");
+      emitSignal("hoverChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in hoverLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -1661,7 +1699,7 @@ public class DelvImpl implements Delv {
     if (ds != null) {
       ds.hoverLike(coordinate, relationship);
       // TODO transmit coordinate or relationship or both?
-      emitSignal("hoverChanged", invoker, dataset, "LIKE");
+      emitSignal("hoverChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in hoverLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -1840,7 +1878,7 @@ public class DelvImpl implements Delv {
         ds.clearFilter();
       }
       ds.filterCats(attribute, categories);
-      emitSignal("filterChanged", invoker, dataset, "CAT");
+      emitSignal("filterChanged", invoker, dataset, "CAT", attribute);
     } else {
       log("Warning in filterCats! Dataset <"+dataset+"> does not exist.");
     }
@@ -1849,7 +1887,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.toggleCatFilter(attribute, category);
-      emitSignal("filterChanged", invoker, dataset, "CAT");
+      emitSignal("filterChanged", invoker, dataset, "CAT", attribute);
     } else {
       log("Warning in toggleCatFilter! Dataset <"+dataset+"> does not exist.");
     }
@@ -1862,7 +1900,7 @@ public class DelvImpl implements Delv {
         ds.clearFilter();
       }
       ds.filterRanges(attribute, mins, maxes);
-      emitSignal("filterChanged", invoker, dataset, "RANGE");
+      emitSignal("filterChanged", invoker, dataset, "RANGE", attribute);
     } else {
       log("Warning in filterRanges! Dataset <"+dataset+"> does not exist.");
     }
@@ -1887,7 +1925,7 @@ public class DelvImpl implements Delv {
         ds.clearFilter();
       }
       ds.filterLike(coordinates, relationships);
-      emitSignal("filterChanged", invoker, dataset, "LIKE");
+      emitSignal("filterChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in filterLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -1896,7 +1934,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.clearFilter();
-      emitSignal("filterChanged", invoker, dataset, "CLEAR");
+      emitSignal("filterChanged", invoker, dataset, "CLEAR", "");
     } else {
       log("Warning in clearFilter! Dataset <"+dataset+"> does not exist.");
     }
@@ -1929,7 +1967,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.navItem(identifier, numItems);
-      emitSignal("navChanged", invoker, dataset, "ITEM");
+      emitSignal("navChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in navItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -1938,7 +1976,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.navItem(coordinate, numItems);
-      emitSignal("navChanged", invoker, dataset, "ITEM");
+      emitSignal("navChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in navItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -1986,7 +2024,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.navLike(identifier, relationship, numLikeItems);
-      emitSignal("navChanged", invoker, dataset, "LIKE");
+      emitSignal("navChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in navLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -1995,7 +2033,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.navLike(coordinate, relationship, numLikeItems);
-      emitSignal("navChanged", invoker, dataset, "LIKE");
+      emitSignal("navChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in navLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -2004,7 +2042,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.clearNav();
-      emitSignal("navChanged", invoker, dataset, "CLEAR");
+      emitSignal("navChanged", invoker, dataset, "CLEAR", "");
     } else {
       log("Warning in clearNav! Dataset <"+dataset+"> does not exist.");
     }
@@ -2015,7 +2053,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.panItem(identifier);
-      emitSignal("navChanged", invoker, dataset, "ITEM");
+      emitSignal("navChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in panItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -2024,7 +2062,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.panItem(coordinate);
-      emitSignal("navChanged", invoker, dataset, "ITEM");
+      emitSignal("navChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in panItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -2060,7 +2098,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.panLike(identifier, relationship);
-      emitSignal("navChanged", invoker, dataset, "LIKE");
+      emitSignal("navChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in panLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -2069,7 +2107,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.panLike(coordinate, relationship);
-      emitSignal("navChanged", invoker, dataset, "LIKE");
+      emitSignal("navChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in panLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -2081,7 +2119,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.zoomItem(numItems);
-      emitSignal("navChanged", invoker, dataset, "ITEM");
+      emitSignal("navChanged", invoker, dataset, "ITEM", "");
     } else {
       log("Warning in zoomItem! Dataset <"+dataset+"> does not exist.");
     }
@@ -2127,7 +2165,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.zoomLike(numLikeItems);
-      emitSignal("navChanged", invoker, dataset, "LIKE");
+      emitSignal("navChanged", invoker, dataset, "LIKE", "");
     } else {
       log("Warning in zoomLike! Dataset <"+dataset+"> does not exist.");
     }
@@ -2137,7 +2175,7 @@ public class DelvImpl implements Delv {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
       ds.setLOD(levelOfDetail);
-      emitSignal("lodChanged", invoker, dataset);
+      emitSignal("lodChanged", invoker, dataset, levelOfDetail);
     } else {
       log("Warning in setLOD! Dataset <"+dataset+"> does not exist.");
     }
@@ -2774,7 +2812,7 @@ public class DelvBasicView implements DelvView {
   void onDataUpdated(String invoker, String dataset, String attribute) {}
   void onDataUpdated(String invoker, String dataset, String[] attributes) {}
 
-  void onHoverChanged(String invoker, String dataset, String coordination) {
+  void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName)) {
@@ -2791,14 +2829,14 @@ public class DelvBasicView implements DelvView {
       // TODO any redraw notification here?
     }
   }
-  void onFilterChanged(String invoker, String dataset, String coordination) {
+  void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
       setFilteredCoords( _delv.getFilterCoords(_datasetName) );
     }
   }
-  void onNavChanged(String invoker, String dataset, String coordination) {
+  void onNavChanged(String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
@@ -2876,7 +2914,7 @@ public class DelvBasicView implements DelvView {
       }
     }
     hoveredCoordsUpdated();
-    //redraw();
+    draw();
   }
   public void setSelectedCoords(String[][] coords) {
     // TODO actually pick a better data structure and algorithm
@@ -2909,7 +2947,7 @@ public class DelvBasicView implements DelvView {
       }
     }
     filteredCoordsUpdated();
-    //redraw();
+    draw();
   }
   public void setNavCoords(String[][] coords) {
     notImplemented("DelvBasicView", "setNavCoords", "coords");
@@ -2925,7 +2963,7 @@ public class DelvBasicView implements DelvView {
     //   }
     // }
     // navCoordsUpdated();
-    // //redraw();
+    // draw();
   }
 
   public void hoverOn(int idx) {
@@ -3068,7 +3106,7 @@ public class DelvBasicView implements DelvView {
       _hoverCoords = coords;
       _delv.hoverItem(_name, _datasetName, coord);
       if (doDraw) {
-        //redraw();
+        draw();
       }
     }
   }
@@ -3078,12 +3116,11 @@ public class DelvBasicView implements DelvView {
   public void hoverItem(String id, boolean doDraw) {
     String[][] coords = new String[1][];
     coords[0] = idToCoord(id);
-    if (_hoverCoords.length != 1 ||
-        !(coordsEqual(coords[0],_hoverCoords[0]))) {
+    if (_hoverCoords.length != 1 || !coordsEqual(_hoverCoords[0], coords[0])) {
       _hoverCoords = coords;
       _delv.hoverItem(_name, _datasetName, coords[0]);
       if (doDraw) {
-        //redraw();
+        draw();
       }
     }
   }
@@ -3374,7 +3411,7 @@ public class DelvCategoryView extends DelvBasicView {
     _delv.connectToSignal("colorChanged", _name, "onColorChanged");
   }
 
- public void onFilterChanged(String invoker, String dataset, String coordination) {
+ public void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
     if (invoker.equals(_name)) {
       _delv.log("DelvCategoryView " + _name + ".onFilterChanged(" + dataset + ", " + coordination + ") triggered by self");
     } else {
@@ -3384,8 +3421,8 @@ public class DelvCategoryView extends DelvBasicView {
       }
     }
   }
-  public void onHoverChanged(String invoker, String dataset, String coordination) {
-    super.onHoverChanged(invoker, dataset, coordination);
+  public void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
+    super.onHoverChanged(invoker, dataset, coordination, detail);
     if (invoker.equals(_name)) {
       _delv.log(_name+".onHoverChanged(" + dataset + ", " + coordination + ") triggered by self");
     } else {
@@ -3463,12 +3500,10 @@ public class DelvCategoryView extends DelvBasicView {
     hoverCat(cat, true);
   }
   public void hoverCat(String cat, boolean doDraw) {
-    if (!(cat.equals(_hoverCat))) {
-      _hoverCat = cat;
-      _delv.hoverCat(_name, _datasetName, _catAttr, cat);
-      if (doDraw) {
-        draw();
-      }
+    _hoverCat = cat;
+    _delv.hoverCat(_name, _datasetName, _catAttr, cat);
+    if (doDraw) {
+      draw();
     }
   }
 
@@ -4508,6 +4543,51 @@ public class DelvBasicDataSet implements DelvDataSet {
        println("Warning in getMax! Attribute <"+attr+"> does not exist.");
       return "";
     }
+  }
+  String getFilterMin(String attr) {
+    DelvAttribute at = _attributes.get(attr);
+    boolean none = true;
+    Float minVal = 0.0;
+    if (at != null && !at.isCategorical()) {
+      minVal = parseFloat(at.getMaxVal());
+      for (DelvItemId id: _itemIds) {
+        if (id.filtered) {
+          Float val = at.getItemAsFloat(id.name);
+          if (val < minVal) {
+            minVal = val;
+            none = false;
+          }
+        }
+      }
+    }
+    if (none) {
+      return "";
+    } else {
+      return "" + minVal;
+    }
+  }
+  String getFilterMax(String attr) {
+    DelvAttribute at = _attributes.get(attr);
+    boolean none = true;
+    Float maxVal = 0.0;
+    if (at != null && !at.isCategorical()) {
+      maxVal = parseFloat(at.getMinVal());
+      for (DelvItemId id: _itemIds) {
+        if (id.filtered) {
+          Float val = at.getItemAsFloat(id.name);
+          if (val > maxVal) {
+            maxVal = val;
+            none = false;
+          }
+        }
+      }
+    }
+    if (none) {
+      return "";
+    } else {
+      return "" + maxVal;
+    }
+
   }
 
   String[] getHoverItems(String attr) {

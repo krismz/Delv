@@ -1,7 +1,7 @@
 {
   "width": 200,
   "height": 160,
-  
+
   "data": [
     {
       "name": "flights",
@@ -13,6 +13,30 @@
           "type": "formula", 
           "field": "day", 
           "expr": "datetime((month(datum.date)+1) + '/' + date(datum.date) + '/2001')"
+        },
+        {
+          "type": "bin",
+          "field": "hour",
+          "min": 0,
+          "max": 24,
+          "step": 1,
+          "output": {"start": "bin_hour"}
+        },
+        {
+          "type": "bin",
+          "field": "delay",
+          "min": -60,
+          "max": 140,
+          "step": 10,
+          "output": {"start": "bin_delay"}
+        },
+        {
+          "type": "bin",
+          "field": "distance",
+          "min": 0,
+          "max": 2000,
+          "step": 50,
+          "output": {"start": "bin_dist"}
         }
       ]
     },
@@ -20,17 +44,10 @@
       "name": "times",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay))"},
-        {
-          "type": "bin",
-          "field": "hour",
-          "min": 0,
-          "max": 24,
-          "step": 1
-        },
+        {"type": "filter", "test": "(minDay === maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay))"},
         {
           "type": "aggregate",
-          "groupby": ["bin"],
+          "groupby": ["bin_hour"],
           "summarize": {"delay": ["count"]}
         }
       ]
@@ -39,18 +56,10 @@
       "name": "delay",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
-        {
-          "type": "bin",
-          "field": "delay",
-          "min": -60,
-          "max": 140,
-          "step": 10
-        },
-        {"type": "filter", "test": "datum.bin <= 140"},
+        {"type": "filter", "test": "(minDay === maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime)) && datum.bin_delay <= 140"},
         {
           "type": "aggregate",
-          "groupby": ["bin"],
+          "groupby": ["bin_delay"],
           "summarize": {"delay": ["count"]}
         }
       ]
@@ -59,18 +68,10 @@
       "name": "distance",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "((minDay <= maxDay && maxDay <= minDay) || (datum.day >= minDay && datum.day <= maxDay)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
-        {
-          "type": "bin",
-          "field": "distance",
-          "min": 0,
-          "max": 2000,
-          "step": 50
-        },
-        {"type": "filter", "test": "datum.bin <= 2000"},
+        {"type": "filter", "test": "(minDay === maxDay || (datum.day >= minDay && datum.day <= maxDay)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime)) && datum.bin_dist <= 2000"},
         {
           "type": "aggregate",
-          "groupby": ["bin"],
+          "groupby": ["bin_dist"],
           "summarize": {"delay": ["count"]}
         }
       ]
@@ -79,8 +80,7 @@
       "name": "date",
       "source": "flights",
       "transform": [
-        {"type": "filter", "test": "(minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime))"},
-        {"type": "filter", "test": "datum.day < datetime('4/1/2001')"},
+        {"type": "filter", "test": "(minDist == maxDist || (datum.distance >= minDist && datum.distance <= maxDist)) && (minDelay == maxDelay || (datum.delay >= minDelay && datum.delay <= maxDelay)) && (minTime == maxTime || (datum.hour >= minTime && datum.hour <= maxTime)) && datum.day < datetime('4/1/2001')"},
         {
           "type": "aggregate",
           "groupby": ["day"],
@@ -89,7 +89,7 @@
       ]
     }
   ],
-  
+     
   "signals": [
     {"name": "minTime", "init": -1},
     {"name": "maxTime", "init": -1},

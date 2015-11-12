@@ -20,6 +20,7 @@ function init() {
   }
 
   dataLoaded = false;
+  //delv.noLog();
   var readers = [];
   canvasArray = Array.prototype.slice.call(document.getElementsByTagNameNS("*","canvas"));
   for (var j = 0; j < canvasArray.length; j++) {
@@ -167,8 +168,6 @@ function finishLoadingData() {
 function initProcessingSketch(view, canvasId) {
 
   if (canvasId == "Region") {
-    view.name("inSiteRegion");
-
     aboveDataset = view.createDataset("Regions");
     aboveDataset.regionTypeAttr("Species")
                 .regionLengthAttr("totalLength")
@@ -189,34 +188,28 @@ function initProcessingSketch(view, canvasId) {
     view.addDataset(belowDataset, true);
 
   } else if (canvasId == "DropDown") {
-    view.name("inSiteDropDown")
-        .dataSet("Regions")
+    view.dataSet("Regions")
         .catAttr("Species")
         .label("Species");
 
   } else if (canvasId == "ColorPickerLegend") {
-    view.name("inSiteColorPickerLegend")
-        .dataSet("Regions")
+    view.dataSet("Regions")
         .dataAttr("motif_type");
 
   } else if (canvasId == "ColorLegendWithDropdown") {
-    view.name("inSiteColorLegendWithDropdown")
-        .dataSet("Regions")
+    view.dataSet("Regions")
         .dataAttr("motif_type")
         .label("TF");
 
   } else if (canvasId == "Alignment") {
-    view.name("inSiteRegionAlignment");
 
   } else if (canvasId == "BarHeight") {
-    view.name("inSiteBarHeight")
-        .dataSet("Regions")
+    view.dataSet("Regions")
         .dim1Attr("strength")
         .dim2Attr("motif_type");
   } else {}
 
   if (dataLoaded) {
-      //view.dataIF("inSite");
       view.onDataChanged("inSite.js");
   }
   else {

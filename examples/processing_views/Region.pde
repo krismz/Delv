@@ -258,8 +258,7 @@ class RegionView extends DelvBasicView {
     String[][] coords = new String[1][];
     coords[0] = idToCoord(id);
     if (_feature_above_rolled_over) {
-      if (_hoverCoords.length != 1 ||
-          !(coordsEqual(coords[0],_hoverCoords[0]))) {
+      if (_hoverCoords.length != 1 || !coordsEqual(_hoverCoords[0], coords[0])) {
         _hoverCoords = coords;
         _delv.hoverItem(_name, _above_dataset.name(), coords[0]);
         if (_below_dataset != null) {
@@ -270,15 +269,26 @@ class RegionView extends DelvBasicView {
         String[] selections = new String[1];
         selections[0] = id;
         _delv.selectItems(_name, _above_dataset.name(), selections, "PRIMARY");
+        if (doDraw) {
+          draw();
+        }
       }
     } else {
-      if (_below_dataset != null) {
-        _delv.hoverItem(_name, _below_dataset.name(), coords[0]);
+      if (_hoverCoords.length != 1 || !coordsEqual(_hoverCoords[0], coords[0])) {
+        _hoverCoords = coords;
+        if (_below_dataset != null) {
+          _delv.hoverItem(_name, _below_dataset.name(), coords[0]);
+        }
+        _delv.hoverItem(_name, _above_dataset.name(), new String[0]);
+
+        // TODO remove this, just done for d3 demo
+        String[] selections = new String[1];
+        selections[0] = "";
+        _delv.selectItems(_name, _above_dataset.name(), selections, "PRIMARY");
+        if (doDraw) {
+          draw();
+        }
       }
-      _delv.hoverItem(_name, _above_dataset.name(), new String[0]);
-    }
-    if (doDraw) {
-      draw();
     }
   }
 
@@ -291,7 +301,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onFilterChanged(String invoker, String dataset, String coordination) {
+  void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
     // TODO respond to filter for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name())) {
@@ -300,7 +310,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onHoverChanged(String invoker, String dataset, String coordination) {
+  void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
     // TODO respond to hover for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name())) {

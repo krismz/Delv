@@ -1,21 +1,22 @@
 var vgWrapperNS = vgWrapperNS || {};
 
 vgWrapperNS.vega_crossfilter_data = function ( name ) {
-  var newObj = new delv.data(name);
+  var newObj = new delv.dataSet(name);
+  var view = new delv.view();
+  view.name(name);
+  delv.mixin(newObj, view);
   newObj.chart = {};
   newObj.spec = {};
-  newObj.setDelvIF(delv);
 
   newObj.resize = function(w, h) {};
-  newObj.dataIF = function(name) {};
-  newObj.reloadData = function(source) {};
+  newObj.onDataChanged = function(source) {};
   newObj.load_data = function(script, when_finished) {
     var view = this;
     d3.json(script, function(error, json) {
       view.spec = json;
       vg.parse.spec(json, function(chart) {
-        view.create_dataIF(name);
-        view.convert_to_dataIF(chart, name);
+        view.create_dataSet(name);
+        view.convert_to_dataSet(chart, name);
         when_finished();
       });
     });
@@ -24,72 +25,55 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
   newObj.updateDataTables = function() {
     var ds;
     var values;
-    var dataIF;
     var vMin;
     var vMax;
-    dataIF = delv.getDataIF(this.getName());
-    ds = dataIF.getDataSet("times");
-    vMin = ds.getVisibleMin("bin");
-    vMax = ds.getVisibleMax("bin");
+    ds = delv.getDataSet("times");
+    vMin = ds.getFilterMin("bin_hour");
+    vMax = ds.getFilterMax("bin_hour");
     ds.clearItems();
-    values =  dataIF.chart.data("times").values();
+    values =  this.chart.data("times").values();
     for (var v = 0; v < values.length; v++) {
       var id = ""+v;
       var elem = values[v];
       ds.addId(id);
-      ds.setItem("bin", id, elem["bin"]);
+      ds.setItem("bin_hour", id, elem["bin_hour"]);
       ds.setItem("count_delay", id, elem["count_delay"]);
     }
-    if (typeof(vMin) !== "undefined") {
-      ds.updateVisibleMin("bin", vMin);
-    }
-    if (typeof(vMax) !== "undefined") {
-      ds.updateVisibleMax("bin", vMax);
-    }
+    ds.filterRanges("bin_hour", [vMin], [vMax]);
 
-    ds = dataIF.getDataSet("distance");
-    vMin = ds.getVisibleMin("bin");
-    vMax = ds.getVisibleMax("bin");
+    ds = delv.getDataSet("distance");
+    vMin = ds.getFilterMin("bin_dist");
+    vMax = ds.getFilterMax("bin_dist");
     ds.clearItems();
-    values =  dataIF.chart.data("distance").values();
+    values =  this.chart.data("distance").values();
     for (var v = 0; v < values.length; v++) {
       var id = ""+v;
       var elem = values[v];
       ds.addId(id);
-      ds.setItem("bin", id, elem["bin"]);
+      ds.setItem("bin_dist", id, elem["bin_dist"]);
       ds.setItem("count_delay", id, elem["count_delay"]);
     }
-    if (typeof(vMin) !== "undefined") {
-      ds.updateVisibleMin("bin", vMin);
-    }
-    if (typeof(vMax) !== "undefined") {
-      ds.updateVisibleMax("bin", vMax);
-    }
+    ds.filterRanges("bin_dist", [vMin], [vMax]);
 
-    ds = dataIF.getDataSet("delay");
-    vMin = ds.getVisibleMin("bin");
-    vMax = ds.getVisibleMax("bin");
+    ds = delv.getDataSet("delay");
+    vMin = ds.getFilterMin("bin_delay");
+    vMax = ds.getFilterMax("bin_delay");
     ds.clearItems();
-    values =  dataIF.chart.data("delay").values();
+    values =  this.chart.data("delay").values();
     for (var v = 0; v < values.length; v++) {
       var id = ""+v;
       var elem = values[v];
       ds.addId(id);
-      ds.setItem("bin", id, elem["bin"]);
+      ds.setItem("bin_delay", id, elem["bin_delay"]);
       ds.setItem("count_delay", id, elem["count_delay"]);
     }
-    if (typeof(vMin) !== "undefined") {
-      ds.updateVisibleMin("bin", vMin);
-    }
-    if (typeof(vMax) !== "undefined") {
-      ds.updateVisibleMax("bin", vMax);
-    }
+    ds.filterRanges("bin_delay", [vMin], [vMax]);
 
-    ds = dataIF.getDataSet("date");
-    vMin = ds.getVisibleMin("day");
-    vMax = ds.getVisibleMax("day");
+    ds = delv.getDataSet("date");
+    vMin = ds.getFilterMin("day");
+    vMax = ds.getFilterMax("day");
     ds.clearItems();
-    values =  dataIF.chart.data("date").values();
+    values =  this.chart.data("date").values();
     for (var v = 0; v < values.length; v++) {
       var id = ""+v;
       var elem = values[v];
@@ -98,90 +82,90 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
       ds.setItem("day", id, ""+(day.getMonth()+1)+"/"+day.getDate()+"/"+day.getFullYear());
       ds.setItem("count_delay", id, elem["count_delay"]);
     }
-    if (typeof(vMin) !== "undefined") {
-      ds.updateVisibleMin("day", vMin);
-    }
-    if (typeof(vMax) !== "undefined") {
-      ds.updateVisibleMax("day", vMax);
-    }
-
+    ds.filterRanges("day", [vMin], [vMax]);
   };
 
-  newObj.create_dataIF = function( name ) {
-    var dataIF = delv.getDataIF(name);
+  newObj.create_dataSet = function( name ) {
 
-    var ds = dataIF.addDataSet("times");
+    var ds = new delv.dataSet("times");
     var def_color = ["210", "210", "210"];
-    ds.addAttribute( new delv.attribute("bin", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
-    ds.addAttribute( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds.addAttr( new delv.attribute("bin_hour", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds.addAttr( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    delv.addDataSet("times", ds);
 
-    ds = dataIF.addDataSet("delay");
-    ds.addAttribute( new delv.attribute("bin", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
-    ds.addAttribute( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds = new delv.dataSet("delay");
+    ds.addAttr( new delv.attribute("bin_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds.addAttr( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    delv.addDataSet("delay", ds);
 
 
-    ds = dataIF.addDataSet("distance");
-    ds.addAttribute( new delv.attribute("bin", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
-    ds.addAttribute( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds = new delv.dataSet("distance");
+    ds.addAttr( new delv.attribute("bin_dist", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds.addAttr( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    delv.addDataSet("distance", ds);
 
-    ds = dataIF.addDataSet("date");
-    ds.addAttribute( new delv.attribute("day", delv.AttributeType.DATETIME, new delv.colorMap(def_color), new delv.continuousRange()) );
-    ds.addAttribute( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    ds = new delv.dataSet("date");
+    ds.addAttr( new delv.attribute("day", delv.AttributeType.DATETIME, new delv.colorMap(def_color), new delv.continuousRange()) );
+    ds.addAttr( new delv.attribute("count_delay", delv.AttributeType.CONTINUOUS, new delv.continuousColorMap(def_color), new delv.continuousRange()) );
+    delv.addDataSet("date", ds);
 
   };
   
-  newObj.convert_to_dataIF = function( chart, name ) {
-    var dataIF = delv.getDataIF(name);
-    dataIF.chart = chart();
-    dataIF.chart.update();
+  newObj.convert_to_dataSet = function( chart, name ) {
+    //var dataSet = delv.getDataSet(name);
+    this.chart = chart();
+    this.chart.update();
     this.updateDataTables();
   };
 
 
-  newObj.onVisibilityChanged = function(invoker, dataset, attr) {
-    var vMin;
-    var vMax;
-    var dataIF = delv.getDataIF(this.getName());
+  newObj.onFilterChanged = function(invoker, dataset, coordination, attr) {
+    var fMin;
+    var fMax;
+    var minDate;
+    var maxDate;
 
-    vMin = dataIF.getVisibleMin(dataset, attr);
-    if (typeof(vMin) === "undefined") {
-      vMin = dataIF.getMin(dataset, attr);
+    fMin = delv.getFilterMin(dataset, attr);
+    if (typeof(fMin) === "undefined") {
+      fMin = delv.getMin(dataset, attr);
     }
-    vMax = dataIF.getVisibleMax(dataset, attr);
-    if (typeof(vMax) === "undefined") {
-      vMax = dataIF.getMax(dataset, attr);
+    fMax = delv.getFilterMax(dataset, attr);
+    if (typeof(fMax) === "undefined") {
+      fMax = delv.getMax(dataset, attr);
     }
 
-    // TODO big bug, vMax shouldn't still be undefined here.  Why?
-    if (typeof(vMin) === "undefined") {
-      vMin = vMax;
+    // TODO big bug, fMax shouldn't still be undefined here.  Why?
+    if (typeof(fMin) === "undefined") {
+      fMin = fMax;
     }
-    if (typeof(vMax) === "undefined") {
-      vMax = vMin;
+    if (typeof(fMax) === "undefined") {
+      fMax = fMin;
     }
 
     if (dataset === "times") {
-      dataIF.chart.signal("minTime", vMin);
-      dataIF.chart.signal("maxTime", vMax);
+      this.chart.signal("minTime", fMin);
+      this.chart.signal("maxTime", fMax);
     } else if (dataset === "delay") {
-      dataIF.chart.signal("minDelay", vMin);
-      dataIF.chart.signal("maxDelay", vMax);
+      this.chart.signal("minDelay", fMin);
+      this.chart.signal("maxDelay", fMax);
     } else if (dataset === "distance") {
-      dataIF.chart.signal("minDist", vMin);
-      dataIF.chart.signal("maxDist", vMax);
+      this.chart.signal("minDist", fMin);
+      this.chart.signal("maxDist", fMax);
     } else if (dataset === "date") {
-      dataIF.chart.signal("minDay", new Date(vMin));
-      dataIF.chart.signal("maxDay", new Date(vMax));
+      var minDate = new Date(fMin);
+      var maxDate = new Date(fMax);
+      this.chart.signal("minDay", minDate.getTime());
+      this.chart.signal("maxDay", maxDate.getTime());
     }
-    dataIF.chart.update();
+    this.chart.update();
     this.updateDataTables();
-    delv.reloadData("crossfilter_data");
+    delv.reloadData();
   };
 
-  delv.addDataIF(newObj);
-  delv.addView(newObj, name);
+  delv.addDataSet(name, newObj);
+  delv.addView(newObj);
   // TODO add signal handling to do crossfiltering
-  delv.connectToSignal("dataVisibilityChanged", name, "onVisibilityChanged");
+  delv.connectToSignal("filterChanged", name, "onFilterChanged");
 
   return newObj;
 };
