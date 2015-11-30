@@ -2,8 +2,7 @@ var vgWrapperNS = vgWrapperNS || {};
 
 vgWrapperNS.vega_crossfilter_data = function ( name ) {
   var newObj = new delv.dataSet(name);
-  var view = new delv.view();
-  view.name(name);
+  var view = new delv.view(name);
   delv.mixin(newObj, view);
   newObj.chart = {};
   newObj.spec = {};

@@ -13,14 +13,14 @@ function init() {
     var id = d3Array[j].getAttribute("id");
     var svgElem = d3Array[j];
     console.log("loading script: " + "" + id + ".js");
-    var chart = new delv.d3Chart(id, "./"+id+".js", "d3WrapperNS."+id+"_view", init_view_instance);
+    var chart = new delv.d3Chart(id, id, "./"+id+".js", "d3WrapperNS."+id+"_view", init_view_instance);
   }
 
   canvasArray = Array.prototype.slice.call(document.getElementsByTagNameNS("*","canvas"));
   for (var j = 0; j < canvasArray.length; j++) {
     var id = canvasArray[j].getAttribute("id");
     var canvas = canvasArray[j];
-    var sketch = new delv.processingSketch(canvas,
+    var sketch = new delv.processingSketch(id, canvas,
 					    ["./Globals.pde",
 					     "./Attribute.pde",
 					     "./Delv.pde",

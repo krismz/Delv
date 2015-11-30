@@ -11,11 +11,11 @@ var d3WrapperNS = d3WrapperNS || {};
 //              View             //
 ///////////////////////////////////
 
-d3WrapperNS.partition_sunburst_zoom_view = function ( svgElemId ) {
+d3WrapperNS.partition_sunburst_zoom_view = function ( name, svgElemId ) {
   // example from d3/examples/partition/partition-sunburst-zoom.html
   // git commit e01f789017e7de784811c7c97edc3ddfc9568111
 
-  var newObj = new delv.d3HierarchyView(svgElemId);
+  var newObj = new delv.d3HierarchyView(name, svgElemId);
 
   // TODO remove init function, not necessary now that view and mediator are 1
   newObj.init = function() {
@@ -24,18 +24,18 @@ d3WrapperNS.partition_sunburst_zoom_view = function ( svgElemId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
+    this._delv.connectToSignal("selectChanged", this._name, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
     this._delv.log("partition_sunburst_zoom_view.selectionChanged(" + selection + ")");
     ids = [];
     ids[0] = selection;
-    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
+    this._delv.selectItems(this._name, this._nodeDataset, ids, "PRIMARY");
   };
 
   newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
-    if (invoker === this.svgElem) {
+    if (invoker === this._name) {
       this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {

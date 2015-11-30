@@ -1,0 +1,68 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Ask Metafilter Small Multiples</title>
+  <meta name="description" content="Spliting up new Ask Metafilter posts by category to see trends.">
+  <meta name="author" content="Kris Zygmunt">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="delvjs/modernizr-2.0.6.min.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+<div id="delv_desc">
+  <p> A reimplementation of Jim Vallandingham's <a
+  href="https://flowingdata.com/2014/10/15/linked-small-multiples">linked small multiples
+  tutorial</a> using Delv to provide the interactions.
+  </div>
+    <h1>The Rise and Decline of Ask MetaFilter</h1>
+    <div id="lead">
+      <p>Metafilter's revenue has been on the decline, but has its content dried up as well?</p>
+      <p>Here we look at new posts on Ask Metafilter by category.<br/>Categories like <strong>computers &amp; internet</strong> have been dropping in use for a long time, most likely due to competition like Stack Overflow.<br/>Other smaller categories have had consistent use patterns until more recently.</p>
+      <p>Disclaimer: 2014 is included, even though the year is not over yet.</p>
+    </div>
+    <div id="main">
+      <div id="button-wrap">
+        <div id="count" class="button active">COUNT</div>
+        <div id="name" class="button">NAME</div>
+      </div>
+      
+      <div id="vis" style="overflow:hidden;zindex:1;top:0%;left:0;width:100%;height:100%;position:absolute"></div>
+    </div>
+  </div> <!--! end of #container -->
+
+
+  <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script> -->
+  <script>window.jQuery || document.write('<script src="delvjs/jquery-1.7.2.js"><\/script>')</script>
+
+
+  <script src="delvjs/isotope.pkgd.min.js"></script>
+  <script src="delvjs/d3.v3.js"></script>
+  <script src="delvjs/queue.min.js"></script>
+  <script type="text/ecmascript" src="delvjs/delv.js"></script>
+  <script type="text/ecmascript" src="linked_small_multiples.js"></script>
+  <script type="text/javascript">
+  $(document).ready(function() {
+  init();
+    });
+  </script>
+
+  <!--[if lt IE 7 ]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+  
+</body>
+</html>

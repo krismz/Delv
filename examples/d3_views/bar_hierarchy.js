@@ -11,8 +11,8 @@ var d3WrapperNS = d3WrapperNS || {};
 //              View             //
 ///////////////////////////////////
 
-d3WrapperNS.bar_hierarchy_view = function ( svgId ) {
-  var newObj = new delv.d3HierarchyView(svgId);
+d3WrapperNS.bar_hierarchy_view = function ( name, svgId ) {
+  var newObj = new delv.d3HierarchyView(name, svgId);
 
   newObj.init = function() {
 
@@ -20,18 +20,18 @@ d3WrapperNS.bar_hierarchy_view = function ( svgId ) {
   newObj.init();
 
   newObj.connectSignals = function() {
-    this._delv.connectToSignal("selectChanged", this.svgElem, "onSelectChanged");
+    this._delv.connectToSignal("selectChanged", this._name, "onSelectChanged");
   };
 
   newObj.selectionChanged = function( selection ) {
     ids = [];
     ids[0] = selection;
-    this._delv.selectItems(this.svgElem, this._nodeDataset, ids, "PRIMARY");
+    this._delv.selectItems(this._name, this._nodeDataset, ids, "PRIMARY");
   };
 
   newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
     var items = [];
-    if (invoker === this.svgElem) {
+    if (invoker === this._name) {
       this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
     }
     else {

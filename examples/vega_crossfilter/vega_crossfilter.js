@@ -9,19 +9,19 @@ function init() {
   var constructor = "vgWrapperNS.bar_chart_view";
   var id = "TimeOfDay";
   console.log("creating vega chart: " + id);
-  var chart = new delv.vegaChart(id, viewsrc, chartsrc, constructor, init_view_instance);
+  var chart = new delv.vegaChart(id, id, viewsrc, chartsrc, constructor, init_view_instance);
   
   id = "Delay";
   console.log("creating vega chart: " + id);
-  chart = new delv.vegaChart(id, viewsrc, chartsrc, constructor, init_view_instance);
+  chart = new delv.vegaChart(id, id, viewsrc, chartsrc, constructor, init_view_instance);
   
   id = "Distance";
   console.log("creating vega chart: " + id);
-  chart = new delv.vegaChart(id, viewsrc, chartsrc, constructor, init_view_instance);
+  chart = new delv.vegaChart(id, id, viewsrc, chartsrc, constructor, init_view_instance);
   
   id = "Date";
   console.log("creating vega chart: " + id);
-  chart = new delv.vegaChart(id, viewsrc, chartsrc, constructor, init_view_instance);
+  chart = new delv.vegaChart(id, id, viewsrc, chartsrc, constructor, init_view_instance);
 
   console.log("Initializing dataSet");
   dataSet = new vgWrapperNS.vega_crossfilter_data("vgDemo");

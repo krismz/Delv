@@ -22,6 +22,7 @@ var vg = vg || {};
   var data = {};
   var views = {};
   var p5s = {};
+  var sources = {};
   var _hoverColor = [];
   var _selectColor = {};
   var _filterColor = [];
@@ -46,8 +47,8 @@ var vg = vg || {};
   }; // end delv.mixin
   
   // turn obj into a delv view
-  delv.view = function() {
-    this._name = "";
+  delv.view = function(name) {
+    this._name = name;
     this._delv = {};
     this._datasetName = "";
     this.bindDelv = function(dlv) {
@@ -71,8 +72,8 @@ var vg = vg || {};
   }; // end delv.view
 
   // turn obj into a d3 view
-  delv.d3View = function(svgElem) {
-    var newObj = new delv.view();
+  delv.d3View = function(name, svgElem) {
+    var newObj = new delv.view(name);
     newObj.svgElem = svgElem;
     return newObj;
   }; // end delv.d3View
@@ -81,8 +82,7 @@ var vg = vg || {};
   // if a signal comes in for one attribute, it gets resent
   // for the corresponding attribute in the other dataset
   delv.joinView = function(name) {
-    var newObj = new delv.view();
-    newObj._name = name;
+    var newObj = new delv.view(name);
     newObj._dataset1Name = "";
     newObj._dataset2Name = "";
     newObj._dataset1Attr = "";
@@ -147,9 +147,69 @@ var vg = vg || {};
     return newObj;
   }; // end delv.joinView
 
+  delv.compositeView = function(name) {
+    var newObj = new delv.view(name);
+    newObj._views = {};
+    newObj._super = {};
+
+    newObj.addView = function(view) {
+      //var c = view.getBackgroundColor();
+      //c = color_(red_(c), green_(c), blue_(c), 0);
+      //view.setBackgroundColor(c);
+      this._views[view.name()] = view;
+      return this;
+    };
+    
+    newObj._super.BindDelv = newObj.bindDelv;
+    newObj.bindDelv = function(dlv) {
+      var v;
+      for (v in this._views) {
+        dlv.addView(this._views[v]);
+      }
+      this._super.BindDelv(dlv);
+      return this;
+    };
+
+    newObj.dataSet = function(name) {
+      var v;
+      this._datasetName = name;
+      for (v in this._views) {
+        this._views[v].dataSet(name);
+      }
+      return this;
+    };
+
+    newObj._super.OnDataChanged = newObj.onDataChanged;
+    newObj.onDataChanged = function(source) {
+      var v;
+      for (v in this._views) {
+        this._views[v].onDataChanged(source);
+      }
+      this._super.OnDataChanged();
+    };
+
+    newObj._super.resize = newObj.resize;
+    newObj.resize = function(w, h) {
+      var v;
+      this._super.resize(w, h);
+      for (v in this._views) {
+        this._views[v].resize(w, h);
+      }
+    };
+
+    newObj.connectSignals = function() {
+      var v;
+      for (v in this._views) {
+        this._views[v].connectSignals();
+      }
+    };
+    
+    return newObj;
+  };
+
   // turn obj into a d3 hierarchy view
-  delv.d3HierarchyView = function(svgElem) {
-    var newObj = new delv.d3View(svgElem);
+  delv.d3HierarchyView = function(name, svgElem) {
+    var newObj = new delv.d3View(name, svgElem);
     newObj._nodeSizeAttr = "";
     newObj._nodeNameAttr = "";
     newObj._linkStartAttr = "";
@@ -279,9 +339,8 @@ var vg = vg || {};
   }; // end delv.d3HierarchyView
 
   // turn obj into a vega view
-  delv.vegaView = function(elem, vgSpec) {
-    var newObj = new delv.view();
-    newObj._name = elem;
+  delv.vegaView = function(name, elem, vgSpec) {
+    var newObj = new delv.view(name);
     newObj.elem = elem;
     newObj.spec = vgSpec;
     newObj.chart;
@@ -401,31 +460,58 @@ var vg = vg || {};
     return newObj;
   }; // end delv.vegaView
 
-  delv.d3Chart = function (elementId, script, viewConstructor, loadCompleteCallback) {
+  delv.loadScript = function (script, loadCompleteCallback) {
+    var source = script;
+    
+    function initScript(script, loadCompleteCallback) {
+      if (sources.hasOwnProperty(script) && sources[script]) {
+        //delv.log("Script already loaded, not loading again!");
+      } else {
+        $.getScript(script, finishScriptLoad);
+      }
+    }
+    initScript(script, loadCompleteCallback);
+
+    function finishScriptLoad(scriptRext, textStatus, jqxhr) {
+      // TODO any error / status checking?
+      var success = (textStatus === "success");
+      sources[source] = success; 
+      loadCompleteCallback(success);
+    }
+  };
+  
+  delv.d3Chart = function (name, elementId, script, viewConstructor, loadCompleteCallback) {
+    var viewName = name;
     var elemId = elementId;
     var chartLoaded = false;
+    var source = script;
 
     function initChart(script, viewConstructor, loadCompleteCallback) {
       chartLoaded = false;
-      $.getScript(script, finishChartInit);
+      if (sources.hasOwnProperty(script) && sources[script]) {
+        //delv.log("Script already loaded, not loading again!");
+        finishChartInit("","success",{});
+      } else {
+        $.getScript(script, finishChartInit);
+      }
     }
     initChart(script, viewConstructor, loadCompleteCallback);
 
     function finishChartInit(d3_script, textStatus, jqxhr) {
-      delv.log("d3 script loaded!  elemId: " + elemId + ", textStatus: " + textStatus + ", jqxhr: " + jqxhr);
       var view;
-      var callConstructor = "view = new " + viewConstructor + "(elemId)";
-	    try {
+      var callConstructor = "view = new " + viewConstructor + "(viewName, elemId)";
+      //delv.log("d3 script from " + source + " loaded!  elemId: " + elemId + ", textStatus: " + textStatus + ", jqxhr: " + jqxhr);
+      try {
 	      eval(callConstructor);
 	    } catch (e) {
-	      delv.log("initializing d3 chart for " + elemId + " failed while trying to call\n" + callConstructor + "\n.  Try again later");
+	      delv.log("initializing d3 chart " + viewName + " for " + elemId + " failed while trying to call\n" + callConstructor + "\n.  Try again later");
 	      chartLoaded = false;
 	    }
 	    if (typeof(view) !== "undefined") {
 	      chartLoaded = true;
 	    }
+      sources[source] = chartLoaded;
 	    if (chartLoaded) {
-        view.name(elemId);
 	      delv.addView(view);
 	      view.connectSignals();
 	      loadCompleteCallback(view, elemId);
@@ -434,7 +520,8 @@ var vg = vg || {};
 
   };
 
-  delv.vegaChart = function (elementId, viewsrc, script, constructor, loadCompleteCallback) {
+  delv.vegaChart = function (name, elementId, viewsrc, script, constructor, loadCompleteCallback) {
+    var viewName = name;
     var elemId = elementId;
     var chartLoaded = false;
     function initChart(elemId, viewsrc, script, constructor, loadCompleteCallback) {
@@ -456,7 +543,7 @@ var vg = vg || {};
       chartLoaded = true;
       // Now wrap the chart into a Delv view
       var view;
-      var callConstructor = "view = new " + constructor + "(elemId, json)";
+      var callConstructor = "view = new " + constructor + "(viewName, elemId, json)";
       try {
         eval(callConstructor);
       } catch (e) {
@@ -467,7 +554,6 @@ var vg = vg || {};
         chartLoaded = false;
       }
       if (chartLoaded) {
-        view.name(elemId);
         delv.addView(view);
         view.connectSignals();
         loadCompleteCallback(view, elemId);
@@ -475,7 +561,8 @@ var vg = vg || {};
     }
   };
   
-  delv.processingSketch = function ( canvas, sketchList, viewConstructor, loadCompleteCallback ) {
+  delv.processingSketch = function ( name, canvas, sketchList, viewConstructor, loadCompleteCallback ) {
+    var viewName = name;
     var canvasId;
     var sketchLoaded;
     var p; // processing instance
@@ -503,7 +590,7 @@ var vg = vg || {};
     function finishSketchInit() {
       if (!sketchLoaded) {
 	      p = Processing.getInstanceById(canvasId);
-	      var callConstructor = "p._view = new p." + viewConstructor + "()";
+	      var callConstructor = "p._view = new p." + viewConstructor + "(viewName)";
 	      try {
 	        eval(callConstructor);
           delv.log("constructed processing sketch view for " + canvasId + " with call: " + callConstructor);
@@ -539,7 +626,6 @@ var vg = vg || {};
 	        // TODO where should p be bound in delv?
 	        p.bindJavascript(delv);
 	        p.bound = true;
-          p._view.name(canvasId);
 	        delv.addView(p._view);
 	        p._view.connectSignals();
           delv.addP5Instance(p, canvasId);
@@ -565,6 +651,31 @@ var vg = vg || {};
   }
   init();
 
+  // conform id to html5 standards
+  // as found here: http://stackoverflow.com/questions/70579/what-are-valid-values-for-the-id-attribute-in-html
+  delv.conformId = function(id) {
+    var conformed = "";
+    var pos;
+    var ltr = new RegExp("[A-Za-z]");
+    var valid = new RegExp("[A-Za-z0-9_:.]");
+    if (id.length > 0) {
+      // first character should be a letter
+      if (!ltr.exec(id[0])) {
+        // prepend an a, if it doesn't start with a letter
+        conformed = "a";
+      }
+      for (pos = 0; pos < id.length; pos++) {
+        // only keep valid characters, discard rest
+        if (valid.exec(id[pos])) {
+          conformed = conformed + id[pos];
+        }
+      }
+      return conformed;
+    } else {
+      return id;
+    }
+  };
+  
   // from http://davidwalsh.name/javascript-debounce-function
   delv.debounce = function (func, wait, immediate) {
 	  var timeout;
@@ -621,8 +732,8 @@ var vg = vg || {};
 
 
   delv.addView = function (view) {
-    delv.log("Adding view for " + view.name());
-    delv.log("typeof view: " + typeof(view));
+    //delv.log("Adding view for " + view.name());
+    //delv.log("typeof view: " + typeof(view));
     view.bindDelv(delv);
     views[view.name()] = view;
     return delv;
@@ -686,7 +797,7 @@ var vg = vg || {};
   };
   
   delv.connectToSignal = function (signal, name, method) {
-    delv.log("ConnectToSignal(" + signal + ", " + name + ", " + method + ")");
+    //delv.log("ConnectToSignal(" + signal + ", " + name + ", " + method + ")");
     if (delv.signalHandlers.hasOwnProperty(signal)) {
       delv.signalHandlers[signal][name] = method;
     }
@@ -710,18 +821,18 @@ var vg = vg || {};
     var view;
     var method;
     var fullcall;
-    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + coordination + ", " + detail + ")");
-    delv.log("typeof invoker: " + typeof(invoker));
-    delv.log("typeof dataset: " + typeof(dataset));
-    delv.log("typeof coordination: " + typeof(coordination));
-    delv.log("typeof detail: " + typeof(detail));
+    //delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + coordination + ", " + detail + ")");
+    //delv.log("typeof invoker: " + typeof(invoker));
+    //delv.log("typeof dataset: " + typeof(dataset));
+    //delv.log("typeof coordination: " + typeof(coordination));
+    //delv.log("typeof detail: " + typeof(detail));
     try {
       for (key in delv.signalHandlers[signal]) {
         if (delv.signalHandlers[signal].hasOwnProperty(key)) {
           try {
             view = views[key];
-            delv.log("key: " + key);
-            delv.log("typeof view: " + typeof(view));
+            //delv.log("key: " + key);
+            //delv.log("typeof view: " + typeof(view));
             method = delv.signalHandlers[signal][key];
             if (typeof(coordination) !== "undefined") {
               if (typeof(detail) !== "undefined") {
@@ -732,7 +843,7 @@ var vg = vg || {};
             } else {
               fullcall = "view." + method + "(invoker, dataset)";
             }
-            delv.log("calling eval(" + fullcall + ")");
+            //delv.log("calling eval(" + fullcall + ")");
             // TODO using eval to get around Java not being able to pass methods around
             eval(fullcall);
             //     method(invoker, attribute);
@@ -787,16 +898,16 @@ var vg = vg || {};
   delv.dataSetException.prototype = new delv.exception();
 
   delv.pair = function(frst, scnd) {
-    var first = frst;
-    var second = scnd;
+    this.first = frst;
+    this.second = scnd;
 
     this.set = function(frst, scnd) {
-      first = frst;
-      second = scnd;
+      this.first = frst;
+      this.second = scnd;
     }
 
     this.equals = function(other) {
-      return (first === other.first && second === other.second);
+      return (this.first === other.first && this.second === other.second);
     };
   };
 
@@ -1262,6 +1373,14 @@ var vg = vg || {};
   // TODO zoomItem, zoomVal, zoomCat, zoomRange, zoomLike
   // TODO setLOD
 
+  delv.isHovered = function(dataset, id) {
+    try {
+      return data[dataset].isHovered(id);
+    } catch (e) {
+      return;
+    }
+  };
+    
   delv.getHoverIds = function(dataset) {
     try {
       return data[dataset].getHoverIds();
@@ -1294,6 +1413,14 @@ var vg = vg || {};
   delv.getHoverLike = function(dataset) {
     try {
       return data[dataset].getHoverLike();
+    } catch (e) {
+      return;
+    }
+  };
+  
+  delv.isSelected = function(dataset, selectType) {
+    try {
+      return data[dataset].isSelected(id, selectType);
     } catch (e) {
       return;
     }
@@ -1336,6 +1463,13 @@ var vg = vg || {};
   delv.getSelectCriteria = function(dataset, selectType) {
     try {
       return data[dataset].getSelectCriteria();
+    } catch (e) {
+      return;
+    }
+  };
+  delv.isFiltered = function(dataset, id) {
+    try {
+      return data[dataset].isFiltered(id);
     } catch (e) {
       return;
     }
@@ -1638,7 +1772,7 @@ var vg = vg || {};
 
   delv.dataSet = function(name) {
     // TODO set colors via css
-    var itemIds = [];
+    this.itemIds = [];
     var attributes = {};
     var _defaultEncoding = [];
     var _defaultColor = [];
@@ -1657,6 +1791,7 @@ var vg = vg || {};
     var _filterRanges = {};
     var _delv = {};
 
+    // TODO make name interface consistent for views and datasets.  Probably want a name() function ala views
     this.name = name;
 
     // TODO sort API
@@ -1671,17 +1806,17 @@ var vg = vg || {};
     this.getIdx = function(id) {
       var i = -1;
       var val = delv.coordToId(id);
-      for (i = 0; i < itemIds.length; i++) {
-        if (itemIds[i].name === val) {
+      for (i = 0; i < this.itemIds.length; i++) {
+        if (this.itemIds[i].name === val) {
           return i;
         }
       }
-      return i;
+      return -1;
     };
     
     this.addId = function(id) {
       var newId = new delv.itemId(id);
-      itemIds[itemIds.length] = newId;
+      this.itemIds[this.itemIds.length] = newId;
     };
     this.hasId = function(id) {
       var i = this.getIdx(id);
@@ -1700,8 +1835,8 @@ var vg = vg || {};
       // TODO depending on how missing values are handled, returned ids may need to be adjusted
       var ids = [];
       var i;
-      for (i = 0; i < itemIds.length; i++) {
-        ids[ids.length] = itemIds[i].name;
+      for (i = 0; i < this.itemIds.length; i++) {
+        ids[ids.length] = this.itemIds[i].name;
       }
       return ids;
     };
@@ -1710,18 +1845,24 @@ var vg = vg || {};
       // TODO depending on how missing values are handled, returned ids may need to be adjusted
       var ids = [];
       var i;
-      for (i = 0; i < itemIds.length; i++) {
-        ids[ids.length] = delv.idToCoord(itemIds[i].name);
+      for (i = 0; i < this.itemIds.length; i++) {
+        ids[ids.length] = delv.idToCoord(this.itemIds[i].name);
       }
       return ids;
     };
 
+    this.isHovered = function(id) {
+      var i = this.getIdx(id);
+      if (i > -1) {
+        return this.itemIds[i].hovered;
+      }
+    };
     this.getHoverIds = function() {
       var ids = [];
       var i;
-      for (i = 0; i < itemIds.length; i++) {
-        if (itemIds[i].hovered) {
-          ids[ids.length] = itemIds[i].name;
+      for (i = 0; i < this.itemIds.length; i++) {
+        if (this.itemIds[i].hovered) {
+          ids[ids.length] = this.itemIds[i].name;
         }
       }
       return ids;
@@ -1729,14 +1870,35 @@ var vg = vg || {};
     this.getHoverCoords = function() {
       var coords = [];
       var i;
-      for (i = 0; i < itemIds.length; i++) {
-        if (itemIds[i].hovered) {
-          coords[coords.length] = delv.idToCoord(itemIds[i].name);
+      for (i = 0; i < this.itemIds.length; i++) {
+        if (this.itemIds[i].hovered) {
+          coords[coords.length] = delv.idToCoord(this.itemIds[i].name);
         }
       }
       return ids;
     };
 
+    this.isSelected = function(id, selectType) {
+      var i = this.getIdx(id);
+      var selected = false;
+      if (i > -1) {
+        switch (selectType) {
+        case "PRIMARY":
+          selected = this.itemIds[i].selectedPrimary;
+          break;
+        case "SECONDARY":
+          selected = this.itemIds[i].selectedSecondary;
+          break;
+        case "TERTIARY":
+          selected = this.itemIds[i].selectedTertiary;
+          break;
+        default:
+          selected = false;
+          break;
+        }
+      }
+      return selected;
+    };
     this.getSelectIds = function(selectType) {
       var ids = [];
       switch (selectType) {
@@ -1759,8 +1921,8 @@ var vg = vg || {};
       var ids = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedPrimary) {
           ids[ids.length] = id.name;
         }
@@ -1771,8 +1933,8 @@ var vg = vg || {};
       var ids = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedSecondary) {
           ids[ids.length] = id.name;
         }
@@ -1783,8 +1945,8 @@ var vg = vg || {};
       var ids = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedTertiary) {
           ids[ids.length] = id.name;
         }
@@ -1814,8 +1976,8 @@ var vg = vg || {};
       var coords = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedPrimary) {
           coords[coords.length] = delv.idToCoord(id.name);
         }
@@ -1826,8 +1988,8 @@ var vg = vg || {};
       var coords = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedSecondary) {
           coords[coords.length] = delv.idToCoord(id.name);
         }
@@ -1838,8 +2000,8 @@ var vg = vg || {};
       var coords = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.selectedTertiary) {
           coords[coords.length] = delv.idToCoord(id.name);
         }
@@ -1847,12 +2009,19 @@ var vg = vg || {};
       return coords;
     };
 
+    this.isFiltered = function(id) {
+      var i = this.getIdx(id);
+      if (i > -1) {
+        return this.itemIds[i].filtered;
+      }
+    };
+
     this.getFilterIds = function() {
       var ids = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.filtered) {
           ids[ids.length] = id.name;
         }
@@ -1864,8 +2033,8 @@ var vg = vg || {};
       var coords = [];
       var i;
       var id;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         if (id.filtered) {
           coords[coords.length] = delv.idToCoord(id.name);
         }
@@ -1879,24 +2048,24 @@ var vg = vg || {};
     };
 
     this.getNumIds = function() {
-      return itemIds.length;
+      return this.itemIds.length;
     };
     this.getNumCoords = function() {
-      return itemIds.length;
+      return this.itemIds.length;
     };
 
 
     this.removeId = function(id) {
       var i = this.getIdx(id);
       if (i > -1) {
-        itemIds.splice(i, 1);
+        this.itemIds.splice(i, 1);
       }
     };
 
     this.removeCoord = function(coord) {
       var i = this.getIdx(coord);
       if (i > -1) {
-        itemIds.splice(i, 1);
+        this.itemIds.splice(i, 1);
       }
     };
 
@@ -1906,7 +2075,7 @@ var vg = vg || {};
           attributes[attr].clear();
         }
       }
-      itemIds = [];
+      this.itemIds = [];
     };
 
     this.setItem = function(attr, id, item) {
@@ -1946,8 +2115,8 @@ var vg = vg || {};
       var i;
       var at = attributes[attr];
       if (at !== undefined) {
-        for (i = 0; i < itemIds.length; i++) {
-          items[i] = at.getItem(itemIds[i].name);
+        for (i = 0; i < this.itemIds.length; i++) {
+          items[i] = at.getItem(this.itemIds[i].name);
         }
       }
       return items;
@@ -1959,8 +2128,8 @@ var vg = vg || {};
       var i;
       var at = attributes[attr];
       if (at !== undefined) {
-        for (i = 0; i < itemIds.length; i++) {
-          items[i] = at.getItemAsFloat(itemIds[i].name);
+        for (i = 0; i < this.itemIds.length; i++) {
+          items[i] = at.getItemAsFloat(this.itemIds[i].name);
         }
       }
       return items;
@@ -1969,7 +2138,7 @@ var vg = vg || {};
     this.getMin = function(attr) {
       var at = attributes[attr];
       if (at !== undefined) {
-        return at.getMin();
+        return at.getMinVal();
       } else {
         return "";
       }
@@ -1977,7 +2146,7 @@ var vg = vg || {};
     this.getMax = function(attr) {
       var at = attributes[attr];
       if (at !== undefined) {
-        return at.getMax();
+        return at.getMaxVal();
       } else {
         return "";
       }
@@ -2046,9 +2215,9 @@ var vg = vg || {};
       var i;
       var at = attributes[attr];
       if (at !== undefined) {
-        for (i = 0; i < itemIds.length; i++) {
-          if (itemIds[i].hovered) {
-            hovered[hovered.length] = at.getItem(itemIds[i].name);
+        for (i = 0; i < this.itemIds.length; i++) {
+          if (this.itemIds[i].hovered) {
+            hovered[hovered.length] = at.getItem(this.itemIds[i].name);
           }
         }
       }
@@ -2074,8 +2243,8 @@ var vg = vg || {};
       var id;
       var at = attributes[attr];
       if (at !== undefined) {
-        for (i = 0; i < itemIds.length; i++) {
-          id = itemIds[i];
+        for (i = 0; i < this.itemIds.length; i++) {
+          id = this.itemIds[i];
           if (id.filtered) {
             items[items.length] = at.getItem(id.name);
           }
@@ -2097,7 +2266,7 @@ var vg = vg || {};
     };
     this.getItemColorByIdx = function(attr, idx) {
       var item;
-      item = itemIds[idx];
+      item = this.itemIds[idx];
       if (item.hovered && _hoverColorSet) {
         return _hoverColor;
       } else if (item.selectedPrimary && _selectColorSet["PRIMARY"]) {
@@ -2112,15 +2281,15 @@ var vg = vg || {};
         // TODO mismatch between navigation and like here!!! 
         return _likeColor;
       } else {
-        return getItemAttrColor(attr, id);
+        return this.getItemAttrColor(attr, id);
       }
     };
 
     this.getItemColors = function(attr) {
       var idx;
       var cols = [];
-      for (idx = 0; idx < itemIds.length; idx++) {
-        cols[idx] = getItemColorByIdx(attr, idx);
+      for (idx = 0; idx < this.itemIds.length; idx++) {
+        cols[idx] = this.getItemColorByIdx(attr, idx);
       }
       return cols;
     };
@@ -2139,8 +2308,8 @@ var vg = vg || {};
       var colors = [];
       var at = attributes[attr];
       if (at !== undefined) {
-        for (i = 0; i < itemIds.length; i++) {
-          colors[i] = at.getItemAttrColor(itemIds[i].name);
+        for (i = 0; i < this.itemIds.length; i++) {
+          colors[i] = at.getItemAttrColor(this.itemIds[i].name);
         }
       }
       return colors;
@@ -2150,7 +2319,7 @@ var vg = vg || {};
       var idx = this.getIdx(id);
       clearHover();
       if (idx > -1) {
-        itemIds[idx].hovered = true;
+        this.itemIds[idx].hovered = true;
       }
       _hoverCoords = delv.idToCoord(id);
     };
@@ -2165,7 +2334,7 @@ var vg = vg || {};
       for (i = 0; i < ids.length; i++) {
         idx = this.getIdx(ids[i]);
         if (idx > -1) {
-          itemIds[idx].selectedPrimary = doSelect;
+          this.itemIds[idx].selectedPrimary = doSelect;
           range.addCategory(ids[i]);
         }
       }
@@ -2181,7 +2350,7 @@ var vg = vg || {};
       for (i = 0; i < ids.length; i++) {
         idx = this.getIdx(ids[i]);
         if (idx > -1) {
-          itemIds[idx].selectedSecondary = doSelect;
+          this.itemIds[idx].selectedSecondary = doSelect;
           range.addCategory(ids[i]);
         }
       }
@@ -2197,7 +2366,7 @@ var vg = vg || {};
       for (i = 0; i < ids.length; i++) {
         idx = this.getIdx(ids[i]);
         if (idx > -1) {
-          itemIds[idx].selectedTertiary = doSelect;
+          this.itemIds[idx].selectedTertiary = doSelect;
           range.addCategory(ids[i]);
         }
       }
@@ -2449,11 +2618,11 @@ var vg = vg || {};
         if (at !== undefined) {
           range = _hoverRange.second;
           if (range !== undefined) {
-            for (id = 0; id < itemIds.length; id++) {
-              if (range.isInRange(at.getItem(itemIds[id].name))) {
-                itemIds[id].hovered = true;
+            for (id = 0; id < this.itemIds.length; id++) {
+              if (range.isInRange(at.getItem(this.itemIds[id].name))) {
+                this.itemIds[id].hovered = true;
               } else {
-                itemIds[id].hovered = false;
+                this.itemIds[id].hovered = false;
               }
             }
           }
@@ -2485,7 +2654,7 @@ var vg = vg || {};
       var at;
       var range;
       var select;
-      for (id = 0; id < itemIds.length; id++) {
+      for (id = 0; id < this.itemIds.length; id++) {
         for (smap = 0; smap < selectList.length; smap++) {
           select = true;
           selectMap = selectList[smap];
@@ -2495,7 +2664,7 @@ var vg = vg || {};
               at = attributes[attr];
               if (at !== undefined) {
                 range = selectMap[attr];
-                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                if (range !== undefined && !range.isInRange(at.getItem(this.itemIds[id].name))) {
                   select = false;
                   break;
                 }
@@ -2504,7 +2673,7 @@ var vg = vg || {};
           }
           // to be selected, OR the above result with the previous selection state for this item
           if (select) {
-            itemIds[id].selectedPrimary = true;
+            this.itemIds[id].selectedPrimary = true;
           }
         }
       }
@@ -2517,7 +2686,7 @@ var vg = vg || {};
       var at;
       var range;
       var select;
-      for (id = 0; id < itemIds.length; id++) {
+      for (id = 0; id < this.itemIds.length; id++) {
         for (smap = 0; smap < selectList.length; smap++) {
           select = true;
           selectMap = selectList[smap];
@@ -2527,7 +2696,7 @@ var vg = vg || {};
               at = attributes[attr];
               if (at !== undefined) {
                 range = selectMap[attr];
-                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                if (range !== undefined && !range.isInRange(at.getItem(this.itemIds[id].name))) {
                   select = false;
                   break;
                 }
@@ -2536,7 +2705,7 @@ var vg = vg || {};
           }
           // to be selected, OR the above result with the previous selection state for this item
           if (select) {
-            itemIds[id].selectedSecondary = true;
+            this.itemIds[id].selectedSecondary = true;
           }
         }
       }
@@ -2549,7 +2718,7 @@ var vg = vg || {};
       var at;
       var range;
       var select;
-      for (id = 0; id < itemIds.length; id++) {
+      for (id = 0; id < this.itemIds.length; id++) {
         for (smap = 0; smap < selectList.length; smap++) {
           select = true;
           selectMap = selectList[smap];
@@ -2559,7 +2728,7 @@ var vg = vg || {};
               at = attributes[attr];
               if (at !== undefined) {
                 range = selectMap[attr];
-                if (range !== undefined && !range.isInRange(at.getItem(itemIds[id].name))) {
+                if (range !== undefined && !range.isInRange(at.getItem(this.itemIds[id].name))) {
                   select = false;
                   break;
                 }
@@ -2568,7 +2737,7 @@ var vg = vg || {};
           }
           // to be selected, OR the above result with the previous selection state for this item
           if (select) {
-            itemIds[id].selectedTertiary = true;
+            this.itemIds[id].selectedTertiary = true;
           }
         }
       }
@@ -2584,8 +2753,8 @@ var vg = vg || {};
       var filter;
       var ranges;
       var range;
-      for (i = 0; i < itemIds.length; i++) {
-        id = itemIds[i];
+      for (i = 0; i < this.itemIds.length; i++) {
+        id = this.itemIds[i];
         filter = true;
         for (attr in _filterRanges) {
           if (_filterRanges.hasOwnProperty(attr)) {
@@ -2871,8 +3040,8 @@ var vg = vg || {};
       var id;
       _hoverCoords = [];
       _hoverRange.set("", new delv.categoricalRange);
-      for (id = 0; id < itemIds.length; id++){
-        itemIds[id].hovered = false;
+      for (id = 0; id < this.itemIds.length; id++){
+        this.itemIds[id].hovered = false;
       }
     };
 
@@ -2881,18 +3050,18 @@ var vg = vg || {};
       _selectRanges[selectType] = [];
       switch (selectType) {
       case "PRIMARY":
-        for (id = 0; id < itemIds.length; id++) {
-          itemIds[id].selectedPrimary = false;
+        for (id = 0; id < this.itemIds.length; id++) {
+          this.itemIds[id].selectedPrimary = false;
         }
         break;
       case "SECONDARY":
-        for (id = 0; id < itemIds.length; id++) {
-          itemIds[id].selectedSecondary = false;
+        for (id = 0; id < this.itemIds.length; id++) {
+          this.itemIds[id].selectedSecondary = false;
         }
         break;
       case "TERTIARY":
-        for (id = 0; id < itemIds.length; id++) {
-          itemIds[id].selectedTertiary = false;
+        for (id = 0; id < this.itemIds.length; id++) {
+          this.itemIds[id].selectedTertiary = false;
         }
         break;
       default:
@@ -2904,8 +3073,8 @@ var vg = vg || {};
       var id;
       var attr;
       _filterRanges = {};
-      for (id = 0; id < itemIds.length; id++) {
-        id.filtered = true;
+      for (id = 0; id < this.itemIds.length; id++) {
+        this.itemIds[id].filtered = true;
       }
       for (attr in attributes) {
         if (attributes.hasOwnProperty(attr)) {
@@ -2978,6 +3147,611 @@ var vg = vg || {};
 
   }; // end delv.dataSet
 
+  delv.tsvData = function(name, source) {
+    var ds = new delv.dataSet(name);
+    var _source = source;
+
+    ds.load_data = function(when_finished) {
+      this.load_from_file(_source, when_finished);
+    };
+
+    ds.load_from_file = function(filename, when_finished) {
+      var self = this;
+      d3.tsv(filename, function(error, data) {
+        if (error) throw error;
+        populate_data(data, self);
+        when_finished();
+      });
+    };
+
+    function populate_data(data, dataset) {
+      delv.removeDataSet(dataset);
+      delv.addDataSet(dataset.name, dataset);
+      create_dataset(data, dataset);
+      populate_dataset(data, dataset);
+    }
+
+    function populate_dataset(data, dataset) {
+      var id;
+      var row;
+      var header = {};
+      var d;
+      var col = 0;
+      if (data.length < 1) { return; }
+      for (d in data[0]) {
+        header[d] = col;
+        col++;
+      }
+      for (row = 0; row < data.length; row++) {
+        // TODO handle id generation for streaming data
+        id = ""+row;
+        for (d in header) {
+          dataset.setItem(d.trim(), id, data[row][d].trim());
+        }
+      }
+    }
+    
+    function create_dataset(data, dataset) {
+      var def_color = ["210", "210", "210"];
+      var maxrows = (50 < data.length) ? 50 : data.length;
+      var row;
+      var d;
+      var attrs = [];
+      var header = {};
+      var val;
+      var col = 0;
+      if (data.length < 1) { return; }
+      for (d in data[0]) {
+        attrs[attrs.length] = {};
+        header[d] = col;
+        col++;
+      }
+      
+      for (row = 0; row < maxrows; row++) {
+        for (d in data[row]) {
+          col = header[d];
+          val = parseFloat(data[row][d]);
+          if (!isNaN(val)) {
+            attrs[col][val] = val;
+          }
+        }
+      }
+
+      for (d in header) {
+        col = header[d];
+        // determine number of unique elements in a
+        row = 0;
+        for (val in attrs[col]) {
+          if (attrs[col].hasOwnProperty(val)) {
+            row++;
+          }
+        }
+        if (row > 12) {
+          delv.log("Adding CONTINUOUS attribute " + d.trim());
+          dataset.addAttr( new delv.attribute(d.trim(), delv.AttributeType.CONTINUOUS,
+                                              new delv.continuousColorMap(def_color),
+                                              new delv.continuousRange()) );
+        } else {
+          delv.log("Adding CATEGORICAL attribute " + d.trim());
+          dataset.addAttr( new delv.attribute(d.trim(), delv.AttributeType.CATEGORICAL,
+                                              new delv.colorMap(def_color),
+                                              new delv.categoricalRange()) );
+        }
+      }
+    }
+    
+    return ds;
+    
+  }; // end delv.tsvData
+
+  delv.facetDataSet = function ( dataset, attr, cat ) {
+    var ds = new delv.dataSet(dataset+"."+cat);
+    ds._dataset = dataset;
+    ds._attr = attr;
+    ds._cat = cat;
+    ds._super = {};
+
+    ds.facetItems = function() {
+      var ids = delv.getAllIds(this._dataset);
+      var id;
+      for (id = 0; id < ids.length; id++) {
+        if (delv.getItem(this._dataset, this._attr, ids[id]) === this._cat) {
+          this.addId(ids[id]);
+        }
+      }
+    }
+    
+    ds.doFacet = function() {
+      delv.addDataSet(this.name, this);
+      this.facetItems();
+    };
+
+    ds.clearItems = function() {
+      this.itemIds = [];
+    };
+
+    ds.setItem = function(attr, id, item) {
+    };
+
+    ds.getItem = function(attr, id) {
+      if (this.hasId(id)) {
+        delv.getItem(this._dataset, attr, id);
+      } else {
+        return "";
+      }
+    };
+    ds.getItemAsFloat = function(attr, id) {
+      if (this.hasId(id)) {
+        delv.getItemAsFloat(this._dataset, attr, id);
+      } else {
+        return "";
+      }
+    };
+
+    ds.getAllItems = function(attr) {
+      var items = [];
+      var i;
+      for (i = 0; i < this.itemIds.length; i++) {
+        items[i] = delv.getItem(this._dataset, attr, this.itemIds[i].name);
+      }
+      return items;
+    };
+    ds.getAllItemsAsFloat = function(attr) {
+      var items = [];
+      var i;
+      for (i = 0; i < this.itemIds.length; i++) {
+        items[i] = delv.getItemAsFloat(this._dataset, attr, this.itemIds[i].name);
+      }
+      return items;
+    };
+
+    ds.getMin = function(attr) {
+      var minVal = "";
+      var val;
+      var id;
+      if (this.itemIds.length > 0) {
+        minVal = delv.getItem(this._dataset, attr, this.itemIds[0].name);
+      }
+      for (id = 1; id < this.itemIds.length; id++) {
+        val = delv.getItem(this._dataset, attr, this.itemIds[id].name);
+        if (val < minVal) {
+          minVal = val;
+        }
+      }
+      return minVal;
+    };
+    ds.getMax = function(attr) {
+      var maxVal = "";
+      var val;
+      var id;
+      if (this.itemIds.length > 0) {
+        maxVal = delv.getItem(this._dataset, attr, this.itemIds[0].name);
+      }
+      for (id = 1; id < this.itemIds.length; id++) {
+        val = delv.getItem(this._dataset, attr, this.itemIds[id].name);
+        if (val > maxVal) {
+          maxVal = val;
+        }
+      }
+      return maxVal;
+    };
+
+    ds.getFilterMin = function(attr) {
+      var ids = this.getFilterIds();
+      var minVal = "";
+      var val;
+      var id;
+      if (ids.length > 0) {
+        minVal = delv.getItem(this._dataset, attr, ids[0]);
+      }
+      for (id = 1; id < this.itemIds.length; id++) {
+        val = delv.getItem(this._dataset, attr, ids[i]);
+        if (val < minVal) {
+          minVal = val;
+        }
+      }
+      return minVal;
+    };
+    ds.getFilterMax = function(attr) {
+      var ids = this.getFilterIds();
+      var maxVal = "";
+      var val;
+      var id;
+      if (ids.length > 0) {
+        maxVal = delv.getItem(this._dataset, attr, ids[0]);
+      }
+      for (id = 1; id < this.itemIds.length; id++) {
+        val = delv.getItem(this._dataset, attr, ids[i]);
+        if (val > maxVal) {
+          maxVal = val;
+        }
+      }
+      return maxVal;
+    };
+
+    ds.getHoverItems = function(attr) {
+      var hovered = [];
+      var i;
+      for (i = 0; i < this.itemIds.length; i++) {
+        if (this.itemIds[i].hovered) {
+          hovered[hovered.length] = delv.getItem(this._dataset, attr, this.itemIds[i].name);
+        }
+      }
+      return hovered;
+    };
+    ds.getSelectItems = function(attr, selectType) {
+      var ids = this.getSelectIds(selectType);
+      var items = [];
+      var i;
+      for (i = 0; i < ids.length; i++) {
+        items[items.length] = delv.getItem(this._dataset, attr, ids[i]);
+      }
+      return items;
+    };
+    ds.getFilterItems = function(attr) {
+      var filtered = [];
+      var i;
+      for (i = 0; i < this.itemIds.length; i++) {
+        if (this.itemIds[i].filtered) {
+          filtered[filtered.length] = delv.getItem(this._dataset, attr, this.itemIds[i].name);
+        }
+      }
+      return filtered;
+    };
+
+    ds.getItemColor = function(attr, id) {
+      return delv.getItemColor(this._dataset, attr, id);
+    };
+    ds.getItemColorByIdx = function(attr, id) {
+      return delv.getItemColorByIdx(this._dataset, attr, id);
+    };
+    ds.getItemAttrColor = function(attr, id) {
+      return delv.getItemAttrColor(this._dataset, attr, id);
+    };
+    ds.getItemAttrColors = function(attr) {
+      var colors = [];
+      var i;
+      for (i = 0; i < this.itemIds.length; i++) {
+        colors[i] = delv.getItemAttrColor(this._dataset, attr, this.itemIds[i].name);
+      }
+      return colors;
+    };
+
+    ds._super.hoverItem = ds.hoverItem;
+    ds.hoverItem = function(id) {
+      ds._super.hoverItem(id);
+      delv.hoverItem(this.name, this._dataset, id);
+    };
+    ds._super.selectPrimaryItems = ds.selectPrimaryItems;
+    ds.selectPrimaryItems = function(ids, doSelect) {
+      ds._super.selectPrimaryItems(ids, doSelect);
+      if (doSelect) {
+        delv.selectItems(this.name, this._dataset, ids, "PRIMARY");
+      } else {
+        delv.deselectItems(this.name, this._dataset, ids, "PRIMARY");
+      }
+    };
+    ds._super.selectSecondaryItems = ds.selectSecondaryItems;
+    ds.selectSecondaryItems = function(ids, doSelect) {
+      ds._super.selectSecondaryItems(ids, doSelect);
+      if (doSelect) {
+        delv.selectItems(this.name, this._dataset, ids, "SECONDARY");
+      } else {
+        delv.deselectItems(this.name, this._dataset, ids, "SECONDARY");
+      }
+    };
+    ds._super.selectTertiaryItems = ds.selectTertiaryItems;
+    ds.selectTertiaryItems = function(ids, doSelect) {
+      ds._super.selectTertiaryItems(ids, doSelect);
+      if (doSelect) {
+        delv.selectItems(this.name, this._dataset, ids, "TERTIARY");
+      } else {
+        delv.deselectItems(this.name, this._dataset, ids, "TERTIARY");
+      }
+    };
+    ds.hasAttr = function(attr) {
+      return delv.hasAttr(this._dataset, attr);
+    };
+    ds.getAttrs = function() {
+      return delv.getAttrs(this._dataset);
+    };
+    ds.getAllCats = function(attr) {
+      return delv.getAllCats(this._dataset);
+    };
+    ds.getCatColor = function(attr, cat) {
+      return delv.getCatColor(this._dataset, attr, cat);
+    };
+    ds.getAllCatColors = function(attr, cat) {
+      return delv.getAllCatColors(this._dataset, attr, cat);
+    };
+    ds.getFilterCatColors = function(attr) {
+      return delv.getFilterCatColors(this._dataset, attr);
+    };
+    ds.hoverCat = function(attr, cat) {
+      delv.hoverCat(this.name, this._dataset, attr, cat);
+      this.determineHoveredItems();
+    };
+    ds.hoverRange = function(attr, minVal, maxVal) {
+      delv.hoverRange(this.name, this._dataset, attr, minVal, maxVal);
+      this.determineHoveredItems();
+    };
+    ds.selectCats = function(attrs, cats, selectType) {
+      delv.selectCats(this.name, this._dataset, attrs, cats, selectType);
+      this.determineSelectedItems(selectType);
+    };
+    ds.selectRanges = function(attrs, mins, maxes, selectType) {
+      delv.selectRanges(this.name, this._dataset, attrs, mins, maxes, selectType);
+      this.determineSelectedItems(selectType);
+    };
+    ds.filterCats = function(attr, cats) {
+      delv.filterCats(this.name, this._dataset, attr, cats);
+      this.determineFilteredItems();
+    };
+    ds.toggleCatFilter = function(attr, cat) {
+      delv.toggleCatFilter(this.name, this._dataset, attr, cat);
+      this.determineFilteredItems();
+    };
+    ds.filterRanges = function(attr, mins, maxes) {
+      delv.filterRanges(this.name, this._dataset, attr, mins, maxes);
+      this.determineFilteredItems();
+    };
+    ds.colorCat = function(attr, cat, rgbaColor) {
+      delv.colorCat(this.name, this._dataset, attr, cat, rgbaColor);
+    };
+    ds.determineHoveredItems = function() {
+      var id;
+      for (id = 0; id < this.itemIds.length; id++) {
+        this.itemIds[id].hovered = delv.isHovered(this._dataset, this.itemIds[id].name);
+      }
+    };
+    ds.determineSelectedItems = function(selectType) {
+      var id;
+      var selected;
+      for (id = 0; id < this.itemIds.length; id++) {
+        selected = delv.isSelected(this._dataset, this.itemIds[id].name, selectType);
+        switch (selectType) {
+        case "PRIMARY":
+          this.itemIds[id].selectedPrimary = selected;
+          break;
+        case "SECONDARY":
+          this.itemIds[id].selectedSecondary = selected;
+          break;
+        case "TERTIARY":
+          this.itemIds[id].selectedTertiary = selected;
+          break;
+        default:
+          break;
+        }
+      }
+    };
+    ds.determineFilteredItems = function() {
+      var id;
+      for (id = 0; id < this.itemIds.length; id++) {
+        this.itemIds[id].filtered = delv.isFiltered(this._dataset, this.itemIds[id].name);
+      }
+    };
+
+    ds.getHoverCat = function(attr) {
+      return delv.getHoverCat(this._dataset, attr);
+    };
+    ds.getHoverRange = function(attr) {
+      return delv.getHoverRange(this._dataset, attr);
+    };
+    ds.getSelectCats = function(attr, selectType) {
+      return delv.getSelectCats(this._dataset, attr, selectType);
+    };
+    ds.getSelectRanges = function(attr, selectType) {
+      return delv.getSelectRanges(this._dataset, attr, selectType);
+    };
+    ds.getSelectCriteria = function(selectType) {
+      return delv.getSelectCriteria(this._dataset, selectType);
+    };
+    ds.getFilterCats = function(attr) {
+      return delv.getFilterCats(this._dataset, attr);
+    };
+    ds.getFilterRanges = function(attr) {
+      return delv.getFilterRanges(this._dataset, attr);
+    };
+    ds.getFilterCriteria = function() {
+      return delv.getFilterCriteria(this._dataset);
+    };
+    ds._super.clearHover = ds.clearHover;
+    ds.clearHover = function() {
+      ds._super.clearHover();
+      delv.clearHover(this.name, this._dataset);
+    };
+    ds._super.clearSelect = ds.clearSelect;
+    ds.clearSelect = function(selectType) {
+      ds._super.clearSelect(selectType);
+      delv.clearSelect(this.name, this._dataset, selectType);
+    };
+      
+    ds.clearFilter = function() {
+      var id;
+      for (id = 0; id < this.itemIds.length; id++) {
+        this.itemIds[id].filtered = true;
+      }
+      delv.clearFilter(this.name, this._dataset);
+    };
+    ds._super.hoverColor = ds.hoverColor;
+    ds.hoverColor = function(rgbaColor) {
+      ds._super.hoverColor(rgbaColor);
+      delv.hoverColor(this.name, this._dataset, rgbaColor);
+    };
+    ds._super.selectColor = ds.selectColor;
+    ds.selectColor = function(rgbaColor, selectType) {
+      ds._super.selectColor(rgbaColor, selectColor);
+      delv.selectColor(this.name, this._dataset, rgbaColor, selectType);
+    };
+    ds._super.filterColor = ds.filterColor;
+    ds.filterColor = function(rgbaColor) {
+      ds._super.filterColor(rgbaColor);
+      delv.filterColor(this.name, this._dataset, rgbaColor);
+    };
+    ds._super.likeColor = ds.likeColor;
+    ds.likeColor = function(rgbaColor) {
+      ds._super.likeColor(rgbaColor);
+      delv.likeColor(this.name, this._dataset, rgbaColor);
+    };
+    ds._super.clearHoverColor = ds.clearHoverColor;
+    ds.clearHoverColor = function() {
+      ds._super.clearHoverColor();
+      delv.clearHoverColor(this.name, this._dataset);
+    };
+    ds._super.clearSelectColor = ds.clearSelectColor;
+    ds.clearSelectColor = function(selectType) {
+      ds._super.clearSelectColor(selectColor);
+      delv.clearSelectColor(this.name, this._dataset, selectType);
+    };
+    ds._super.clearFilterColor = ds.clearFilterColor;
+    ds.clearFilterColor = function() {
+      ds._super.clearFilterColor();
+      delv.clearFilterColor(this.name, this._dataset);
+    };
+    ds._super.clearLikeColor = ds.clearLikeColor;
+    ds.clearLikeColor = function() {
+      ds._super.clearLikeColor();
+      delv.clarLikeColor(this.name, this._dataset);
+    };
+    ds.getAllCatColorMaps = function(attr) {
+      delv.getAllCatColorMaps(this._dataset, attr);
+    };
+
+    return ds;
+    
+  }; // end delv.facetDataSet
+  
+  delv.smallMultiples = function ( name, elemId, viewConstructor, viewSource ) {
+    var view = new delv.compositeView();
+    view.name(name);
+    view._splitAttr = "";
+    view._facets = [];
+    view._constructor = viewConstructor;
+    view._source = viewSource;
+    view._elemId = elemId;
+    view.margin = { top: 15,
+                    right: 10,
+                    bottom: 40,
+                    left: 35 };
+
+    view.onDataChanged = function(source) {
+      var v;
+      this.splitData();
+    };
+
+    view.splitAttr = function(attr) {
+      if (attr !== undefined) {
+        this._splitAttr = attr;
+        return this;
+      } else {
+        return this._splitAttr;
+      }
+    };
+
+        
+    view.splitData = function() {
+      var f;
+      var ds;
+      var v;
+      var viewPromises = [];
+      var self = this;
+      // TODO how to handle if the attr to split on is changed?
+      // delete old views?  delete old datasets?
+      this._facets = delv.getAllCats(this._datasetName, this._splitAttr);
+      for (f = 0; f < this._facets.length; f++) {
+        ds = new delv.facetDataSet( this._datasetName, this._splitAttr, this._facets[f]);
+        ds.doFacet();
+        viewPromises[f] = this.makeView(this._facets[f], ds.name);
+      }
+      $.when.apply($, viewPromises)
+        .done(function(responses) { self.afterDataUpdated(); });
+      return this;
+    };
+
+    view.dataDependentConfig = function(smallView) {
+      // override this to do configuration across all the views that is data-dependent
+    };
+
+
+    view.configureView = function(smallView) {
+      // override this method to configure attributes, etc
+    };
+
+    view.afterDataUpdated = function() {
+      // override this method to do any handling like sort etc that needs to take place
+      // after ALL of the views have updated their data
+    };
+    
+    view.makeView = function() {
+      // override this method for d3, processing, vega, other views
+      // be sure to return a jQuery promis
+    };
+
+    view.dataSet = function(name) {
+      var v;
+      this._datasetName = name;
+      return this;
+    };
+
+    view.resize = function(width, height) {
+      var v;
+      var elem;
+      var w;
+      var h;
+      for (v in this._views) {
+        elem = d3.select("#"+v);
+        w = elem.parent().width();
+        h = elem.parent().height();
+        this._views[v].resize(w - this.margin.left - this.margin.right, h - this.margin.top - this.margin.bottom);
+      }
+    };
+
+    view.makeViewCallback = function(viewInstance, elemId, dataset, self, promise) {
+      viewInstance.dataSet(dataset);
+      self.addView(viewInstance);
+      self.configureView(viewInstance);
+      self.dataDependentConfig(viewInstance);
+      viewInstance.onDataChanged(self.name());
+      promise.resolve();
+    }
+
+
+    
+    return view;
+  }; // end delv.smallMultiples
+
+  delv.d3SmallMultiples = function( name, elemId, viewConstructor, viewSource ) {
+    var view = new delv.smallMultiples(name, elemId, viewConstructor, viewSource);
+    view.loaded = false;
+    delv.loadScript(viewSource, function(success) { view.loaded = success; });
+
+    view.makeView = function(facet, dataset) {
+      var parent = d3.select("#" + this._elemId);
+      var cleaned = delv.conformId(facet);
+      var name = this.name() + "." + facet;
+      var cleaned_name = this.name() + "_" + cleaned;
+      var chart = {};
+      var div;
+      var svg;
+      var self = this;
+      var d = $.Deferred();
+      div = parent.append("div")
+        .attr("class", "d3Chart")
+        .attr("float", "left")
+        .attr("padding-right", "5px")
+        .attr("padding-bottom", "5px")
+        .attr("padding-top", "0")
+        .attr("padding-left", "0");
+      svg = div.append("svg").attr("id", cleaned_name);
+      //svg = div.select("svg").attr("id", name);
+      chart = new delv.d3Chart(name, cleaned_name, this._source, this._constructor,
+                               function(view, elemId) { self.makeViewCallback(view, elemId, dataset, self, d);});
+      return d.promise();
+    }
+
+    return view;
+  }; // end delv.d3SmallMultiples
+  
   // TODO add a datatype for date / time?
   delv.AttributeType = {
     UNSTRUCTURED: {name: "UNSTRUCTURED"},

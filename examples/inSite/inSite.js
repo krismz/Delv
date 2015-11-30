@@ -30,14 +30,14 @@ function init() {
     if (id == "DataInterface")  {
 	dataCanvasId = id;
 	// temp hack to try programming data interface in processing
-        Processing.loadSketchFromSources(canvas,
+      Processing.loadSketchFromSources(canvas,
 					 ["Globals.pde",
 						"Delv.pde",
 					  "InSiteData.pde"]);
 	setTimeout(finishLoadingData, 50);
 	    
     } else {
-	var sketch = new delv.processingSketch(canvas,
+	    var sketch = new delv.processingSketch(id, canvas,
 						["Globals.pde",
 						 "Attribute.pde",
 						 "Delv.pde",

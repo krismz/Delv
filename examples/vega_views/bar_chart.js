@@ -1,7 +1,7 @@
 var vgWrapperNS = vgWrapperNS || {};
 
-vgWrapperNS.bar_chart_view = function (elem, vgSpec) {
-  var newObj = new delv.vegaView(elem, vgSpec);
+vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
+  var newObj = new delv.vegaView(name, elem, vgSpec);
   newObj._dataset = "";
   newObj._xAttr = "";
   newObj._yAttr = "";
