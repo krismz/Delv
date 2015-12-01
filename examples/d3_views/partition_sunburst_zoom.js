@@ -55,9 +55,12 @@ d3WrapperNS.partition_sunburst_zoom_view = function ( name, svgElemId ) {
     }
   };
 
-  newObj.onDataChanged = function() {
-    var hierarchy = this.convertToHierarchy();
-    bindData(hierarchy);
+  newObj.onDataChanged = function(invoker, dataset) {
+    var hierarchy;
+    if (dataset === this._nodeDataset || dataset === this._linkDataset) {
+       hierarchy = this.convertToHierarchy();
+      bindData(hierarchy);
+    }
   };
 
   // TODO figure out how to resize this

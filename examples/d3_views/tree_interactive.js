@@ -51,9 +51,12 @@ d3WrapperNS.tree_interactive_view = function ( name, svgElemId ) {
     }
   };
 
-  newObj.onDataChanged = function() {
-    var hierarchy = this.convertToHierarchy();
-    bindData(hierarchy);
+  newObj.onDataChanged = function(invoker, dataset) {
+    var hierarchy;
+    if (dataset === this._nodeDataset || dataset === this._linkDataset) {
+       hierarchy = this.convertToHierarchy();
+      bindData(hierarchy);
+    }
   };
 
 // TODO left margin should really be based on the max width of the root node name

@@ -53,6 +53,7 @@ var vg = vg || {};
     this._datasetName = "";
     this.bindDelv = function(dlv) {
       this._delv = dlv;
+      this._delv.connectToSignal("dataChanged", this._name, "onDataChanged");
       return this;
     };
     this.dataSet = function(dataSetName) {
@@ -68,7 +69,7 @@ var vg = vg || {};
     };
     this.resize = function(w, h) {};
     this.connectSignals = function() {};
-    this.onDataChanged = function(source) {};
+    this.onDataChanged = function(invoker, dataset) {};
   }; // end delv.view
 
   // turn obj into a d3 view
@@ -150,7 +151,6 @@ var vg = vg || {};
   delv.compositeView = function(name) {
     var newObj = new delv.view(name);
     newObj._views = {};
-    newObj._super = {};
 
     newObj.addView = function(view) {
       //var c = view.getBackgroundColor();
@@ -160,13 +160,16 @@ var vg = vg || {};
       return this;
     };
     
-    newObj._super.BindDelv = newObj.bindDelv;
+    newObj.superBindDelv = newObj.bindDelv;
     newObj.bindDelv = function(dlv) {
       var v;
       for (v in this._views) {
-        dlv.addView(this._views[v]);
+        if (this._views.hasOwnProperty(v)) {
+          console.log("adding view to delv: " + v);
+          dlv.addView(this._views[v]);
+        }
       }
-      this._super.BindDelv(dlv);
+      this.superBindDelv(dlv);
       return this;
     };
 
@@ -174,33 +177,41 @@ var vg = vg || {};
       var v;
       this._datasetName = name;
       for (v in this._views) {
-        this._views[v].dataSet(name);
+        if (this._views.hasOwnProperty(v)) {
+          this._views[v].dataSet(name);
+        }
       }
       return this;
     };
 
-    newObj._super.OnDataChanged = newObj.onDataChanged;
-    newObj.onDataChanged = function(source) {
+    newObj.superOnDataChanged = newObj.onDataChanged;
+    newObj.onDataChanged = function(invoker, dataset) {
       var v;
       for (v in this._views) {
-        this._views[v].onDataChanged(source);
+        if (this._views.hasOwnProperty(v)) {
+          this._views[v].onDataChanged(invoker, dataset);
+        }
       }
-      this._super.OnDataChanged();
+      this.superOnDataChanged(invoker, dataset);
     };
 
-    newObj._super.resize = newObj.resize;
+    newObj.superResize = newObj.resize;
     newObj.resize = function(w, h) {
       var v;
-      this._super.resize(w, h);
+      this.superResize(w, h);
       for (v in this._views) {
-        this._views[v].resize(w, h);
+        if (this._views.hasOwnProperty(v)) {
+          this._views[v].resize(w, h);
+        }
       }
     };
 
     newObj.connectSignals = function() {
       var v;
       for (v in this._views) {
-        this._views[v].connectSignals();
+        if (this._views.hasOwnProperty(v)) {
+          this._views[v].connectSignals();
+        }
       }
     };
     
@@ -502,6 +513,7 @@ var vg = vg || {};
       var callConstructor = "view = new " + viewConstructor + "(viewName, elemId)";
       //delv.log("d3 script from " + source + " loaded!  elemId: " + elemId + ", textStatus: " + textStatus + ", jqxhr: " + jqxhr);
       try {
+        //delv.log("constructing view with: " + callConstructor);
 	      eval(callConstructor);
 	    } catch (e) {
 	      delv.log("initializing d3 chart " + viewName + " for " + elemId + " failed while trying to call\n" + callConstructor + "\n.  Try again later");
@@ -526,7 +538,12 @@ var vg = vg || {};
     var chartLoaded = false;
     function initChart(elemId, viewsrc, script, constructor, loadCompleteCallback) {
       chartLoaded = false;
-      $.getScript(viewsrc, loadSpec);
+      if (sources.hasOwnProperty(script) && sources[script]) {
+        // TODO is it worth finding a way to only load the spec one time as well?
+        loadSpec("","success",{});
+      } else {
+        $.getScript(viewsrc, loadSpec);
+      }
     }
     initChart(elemId, viewsrc, script, constructor, loadCompleteCallback);
 
@@ -715,27 +732,11 @@ var vg = vg || {};
     }
   }
 
-  delv.reloadData = function() {
-    var view;
-    var p5;
-    for (view in views) {
-      if (views.hasOwnProperty(view)) {
-        views[view].onDataChanged("delv.js");
-      }
-    }
-    for (p5 in p5s) {
-      if (p5s.hasOwnProperty(p5)) {
-        p5s[p5].draw();
-      }
-    }
-  };
-
-
   delv.addView = function (view) {
     //delv.log("Adding view for " + view.name());
     //delv.log("typeof view: " + typeof(view));
-    view.bindDelv(delv);
     views[view.name()] = view;
+    view.bindDelv(delv);
     return delv;
   };
 
@@ -865,13 +866,23 @@ var vg = vg || {};
     //delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
   };
 
+  delv.prevSignal = {signal: "", dataset: ""};
+  
   delv.doSignalDebounce = function(duration) {
     if (duration === undefined) {
       duration = 75;
     }
     delv.debouncedHandleSignal = delv.debounce( delv.handleSignal, duration, false );
     delv.emitSignal = function(signal, invoker, dataset, coordination, detail) {
-      delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
+      // don't debounce dataChanged signals across datasets
+      if ((signal === "dataChanged") &&
+          ((signal !== delv.prevSignal.signal) || (dataset !== delv.prevSignal.dataset))) {
+        delv.prevSignal.signal = signal;
+        delv.prevSignal.dataset = dataset;
+        delv.handleSignal(signal, invoker, dataset, coordination, detail);
+      } else {
+        delv.debouncedHandleSignal(signal, invoker, dataset, coordination, detail);
+      }
     };
   };
 
@@ -967,7 +978,14 @@ var vg = vg || {};
       return [];
     }
   };
-
+  delv.isCategorical = function(dataset, attr) {
+    try {
+      return data[dataset].isCategorical(attr);
+    } catch (e) {
+      return false;
+    }
+  };
+  
   delv.getAllCats = function(dataset, attr) {
     // return unique set of values from categorical data
     try {
@@ -1197,6 +1215,20 @@ var vg = vg || {};
 
   // TODO aggregate API
 
+  delv.dataChanged = function(invoker, dataset) {
+    var p5;
+    try {
+      delv.emitSignal('dataChanged', invoker, dataset);
+      for (p5 in p5s) {
+        if (p5s.hasOwnProperty(p5)) {
+          p5s[p5].draw();
+        }
+      }
+    } catch (e) {
+      return;
+    }
+  };
+  
   delv.hoverItem = function(invoker, dataset, id) {
     try {
       data[dataset].hoverItem(id);
@@ -1377,7 +1409,7 @@ var vg = vg || {};
     try {
       return data[dataset].isHovered(id);
     } catch (e) {
-      return;
+      return false;
     }
   };
     
@@ -1385,7 +1417,7 @@ var vg = vg || {};
     try {
       return data[dataset].getHoverIds();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getHoverCoords = function(dataset) {
@@ -1393,99 +1425,99 @@ var vg = vg || {};
       return data[dataset].getHoverCoords();
     } catch (e) {
       delv.log("delv.getHoverCoords(" + dataset + ") caught exception: " + e);
-      return;
+      return [];
     }
   };
   delv.getHoverCat = function(dataset, attr) {
     try {
       return data[dataset].getHoverCat(attr);
     } catch (e) {
-      return;
+      return "";
     }
   };
   delv.getHoverRange = function(dataset, attr) {
     try {
       return data[dataset].getHoverRange(attr);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getHoverLike = function(dataset) {
     try {
       return data[dataset].getHoverLike();
     } catch (e) {
-      return;
+      return [];
     }
   };
   
-  delv.isSelected = function(dataset, selectType) {
+  delv.isSelected = function(dataset, id, selectType) {
     try {
       return data[dataset].isSelected(id, selectType);
     } catch (e) {
-      return;
+      return false;
     }
   };
   delv.getSelectIds = function(dataset, selectType) {
     try {
       return data[dataset].getSelectIds(selectType);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getSelectCoords = function(dataset, selectType) {
     try {
       return data[dataset].getSelectCoords(selectType);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getSelectCats = function(dataset, attr, selectType) {
     try {
       return data[dataset].getSelectCats(attr, selectType);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getSelectRanges = function(dataset, attr, selectType) {
     try {
       return data[dataset].getSelectRanges(attr, selectType);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getSelectLike = function(dataset, selectType) {
     try {
       return data[dataset].getSelectLike();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getSelectCriteria = function(dataset, selectType) {
     try {
       return data[dataset].getSelectCriteria();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.isFiltered = function(dataset, id) {
     try {
       return data[dataset].isFiltered(id);
     } catch (e) {
-      return;
+      return false;
     }
   };
   delv.getFilterIds = function(dataset) {
     try {
       return data[dataset].getFilterIds();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getFilterCoords = function(dataset) {
     try {
       return data[dataset].getFilterCoords();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getFilterCats = function(dataset, attr) {
@@ -1493,28 +1525,28 @@ var vg = vg || {};
       return data[dataset].getFilterCats(attr);
     } catch (e) {
       delv.log("delv.getFilterCats(" + dataset + ", " + attr + ") caught exception: " + e);
-      return;
+      return [];
     }
   };
   delv.getFilterRanges = function(dataset, attr) {
     try {
       return data[dataset].getFilterRanges(attr);
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getFilterLike = function(dataset) {
     try {
       return data[dataset].getFilterLike();
     } catch (e) {
-      return;
+      return [];
     }
   };
   delv.getFilterCriteria = function(dataset) {
     try {
       return data[dataset].getFilterCriteria();
     } catch (e) {
-      return;
+      return [];
     }
   };
 
@@ -1523,7 +1555,7 @@ var vg = vg || {};
     try {
       return data[dataset].getNavCoords();
     } catch (e) {
-      return;
+      return [];
     }
   };
 
@@ -2413,6 +2445,14 @@ var vg = vg || {};
       }
       return keys;
     };
+    this.isCategorical = function(attr) {
+      var at = attributes[attr];
+      if (at !== undefined) {
+        return at.isCategorical();
+      } else {
+        return false;
+      }
+    };
 
     // TODO establish consistency in checking whether an attribute exists
     this.getAllCats = function(attr) {
@@ -3165,7 +3205,7 @@ var vg = vg || {};
     };
 
     function populate_data(data, dataset) {
-      delv.removeDataSet(dataset);
+      delv.removeDataSet(dataset.name);
       delv.addDataSet(dataset.name, dataset);
       create_dataset(data, dataset);
       populate_dataset(data, dataset);
@@ -3189,6 +3229,7 @@ var vg = vg || {};
           dataset.setItem(d.trim(), id, data[row][d].trim());
         }
       }
+      delv.dataChanged(name, name);
     }
     
     function create_dataset(data, dataset) {
@@ -3244,28 +3285,159 @@ var vg = vg || {};
     
   }; // end delv.tsvData
 
-  delv.facetDataSet = function ( dataset, attr, cat ) {
-    var ds = new delv.dataSet(dataset+"."+cat);
+  delv.aggregateDataSet = function( name, dataset, groupBy, aggAttr, summaryTypes, fieldNames ) {
+    var ds = new delv.dataSet(name);
     ds._dataset = dataset;
-    ds._attr = attr;
-    ds._cat = cat;
-    ds._super = {};
+    ds._groupby = groupBy;
+    ds._aggAttr = aggAttr;
+    ds._summaries = delv.asArray(summaryTypes).map(function (x) { return x.name; });
+    ds._fieldNames = typeof(fieldNames) !== "undefined" ? delv.asArray(fieldNames) : ds._summaries;
 
-    ds.facetItems = function() {
+    ds.aggItems = function() {
+      var cats = delv.getAllCats(this._dataset, this._groupby);
+      var cat;
+      var isNum = !delv.isCategorical(this._dataset, this._aggAttr);
+      var f;
+      var field;
       var ids = delv.getAllIds(this._dataset);
       var id;
+      var val;
+      var def_color = ["210", "210", "210"];
+      var stats = {};
+      var mn = delv.getMax(this._dataset, this._aggAttr); // init to max
+      var mx = delv.getMin(this._dataset, this._aggAttr); // init to min
+      var stat;
+      
+      for (cat = 0; cat < cats.length; cat++) {
+        stats[cats[cat]] = { "COUNT": 0,
+                             "SUM": 0,
+                             "MIN": mn,
+                             "MAX":  mx};
+      }
+
+      for (f = 0; f < this._fieldNames.length; f++) {
+        field = this._fieldNames[f];
+        this.addAttr(new delv.attribute(field,
+                                        delv.AttributeType.CONTINUOUS,
+                                        new delv.continuousColorMap(def_color),
+                                        new delv.continuousRange()));
+        for (cat = 0; cat < cats.length; cat++) {
+          this.setItem(field, cats[cat], "");
+        }
+      }
+
       for (id = 0; id < ids.length; id++) {
-        if (delv.getItem(this._dataset, this._attr, ids[id]) === this._cat) {
+        cat = delv.getItem(this._dataset, this._groupby, ids[id]);
+        val = delv.getItem(this._dataset, this._aggAttr, ids[id]);
+        stats[cat]["COUNT"]++;
+        if (isNum) {
+          val = +val;
+          stats[cat]["SUM"] += val;
+          if (val < stats[cat]["MIN"]) {
+            stats[cat]["MIN"] = val;
+          }
+          if (val > stats[cat]["MAX"]) {
+            stats[cat]["MAX"] = val;
+          }
+        }
+      }
+
+      for (cat = 0; cat < cats.length; cat++) {
+        for (f = 0; f < this._fieldNames.length; f++) {
+          if (this._summaries[f] === delv.SummaryType.AVERAGE.name) {
+            this.setItem(this._fieldNames[f], cats[cat], "" + (stats[cats[cat]]["SUM"] / (stats[cats[cat]]["COUNT"] + 1)));
+          } else {
+            this.setItem(this._fieldNames[f], cats[cat], "" + stats[cats[cat]][this._summaries[f]]);
+          }
+        }
+      }
+    };
+
+    ds.aggregate = function(invoker, dataset) {
+      if (dataset === this._dataset) {
+        // TODO, ideally would have a way to update without blowing away the previous aggregation
+        // but that would take some work
+        delv.removeDataSet(this.name);
+        delv.addDataSet(this.name, this);
+        this.aggItems();
+      }
+    };
+    ds.aggregate(ds.name, ds._dataset);
+
+    delv.connectToSignal("dataChanged", ds.name, "aggregate");
+    
+    return ds;
+  }; // end delv.aggregateDataSet
+
+  // Use to provide a customized filter view of a dataset (ie for crossfiltering or faceting)
+  // set passEqualRange to true if all items should be included when the min === max for a given range
+  // criteria is an array of arrays, where each inner array is one clause.
+  // for categorical data, that clause looks like: [attribute, cat1, cat2,..., catn]
+  // for continuous data, that clause looks like: [attribute, min, max]
+  delv.filteredDataSet = function ( name, dataset, criteria, passEqualRange ) {
+    var ds = new delv.dataSet(name);
+    ds._dataset = dataset;
+    ds._criteria = criteria;
+    ds._passEqualRange = typeof(passEqualRange) !== "undefined" ? passEqualRange : true;
+
+    ds.applyFilter = function() {
+      var ids = delv.getAllIds(this._dataset);
+      var id;
+      var i;
+      var crit;
+      var attr;
+      var cat;
+      var mn;
+      var mx;
+      var val;
+      var passes;
+      var passCrit;
+      for (id = 0; id < ids.length; id++) {
+        passes = true;
+        for (i = 0; i < this._criteria.length; i++) {
+          crit = this._criteria[i];
+          // don't accept this id, if any one of these criteria don't pass
+          passCrit = false;
+          attr = crit[0];
+          val = delv.getItem(this._dataset, attr, ids[id]);
+          if (delv.isCategorical(this._dataset, attr)) {
+            for (cat = 1; cat < crit.length; cat++) {
+              if (val === crit[cat]) {
+                passCrit = true;
+                break;
+              }
+            }
+          } else {
+            mn = crit[1];
+            mx = crit[2];
+            if (this._passEqualRange && (mn === mx)) {
+              passCrit = true;
+            } else if ((mn <= val) && (val <= mx)) {
+              passCrit = true;
+            }
+          }
+          if (!passCrit) {
+            passes = false;
+            break;
+          }
+        }
+        if (passes) {
           this.addId(ids[id]);
         }
       }
-    }
+    };
     
-    ds.doFacet = function() {
-      delv.addDataSet(this.name, this);
-      this.facetItems();
+    ds.filter = function(invoker, dataset) {
+      if (dataset === this._dataset) {
+        delv.removeDataSet(this.name);
+        delv.addDataSet(this.name, this);
+        this.applyFilter();
+      }
     };
 
+    ds.filter(ds.name, ds._dataset);
+    delv.connectToSignal("dataChanged", ds.name, "filter");
+    
     ds.clearItems = function() {
       this.itemIds = [];
     };
@@ -3417,32 +3589,32 @@ var vg = vg || {};
       return colors;
     };
 
-    ds._super.hoverItem = ds.hoverItem;
+    ds.superHoverItem = ds.hoverItem;
     ds.hoverItem = function(id) {
-      ds._super.hoverItem(id);
+      ds.superHoverItem(id);
       delv.hoverItem(this.name, this._dataset, id);
     };
-    ds._super.selectPrimaryItems = ds.selectPrimaryItems;
+    ds.superSelectPrimaryItems = ds.selectPrimaryItems;
     ds.selectPrimaryItems = function(ids, doSelect) {
-      ds._super.selectPrimaryItems(ids, doSelect);
+      ds.superSelectPrimaryItems(ids, doSelect);
       if (doSelect) {
         delv.selectItems(this.name, this._dataset, ids, "PRIMARY");
       } else {
         delv.deselectItems(this.name, this._dataset, ids, "PRIMARY");
       }
     };
-    ds._super.selectSecondaryItems = ds.selectSecondaryItems;
+    ds.superSelectSecondaryItems = ds.selectSecondaryItems;
     ds.selectSecondaryItems = function(ids, doSelect) {
-      ds._super.selectSecondaryItems(ids, doSelect);
+      ds.superSelectSecondaryItems(ids, doSelect);
       if (doSelect) {
         delv.selectItems(this.name, this._dataset, ids, "SECONDARY");
       } else {
         delv.deselectItems(this.name, this._dataset, ids, "SECONDARY");
       }
     };
-    ds._super.selectTertiaryItems = ds.selectTertiaryItems;
+    ds.superSelectTertiaryItems = ds.selectTertiaryItems;
     ds.selectTertiaryItems = function(ids, doSelect) {
-      ds._super.selectTertiaryItems(ids, doSelect);
+      ds.superSelectTertiaryItems(ids, doSelect);
       if (doSelect) {
         delv.selectItems(this.name, this._dataset, ids, "TERTIARY");
       } else {
@@ -3454,6 +3626,9 @@ var vg = vg || {};
     };
     ds.getAttrs = function() {
       return delv.getAttrs(this._dataset);
+    };
+    ds.isCategorical = function(attr) {
+      return delv.isCategorical(this._dataset);
     };
     ds.getAllCats = function(attr) {
       return delv.getAllCats(this._dataset);
@@ -3555,14 +3730,14 @@ var vg = vg || {};
     ds.getFilterCriteria = function() {
       return delv.getFilterCriteria(this._dataset);
     };
-    ds._super.clearHover = ds.clearHover;
+    ds.superClearHover = ds.clearHover;
     ds.clearHover = function() {
-      ds._super.clearHover();
+      ds.superClearHover();
       delv.clearHover(this.name, this._dataset);
     };
-    ds._super.clearSelect = ds.clearSelect;
+    ds.superClearSelect = ds.clearSelect;
     ds.clearSelect = function(selectType) {
-      ds._super.clearSelect(selectType);
+      ds.superClearSelect(selectType);
       delv.clearSelect(this.name, this._dataset, selectType);
     };
       
@@ -3573,44 +3748,44 @@ var vg = vg || {};
       }
       delv.clearFilter(this.name, this._dataset);
     };
-    ds._super.hoverColor = ds.hoverColor;
+    ds.superHoverColor = ds.hoverColor;
     ds.hoverColor = function(rgbaColor) {
-      ds._super.hoverColor(rgbaColor);
+      ds.superHoverColor(rgbaColor);
       delv.hoverColor(this.name, this._dataset, rgbaColor);
     };
-    ds._super.selectColor = ds.selectColor;
+    ds.superSelectColor = ds.selectColor;
     ds.selectColor = function(rgbaColor, selectType) {
-      ds._super.selectColor(rgbaColor, selectColor);
+      ds.superSelectColor(rgbaColor, selectColor);
       delv.selectColor(this.name, this._dataset, rgbaColor, selectType);
     };
-    ds._super.filterColor = ds.filterColor;
+    ds.superFilterColor = ds.filterColor;
     ds.filterColor = function(rgbaColor) {
-      ds._super.filterColor(rgbaColor);
+      ds.superFilterColor(rgbaColor);
       delv.filterColor(this.name, this._dataset, rgbaColor);
     };
-    ds._super.likeColor = ds.likeColor;
+    ds.superLikeColor = ds.likeColor;
     ds.likeColor = function(rgbaColor) {
-      ds._super.likeColor(rgbaColor);
+      ds.superLikeColor(rgbaColor);
       delv.likeColor(this.name, this._dataset, rgbaColor);
     };
-    ds._super.clearHoverColor = ds.clearHoverColor;
+    ds.superClearHoverColor = ds.clearHoverColor;
     ds.clearHoverColor = function() {
-      ds._super.clearHoverColor();
+      ds.superClearHoverColor();
       delv.clearHoverColor(this.name, this._dataset);
     };
-    ds._super.clearSelectColor = ds.clearSelectColor;
+    ds.superClearSelectColor = ds.clearSelectColor;
     ds.clearSelectColor = function(selectType) {
-      ds._super.clearSelectColor(selectColor);
+      ds.superClearSelectColor(selectColor);
       delv.clearSelectColor(this.name, this._dataset, selectType);
     };
-    ds._super.clearFilterColor = ds.clearFilterColor;
+    ds.superClearFilterColor = ds.clearFilterColor;
     ds.clearFilterColor = function() {
-      ds._super.clearFilterColor();
+      ds.superClearFilterColor();
       delv.clearFilterColor(this.name, this._dataset);
     };
-    ds._super.clearLikeColor = ds.clearLikeColor;
+    ds.superClearLikeColor = ds.clearLikeColor;
     ds.clearLikeColor = function() {
-      ds._super.clearLikeColor();
+      ds.superClearLikeColor();
       delv.clarLikeColor(this.name, this._dataset);
     };
     ds.getAllCatColorMaps = function(attr) {
@@ -3619,11 +3794,10 @@ var vg = vg || {};
 
     return ds;
     
-  }; // end delv.facetDataSet
+  }; // end delv.filteredDataSet
   
   delv.smallMultiples = function ( name, elemId, viewConstructor, viewSource ) {
-    var view = new delv.compositeView();
-    view.name(name);
+    var view = new delv.compositeView(name);
     view._splitAttr = "";
     view._facets = [];
     view._constructor = viewConstructor;
@@ -3634,9 +3808,11 @@ var vg = vg || {};
                     bottom: 40,
                     left: 35 };
 
-    view.onDataChanged = function(source) {
+    view.onDataChanged = function(invoker, dataset) {
       var v;
-      this.splitData();
+      if (dataset === this._datasetName) {
+        this.splitData();
+      }
     };
 
     view.splitAttr = function(attr) {
@@ -3655,12 +3831,16 @@ var vg = vg || {};
       var v;
       var viewPromises = [];
       var self = this;
+      var crit = [];
       // TODO how to handle if the attr to split on is changed?
       // delete old views?  delete old datasets?
       this._facets = delv.getAllCats(this._datasetName, this._splitAttr);
       for (f = 0; f < this._facets.length; f++) {
-        ds = new delv.facetDataSet( this._datasetName, this._splitAttr, this._facets[f]);
-        ds.doFacet();
+        crit = [];
+        crit[0] = [];
+        crit[0][0] = this._splitAttr;
+        crit[0][1] = this._facets[f];
+        ds = new delv.filteredDataSet(this._datasetName+"."+this._facets[f], this._datasetName, crit);
         viewPromises[f] = this.makeView(this._facets[f], ds.name);
       }
       $.when.apply($, viewPromises)
@@ -3699,10 +3879,12 @@ var vg = vg || {};
       var w;
       var h;
       for (v in this._views) {
-        elem = d3.select("#"+v);
-        w = elem.parent().width();
-        h = elem.parent().height();
-        this._views[v].resize(w - this.margin.left - this.margin.right, h - this.margin.top - this.margin.bottom);
+        if (this._views.hasOwnProperty(v)) {
+          elem = d3.select("#"+v);
+          w = elem.parent().width();
+          h = elem.parent().height();
+          this._views[v].resize(w - this.margin.left - this.margin.right, h - this.margin.top - this.margin.bottom);
+        }
       }
     };
 
@@ -3711,7 +3893,7 @@ var vg = vg || {};
       self.addView(viewInstance);
       self.configureView(viewInstance);
       self.dataDependentConfig(viewInstance);
-      viewInstance.onDataChanged(self.name());
+      viewInstance.onDataChanged(self.name(), dataset);
       promise.resolve();
     }
 
@@ -3752,7 +3934,48 @@ var vg = vg || {};
     return view;
   }; // end delv.d3SmallMultiples
   
-  // TODO add a datatype for date / time?
+  delv.vegaSmallMultiples = function( name, elemId, viewConstructor, viewSource, chartSource ) {
+    var view = new delv.smallMultiples(name, elemId, viewConstructor, viewSource);
+    view.loaded = false;
+    delv.loadScript(viewSource, function(success) { view.loaded = success; });
+
+    view.makeView = function(facet, dataset) {
+      var parent = d3.select("#" + this._elemId);
+      var cleaned = delv.conformId(facet);
+      var name = this.name() + "." + facet;
+      var cleaned_name = this.name() + "_" + cleaned;
+      var chart = {};
+      var div;
+      var svg;
+      var self = this;
+      var d = $.Deferred();
+      div = parent.append("div")
+        .attr("class", "d3Chart")
+        .attr("float", "left")
+        .attr("padding-right", "5px")
+        .attr("padding-bottom", "5px")
+        .attr("padding-top", "0")
+        .attr("padding-left", "0");
+      svg = div.append("svg").attr("id", cleaned_name);
+      //svg = div.select("svg").attr("id", name);
+      chart = new delv.vegaChart(name, cleaned_name, this._source, chartSource, this._constructor,
+                               function(view, elemId) { self.makeViewCallback(view, elemId, dataset, self, d);});
+      return d.promise();
+    }
+
+    return view;
+  }; // end delv.vegaSmallMultiples
+
+  
+      
+  delv.SummaryType = {
+    COUNT: {name: "COUNT"},
+    SUM: {name: "SUM"},
+    AVERAGE: {name: "AVERAGE"},
+    MIN: {name: "MIN"},
+    MAX: {name: "MAX"}
+  }; 
+
   delv.AttributeType = {
     UNSTRUCTURED: {name: "UNSTRUCTURED"},
     CATEGORICAL: {name: "CATEGORICAL"},
@@ -4108,7 +4331,10 @@ var vg = vg || {};
 
   delv.isArray = function(obj) {
     return (Object.prototype.toString.call( obj ) === '[object Array]');
-  }
+  };
+  delv.asArray = function(obj) {
+    return delv.isArray(obj) ? obj : [ obj ];
+  };
 
   delv.coordToId = function(coord) {
     var id = "";

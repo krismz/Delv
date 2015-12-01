@@ -33,7 +33,6 @@ function init() {
 function finishLoadingJSData() {
   console.log("finishLoadingJSData called");
   dataLoaded = true;
-  delv.reloadData();
 }
 
 function init_view_instance(view, elemId) {
@@ -74,7 +73,10 @@ function init_view_instance(view, elemId) {
   }
   delv.log("init_view_instance resizeAll");
   if (dataLoaded) {
-    delv.reloadData();
+    view.onDataChanged("vega_crossfilter", "times");
+    view.onDataChanged("vega_crossfilter", "distance");
+    view.onDataChanged("vega_crossfilter", "delay");
+    view.onDataChanged("vega_crossfilter", "date");
     resizeAll();
   }
 }

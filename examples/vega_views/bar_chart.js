@@ -103,28 +103,30 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
 
   };
 
-  newObj.onDataChanged = function( source ) {
+  newObj.onDataChanged = function( invoker, dataset ) {
     var vals = [];
     var ii;
-    this.idAll = this._delv.getAllIds(this._dataset, this._xAttr);
-    this.xAll = this._delv.getAllItems(this._dataset, this._xAttr);
-    this.yAll = this._delv.getAllItemsAsFloat(this._dataset, this._yAttr);
-    for (ii=0; ii < this.idAll.length; ii++) {
-      vals[ii] = { "x": this.xAll[ii], "y": this.yAll[ii] };
-    }
-
-    if (this._xIsDate) {
-      this.spec["data"][0]["format"] = { "type": "json",
-                                         "parse": {"x": "date"} };
-      // TODO undo this hack, was getting the following errors for empty date tables:
-      // TypeError: Cannot read property 'getFullYear' of undefined
-      if (vals.length == 0) {
-        vals[0] = { "x": "1/1/2001", "y": 0 };
+    if (dataset === this._dataset) {
+      this.idAll = this._delv.getAllIds(this._dataset, this._xAttr);
+      this.xAll = this._delv.getAllItems(this._dataset, this._xAttr);
+      this.yAll = this._delv.getAllItemsAsFloat(this._dataset, this._yAttr);
+      for (ii=0; ii < this.idAll.length; ii++) {
+        vals[ii] = { "x": this.xAll[ii], "y": this.yAll[ii] };
       }
+
+      if (this._xIsDate) {
+        this.spec["data"][0]["format"] = { "type": "json",
+                                           "parse": {"x": "date"} };
+        // TODO undo this hack, was getting the following errors for empty date tables:
+        // TypeError: Cannot read property 'getFullYear' of undefined
+        if (vals.length == 0) {
+          vals[0] = { "x": "1/1/2001", "y": 0 };
+        }
+      }
+      this.spec["data"][0]["values"] = vals;
+      this.mixinSpec();
+      this.parseSpec();
     }
-    this.spec["data"][0]["values"] = vals;
-    this.mixinSpec();
-    this.parseSpec();
   };
 
   newObj.xListener = function(view, sig, val) {

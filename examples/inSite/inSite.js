@@ -102,7 +102,7 @@ function readRegionFiles(files) {
       regionPromises[j] = readRegionFile(files[j]);
     }
     $.when.apply($, regionPromises)
-      .done(function (responses) { delv.reloadData(); });
+      .done(function (responses) { delv.dataChanged("readRegionFiles", "Regions"); });
   }
 }
 
@@ -160,7 +160,6 @@ function finishLoadingData() {
     pDataSet.loadData();
     pDataSet.bindDelv(delv);
     delv.addDataSet("inSite", pDataSet);
-    delv.reloadData();
 
   }  
 }
@@ -210,7 +209,7 @@ function initProcessingSketch(view, canvasId) {
   } else {}
 
   if (dataLoaded) {
-      view.onDataChanged("inSite.js");
+    view.onDataChanged("inSite.js", "Regions");
   }
   else {
 	  delv.log("Data hasn't been loaded yet!!!");

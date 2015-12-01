@@ -498,42 +498,44 @@ class RegionView extends DelvBasicView {
 //     return regionMap;
   } // end addDatasetToRegionMap
 
-  void onDataChanged(String source) {
+  void onDataChanged(String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
-    // TODO right now assumes that there is always a region above if there is also a region below
-    HashMap<String,Region> regionMap = new HashMap<String, Region>();
+    if (dataset.equals(_above_dataset.name()) || dataset.equals(_below_dataset.name())) {
+      // TODO right now assumes that there is always a region above if there is also a region below
+      HashMap<String,Region> regionMap = new HashMap<String, Region>();
 
-    addDatasetToRegionMap(_above_dataset, regionMap, false);
-    if (_below_dataset != null) {
-      addDatasetToRegionMap(_below_dataset, regionMap, true);
-    }
-
-    ArrayList<Region> regionList = new ArrayList<Region>();
-    regionList.addAll(regionMap.values());
-    Iterator regIt = regionList.iterator();
-    while (regIt.hasNext()) {
-      Region curReg = (Region)regIt.next();
-      curReg.units(_above_dataset.units());
-      curReg.computeStop();
-      if (_below_dataset == null) {
-        curReg.addStartStopFeatures(0, 1.0);
+      addDatasetToRegionMap(_above_dataset, regionMap, false);
+      if (_below_dataset != null) {
+        addDatasetToRegionMap(_below_dataset, regionMap, true);
       }
-      else {
-        curReg.addStartStopFeatures(0, int(_below_dataset.defaultBarHeight()));
+
+      ArrayList<Region> regionList = new ArrayList<Region>();
+      regionList.addAll(regionMap.values());
+      Iterator regIt = regionList.iterator();
+      while (regIt.hasNext()) {
+        Region curReg = (Region)regIt.next();
+        curReg.units(_above_dataset.units());
+        curReg.computeStop();
+        if (_below_dataset == null) {
+          curReg.addStartStopFeatures(0, 1.0);
+        }
+        else {
+          curReg.addStartStopFeatures(0, int(_below_dataset.defaultBarHeight()));
+        }
+        curReg.setRelativeStartsAndStops();
+        curReg.sortFeatures();
       }
-      curReg.setRelativeStartsAndStops();
-      curReg.sortFeatures();
+
+      setRegions(regionList);
+
+      // set up config values
+      determineMinMaxStrengths(false);
+
+      updateRegionVisibility();
+      updateFeatureVisibility();
     }
-
-    setRegions(regionList);
-
-    // set up config values
-    determineMinMaxStrengths(false);
-
-    updateRegionVisibility();
-    updateFeatureVisibility();
   }
 
   void updateRegionVisibility() {

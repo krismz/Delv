@@ -24,6 +24,8 @@ d3WrapperNS.d3_demo_data = function ( name ) {
             function(error, json) {
               delv.log("load_from_file, error: " + error);
               d3WrapperNS.convert_to_nodes_links(json, name);
+              delv.dataChanged(name, "Nodes");
+              delv.dataChanged(name, "Links");
               when_finished();
             });
   };

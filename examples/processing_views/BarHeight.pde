@@ -49,12 +49,12 @@ class BarHeightView extends Delv2DView {
     _val_hovered = false;
   }
 
-  void onDataChanged(String source) {
+  void onDataChanged(String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
 
-    if (!source.equals(_name)) {
+    if (!invoker.equals(_name) && dataset.equals(_datasetName)) {
       String[] categories;
       float[] minVals;
       float[] maxVals;

@@ -120,7 +120,7 @@ function finishLoadingData() {
     .splitAttr("category");
   delv.addView(smView);
   smView.connectSignals();
-  delv.reloadData();
+  delv.dataChanged("init", dataSet.name);
 }
 
 d3.select("#button-wrap").selectAll("div").on("click", function() {

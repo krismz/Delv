@@ -171,6 +171,7 @@ interface Delv {
   // TODO how should animations be included?  They are a property of the selection event, but how to define in a cross-platform way?
   // TODO is this the best way to do coordinates into multidimensional dataset?  Should there also be a specific interface for one-dimensional data sets?  How about an interface that takes an index instead of id?
   // TODO rename hover as probe? I got the term from Curran Kelleher's dissertation, but he said hovering was also known as probing, find another source to cite or cite his?
+  void dataChanged(String invoker, String dataset);
   void hoverItem(String invoker, String dataset, String identifier);
   void hoverItem(String invoker, String dataset, String[] coordinate);
   void hoverCat(String invoker, String dataset, String attribute, String category);
@@ -350,7 +351,7 @@ interface DelvView {
   String name();
   DelvView name(String name);
   void connectSignals();
-  void onDataChanged(String source);
+  void onDataChanged(String invoker, String dataset);
   // TODO should resize be handled like other signals or treated specially?
   // for instance, should it be called sizeChanged?
   void resize(int w, int h);
@@ -939,17 +940,6 @@ public class DelvImpl implements Delv {
   void addView(DelvView view) {
     view.bindDelv(this);
     _views.put(view.name(), view);
-  }
-
-  void reloadData() {
-    onDataChanged("Delv");
-  }
-  void onDataChanged(String source) {
-    log("reloading data");
-     for (DelvView view : _views.values()) {
-       view.onDataChanged(source);
-     }
-     draw();
   }
 
   void runInThread(Object obj, String name) {
@@ -1647,6 +1637,12 @@ public class DelvImpl implements Delv {
   ////////////////////
   // TODO is this the best way to do coordinates into multidimensional dataset?  Should there also be a specific interface for one-dimensional data sets?  How about an interface that takes an index instead of id?
   // TODO rename hover as probe? I got the term from Curran Kelleher's dissertation, but he said hovering was also known as probing, find another source to cite or cite his?
+  void dataChanged(String invoker, String dataset) {
+    log("data changed");
+    emitSignal("dataChanged", invoker, dataset);
+    draw();
+  }
+
   void hoverItem(String invoker, String dataset, String identifier) {
     DelvDataSet ds = getDataSet(dataset);
     if (ds != null) {
@@ -2754,6 +2750,7 @@ public class DelvBasicView implements DelvView {
 
   public void bindDelv(Delv dlv) {
     _delv = dlv;
+    _delv.connectToSignal("dataChanged", _name, "onDataChanged");
     // TODO explicitly call connectSignals here?
     connectSignals();
   }
@@ -2854,7 +2851,11 @@ public class DelvBasicView implements DelvView {
     // TODO handle color / color map updates
   }
 
-  public void onDataChanged(String source) { updateSelections(); }
+  public void onDataChanged(String invoker, String dataset) {
+    if (dataset.equals(_datasetName)) {
+      updateSelections();
+    }
+  }
 
   public String label() {
     return _label;
@@ -3188,11 +3189,11 @@ public class DelvCompositeView extends DelvBasicView {
     labelUpdated();
   }
 
-  public void onDataChanged(String source) {
+  public void onDataChanged(String invoker, String dataset) {
     for (DelvBasicView view: _views) {
-      view.onDataChanged(source);
+      view.onDataChanged(invoker, dataset);
     }
-    super.onDataChanged(source);
+    super.onDataChanged(invoker, dataset);
   }
 
   // * * * Set the origin * * * //
@@ -3352,12 +3353,13 @@ public class DelvCategoryView extends DelvBasicView {
     filterCatsUpdated();
   }
 
-  public void onDataChanged(String source) {
+  public void onDataChanged(String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
 
-    if (!source.equals(_name)) {
+    _delv.log("dataset: " + dataset + ", name: " + _datasetName);
+    if (!invoker.equals(_name) && dataset.equals(_datasetName)) {
       String[] cats;
       cats = _delv.getAllCats(_datasetName, _catAttr);
       if (_doSort) {
@@ -3366,7 +3368,7 @@ public class DelvCategoryView extends DelvBasicView {
       setCats(cats);
       updateFilters();
     }
-    super.onDataChanged(source);
+    super.onDataChanged(invoker, dataset);
   }
 
   public void updateFilters() {
@@ -3404,7 +3406,6 @@ public class DelvCategoryView extends DelvBasicView {
     if (_delv == null) {
       return;
     }
-
     _delv.connectToSignal("filterChanged", _name, "onFilterChanged");
     _delv.connectToSignal("hoverChanged", _name, "onHoverChanged");
     _delv.connectToSignal("selectChanged", _name, "onSelectChanged");
@@ -3612,12 +3613,12 @@ class Delv1DView extends DelvCategoryView {
     //redraw();
   }
 
-  void onDataChanged(String source) {
+  void onDataChanged(String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
 
-    if (!source.equals(_name)) {
+    if (!invoker.equals(_name) && dataset.equals(_datasetName)) {
       String[] data;
       // TODO need to get Visible Items or Filtered Items or something else
       data = _delv.getAllItems(_datasetName, _dim1Attr);
@@ -3626,7 +3627,7 @@ class Delv1DView extends DelvCategoryView {
       coords = _delv.getAllCoords(_datasetName, _dim1Attr);
       setCoords(coords);
     }
-    super.onDataChanged(source);
+    super.onDataChanged(invoker, dataset);
   }
 
   void dim1Updated() {}
@@ -3665,18 +3666,18 @@ class Delv2DView extends Delv1DView {
     //redraw();
   }
 
-  void onDataChanged(String source) {
+  void onDataChanged(String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
 
-    if (!source.equals(_name)) {
+    if (!invoker.equals(_name) && dataset.equals(_datasetName)) {
       String[] data;
       // TODO need to get Visible Items or Filtered Items or something else
       data = _delv.getAllItems(_datasetName, _dim2Attr);
       setDim2(data);
     }
-    super.onDataChanged(source);
+    super.onDataChanged(invoker, dataset);
   }
 
   void dim2Updated() {}

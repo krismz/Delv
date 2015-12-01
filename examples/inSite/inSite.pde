@@ -78,11 +78,11 @@ void testInsite() {
   _barView.setup();
   _alignView.setup();
 
-  _dropView.onDataChanged("Processing.pde");
-  _regionView.onDataChanged("Processing.pde");
-  _alignView.onDataChanged("Processing.pde");
-  _barView.onDataChanged("Processing.pde");
-  _colorLegendView.onDataChanged("Processing.pde");
+  _dropView.onDataChanged("inSite.pde", "Regions");
+  _regionView.onDataChanged("inSite.pde", "Regions");
+  _alignView.onDataChanged("inSite.pde", "Regions");
+  _barView.onDataChanged("inSite.pde", "Regions");
+  _colorLegendView.onDataChanged("inSite.pde", "Regions");
 
   int w = width;
   int h = height;
@@ -143,7 +143,7 @@ public class InSiteView extends DelvCompositeView {
     addView(_alignView);
   }
 
-  public void onDataChanged(String source) {
+  public void onDataChanged(String invoker, String dataset) {
     RegionDataset aboveDataset = _regionView.createDataset("Regions");
     aboveDataset.regionTypeAttr("Species")
                 .regionLengthAttr("totalLength")
@@ -175,11 +175,11 @@ public class InSiteView extends DelvCompositeView {
     _barView.dim1Attr("strength");
     _barView.dim2Attr("motif_type");
 
-    _regionView.onDataChanged(source);
-    _dropView.onDataChanged(source);
-    _legendView.onDataChanged(source);
-    _barView.onDataChanged(source);
-    _alignView.onDataChanged(source);
+    _regionView.onDataChanged(invoker, "Regions");
+    _dropView.onDataChanged(invoker, "Regions");
+    _legendView.onDataChanged(invoker, "Regions");
+    _barView.onDataChanged(invoker, "Regions");
+    _alignView.onDataChanged(invoker, "Regions");
 
   }
 
@@ -334,7 +334,7 @@ void testInsiteView() {
   _delv.addDataSet("inSite", _dataIF);
   _delv.addView(insite_view);
   insite_view.setup();
-  insite_view.onDataChanged("Processing.pde");
+  insite_view.onDataChanged("inSite.pde", "inSite");
   insite_view.resize(1400, 800);
 }
 
@@ -371,7 +371,7 @@ void testRegion(int x_origin, int y_origin,
     .defaultBarType("Annotations");
   view.addDataset(belowDataset, true);
 
-  view.onDataChanged("Processing.pde");
+  view.onDataChanged("inSite.pde", "Regions");
   // to capture the size of the monitor
   int _w = 1400;
   int _h = 700;
@@ -412,7 +412,7 @@ void testDropDown(int x_origin, int y_origin,
   view.catAttr("Species")
       .label("Species");
   view.setup();
-  view.onDataChanged("Processing.pde");
+  view.onDataChanged("inSite.pde", "Regions");
 
   //view.resize(w, h);
   //view.onCategoryVisibilityChanged("someone", "Regions", "Species");
@@ -433,7 +433,7 @@ void testColorPickerLegend(int x_origin, int y_origin) {
   view.dataSet("Regions");
   view.dataAttr("motif_type");
   view.setup();
-  view.onDataChanged("Processing.pde");
+  view.onDataChanged("inSite.pde", "Regions");
   view.resize(200,300);
 }
 void testColorLegendWithDropdown() {
@@ -452,7 +452,7 @@ void testColorLegendWithDropdown(int x_origin, int y_origin) {
   view.dataAttr("motif_type");
   view.label("motif");
   view.setup();
-  view.onDataChanged("Processing.pde");
+  view.onDataChanged("inSite.pde", "Regions");
   view.resize(200,300);
 }
 

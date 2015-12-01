@@ -52,9 +52,12 @@ d3WrapperNS.force_collapsible_view = function ( name, svgId ) {
     }
   };
 
-  newObj.onDataChanged = function() {
-    var hierarchy = this.convertToHierarchy();
-    bindData(hierarchy);
+  newObj.onDataChanged = function(invoker, dataset) {
+    var hierarchy;
+    if (dataset === this._nodeDataset || dataset === this._linkDataset) {
+      hierarchy = this.convertToHierarchy();
+      bindData(hierarchy);
+    }
   };
 
 

@@ -145,6 +145,10 @@ public class InSiteDataSet extends DelvBasicDataSet {
     clearRegionFiles();
     updateConfig(filename);
     updateRegions();
+    if (_delv != null) {
+      _delv.dataChanged(_name, "Regions");
+      _delv.dataChanged(_name, "Annotations");
+    }
   }
 
 

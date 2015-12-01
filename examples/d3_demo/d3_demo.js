@@ -58,7 +58,6 @@ function finishLoadingJSData() {
   console.log("finishLoadingJSData called");
   dataLoaded = true;
   //delv.giveDataIFToViews("d3Demo");
-  delv.reloadData();
 }
 
   
@@ -77,7 +76,6 @@ function finishLoadingData() {
     pDataSet.loadData();
     pDataSet.bindDelv(delv);
     delv.addDataSet("inSite", pDataSet);
-    delv.reloadData();
   }  
 }
 function init_view_instance(view, elemId) {
@@ -128,7 +126,7 @@ function init_view_instance(view, elemId) {
   }
   if (dataLoaded) {
     delv.log("init_view_instance onDataChanged");
-    view.onDataChanged("d3Demo.js");
+    view.onDataChanged("d3Demo.js", "Nodes");
     delv.log("init_view_instance resizeAll");
     resizeAll();
   }

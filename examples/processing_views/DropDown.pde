@@ -47,6 +47,7 @@ public class DropDownView extends DelvCategoryView {
   }
 
   public void catUpdated() {
+    _delv.log("catUpdated");
     cats_selected = new boolean[_cat.length];
     dropbox_max_width = 0;
     int pad = 10;
@@ -228,7 +229,7 @@ public class DropDownView extends DelvCategoryView {
   }
 
   public void resize() {
-    resize(_w, _h, false);
+    resize(_w, _h, true);
   }
 
   public void resize(int w, int h, boolean doDraw) {

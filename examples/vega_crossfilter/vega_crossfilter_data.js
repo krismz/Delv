@@ -8,7 +8,7 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
   newObj.spec = {};
 
   newObj.resize = function(w, h) {};
-  newObj.onDataChanged = function(source) {};
+  newObj.onDataChanged = function(invoker, dataset) {};
   newObj.load_data = function(script, when_finished) {
     var view = this;
     d3.json(script, function(error, json) {
@@ -82,6 +82,11 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
       ds.setItem("count_delay", id, elem["count_delay"]);
     }
     ds.filterRanges("day", [vMin], [vMax]);
+
+    delv.dataChanged(name, "times");
+    delv.dataChanged(name, "distance");
+    delv.dataChanged(name, "delay");
+    delv.dataChanged(name, "date");
   };
 
   newObj.create_dataSet = function( name ) {
@@ -158,7 +163,6 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
     }
     this.chart.update();
     this.updateDataTables();
-    delv.reloadData();
   };
 
   delv.addDataSet(name, newObj);
