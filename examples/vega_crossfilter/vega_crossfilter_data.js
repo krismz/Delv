@@ -8,7 +8,7 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
   newObj.spec = {};
 
   newObj.resize = function(w, h) {};
-  newObj.onDataChanged = function(invoker, dataset) {};
+  newObj.onDataChanged = function(signal, invoker, dataset) {};
   newObj.load_data = function(script, when_finished) {
     var view = this;
     d3.json(script, function(error, json) {
@@ -123,7 +123,7 @@ vgWrapperNS.vega_crossfilter_data = function ( name ) {
   };
 
 
-  newObj.onFilterChanged = function(invoker, dataset, coordination, attr) {
+  newObj.onFilterChanged = function(signal, invoker, dataset, coordination, attr) {
     var fMin;
     var fMax;
     var minDate;

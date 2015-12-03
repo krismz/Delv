@@ -34,7 +34,7 @@ public class DropDownView extends DelvCategoryView {
     rolled_over_dropdown = 0;
     cats_selected = new boolean[0];
     textFont( _verdana_font_12 );
-    dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
+    dropdown_min_width = (int)(textWidth(_title)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
     dropbox_max_width = dropdown_min_width;
   }
 
@@ -42,8 +42,8 @@ public class DropDownView extends DelvCategoryView {
     return is_dropped_down;
   }
 
-  public void labelUpdated() {
-    dropdown_min_width = (int)(textWidth(_label)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
+  public void titleUpdated() {
+    dropdown_min_width = (int)(textWidth(_title)) + DROP_DOWN_BOX_W + DROP_DOWN_BOX_OFFSET + 2 * DROPBOX_BORDER;
   }
 
   public void catUpdated() {
@@ -79,7 +79,7 @@ public class DropDownView extends DelvCategoryView {
     textFont( _verdana_font_12 );
     textAlign( LEFT, TOP );
     fill( LABEL_COLOR );
-    text( _label, x, y-4 );
+    text( _title, x, y-4 );
 
     x = DROPBOX_BORDER;
     noStroke();

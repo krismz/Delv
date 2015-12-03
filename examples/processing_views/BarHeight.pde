@@ -49,7 +49,7 @@ class BarHeightView extends Delv2DView {
     _val_hovered = false;
   }
 
-  void onDataChanged(String invoker, String dataset) {
+  void onDataChanged(String signal, String invoker, String dataset) {
     if (_delv == null) {
       return;
     }

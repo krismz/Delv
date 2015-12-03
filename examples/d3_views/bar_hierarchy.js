@@ -29,7 +29,7 @@ d3WrapperNS.bar_hierarchy_view = function ( name, svgId ) {
     this._delv.selectItems(this._name, this._nodeDataset, ids, "PRIMARY");
   };
 
-  newObj.onSelectChanged = function(invoker, dataset, coordination, selectType) {
+  newObj.onSelectChanged = function(signal, invoker, dataset, coordination, selectType) {
     var items = [];
     if (invoker === this._name) {
       this._delv.log(this._name + ".onSelectChanged("+dataset+", "+coordination+", "+selectType+") triggered by self");
@@ -51,9 +51,10 @@ d3WrapperNS.bar_hierarchy_view = function ( name, svgId ) {
     }
   };
 
-  newObj.onDataChanged = function(invoker, dataset) {
+  newObj.onDataChanged = function(signal, invoker, dataset) {
     var hierarchy;
-    if (dataset === this._nodeDataset || dataset === this._linkDataset) {
+    if (this.configured() &&
+        (dataset === this._nodeDataset || dataset === this._linkDataset)) {
       hierarchy = this.convertToHierarchy();
       bindData(hierarchy);
     }

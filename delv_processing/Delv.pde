@@ -351,7 +351,7 @@ interface DelvView {
   String name();
   DelvView name(String name);
   void connectSignals();
-  void onDataChanged(String invoker, String dataset);
+  void onDataChanged(String signal, String invoker, String dataset);
   // TODO should resize be handled like other signals or treated specially?
   // for instance, should it be called sizeChanged?
   void resize(int w, int h);
@@ -370,8 +370,8 @@ interface DelvView {
 }
 
 interface DelvDataSet {
-  String getName();
-  void setName(String name);
+  String name();
+  void name(String name);
 
   // bind Delv for adding interior datasets
   void bindDelv(Delv dlv);
@@ -614,8 +614,8 @@ interface DelvAttribute {
 
   boolean isCategorical();
 
-  String getName();
-  void setName(String name);
+  String name();
+  void name(String name);
 
   // items
   void removeItem(String id);
@@ -753,12 +753,14 @@ public class DelvImpl implements Delv {
 
   void emitSignal(String signal, String invoker, String dataset) {
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset);
-    Class[] params = new Class[2];
-    params[0] = invoker.getClass();
-    params[1] = dataset.getClass();
-    Object[] args = new Object[2];
-    args[0] = invoker;
-    args[1] = dataset;
+    Class[] params = new Class[3];
+    params[0] = signal.getClass();
+    params[1] = invoker.getClass();
+    params[2] = dataset.getClass();
+    Object[] args = new Object[3];
+    args[0] = signal;
+    args[1] = invoker;
+    args[2] = dataset;
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
     //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
@@ -789,14 +791,16 @@ public class DelvImpl implements Delv {
   }
   void emitSignal(String signal, String invoker, String dataset, String attribute) {
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset + " and attribute " + attribute);
-    Class[] params = new Class[3];
-    params[0] = invoker.getClass();
-    params[1] = dataset.getClass();
-    params[2] = attribute.getClass();
-    Object[] args = new Object[3];
-    args[0] = invoker;
-    args[1] = dataset;
-    args[2] = attribute;
+    Class[] params = new Class[4];
+    params[0] = signal.getClass();
+    params[1] = invoker.getClass();
+    params[2] = dataset.getClass();
+    params[3] = attribute.getClass();
+    Object[] args = new Object[4];
+    args[0] = signal;
+    args[1] = invoker;
+    args[2] = dataset;
+    args[3] = attribute;
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
     //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
@@ -841,14 +845,16 @@ public class DelvImpl implements Delv {
       }
     }
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset + " and attributes " + attrMesg + " after " + (millis()/1000.0) + " seconds");
-    Class[] params = new Class[3];
-    params[0] = invoker.getClass();
-    params[1] = dataset.getClass();
-    params[2] = attributes.getClass();
-    Object[] args = new Object[3];
-    args[0] = invoker;
-    args[1] = dataset;
-    args[2] = attributes;
+    Class[] params = new Class[4];
+    params[0] = signal.getClass();
+    params[1] = invoker.getClass();
+    params[2] = dataset.getClass();
+    params[3] = attributes.getClass();
+    Object[] args = new Object[4];
+    args[0] = signal;
+    args[1] = invoker;
+    args[2] = dataset;
+    args[3] = attributes;
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
     if (_signalHandlers.containsKey(signal)) {
@@ -880,16 +886,18 @@ public class DelvImpl implements Delv {
   // TODO should be a more generic way to implement this using String ... var args syntax
   void emitSignal(String signal, String invoker, String dataset, String coordination, String detail) {
     log("Emitting " + signal + " sent from " + invoker + " for dataset " + dataset + ", coordination " + coordination + " and detail " + detail);
-    Class[] params = new Class[4];
-    params[0] = invoker.getClass();
-    params[1] = dataset.getClass();
-    params[2] = coordination.getClass();
-    params[3] = detail.getClass();
-    Object[] args = new Object[4];
-    args[0] = invoker;
-    args[1] = dataset;
-    args[2] = coordination;
-    args[3] = detail;
+    Class[] params = new Class[5];
+    params[0] = signal.getClass();
+    params[1] = invoker.getClass();
+    params[2] = dataset.getClass();
+    params[3] = coordination.getClass();
+    params[4] = detail.getClass();
+    Object[] args = new Object[5];
+    args[0] = signal;
+    args[1] = invoker;
+    args[2] = dataset;
+    args[3] = coordination;
+    args[4] = detail;
     // TODO Bug in Processing, following entrySet syntax doesn't compile.
     // iterating on just keys for now instead
     //for (Map.Entry<String, String> entry : signalHandlers.get(signal).entrySet()) {
@@ -2708,7 +2716,7 @@ public class DelvBasicView implements DelvView {
   HashMap<String, String[][]> _selectCoords;
   String[][] _filterCoords;
   String[][] _likeCoords;
-  String _label;
+  String _title;
   int[] _hoveredIdx;
   HashMap<String, int[]> _selectedIdx;
   int[] _filteredIdx;
@@ -2723,7 +2731,7 @@ public class DelvBasicView implements DelvView {
     _p = this;
     _name = name;
     _datasetName = "";
-    _label = "";
+    _title = "";
     _origin = origin;
     _w = w;
     _h = h;
@@ -2805,18 +2813,14 @@ public class DelvBasicView implements DelvView {
   }
   public void colorChanged(String selection, color c) {}
 
-  // TODO undo this hack for onDataUpdated
-  void onDataUpdated(String invoker, String dataset, String attribute) {}
-  void onDataUpdated(String invoker, String dataset, String[] attributes) {}
-
-  void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
+  void onHoverChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName)) {
       setHoveredCoords( _delv.getHoverCoords(_datasetName) );
     }
   }
-  void onSelectChanged(String invoker, String dataset, String coordination, String selectType) {
+  void onSelectChanged(String signal, String invoker, String dataset, String coordination, String selectType) {
     // for all coordination types, just get the coords
     // TODO support secondary / tertiary selections
     if ( !(invoker.equals(_name)) &&
@@ -2826,14 +2830,14 @@ public class DelvBasicView implements DelvView {
       // TODO any redraw notification here?
     }
   }
-  void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
+  void onFilterChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
       setFilteredCoords( _delv.getFilterCoords(_datasetName) );
     }
   }
-  void onNavChanged(String invoker, String dataset, String coordination, String detail) {
+  void onNavChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     // only get the coordinates, not the relationship or val / ranges
     if ( !(invoker.equals(_name)) &&
          dataset.equals(_datasetName) ) {
@@ -2851,18 +2855,18 @@ public class DelvBasicView implements DelvView {
     // TODO handle color / color map updates
   }
 
-  public void onDataChanged(String invoker, String dataset) {
+  public void onDataChanged(String signal, String invoker, String dataset) {
     if (dataset.equals(_datasetName)) {
       updateSelections();
     }
   }
 
-  public String label() {
-    return _label;
+  public String title() {
+    return _title;
   }
-  public void label(String aLabel) {
-    _label = aLabel;
-    labelUpdated();
+  public void title(String aTitle) {
+    _title = aTitle;
+    titleUpdated();
     //redraw();
   }
 
@@ -3088,7 +3092,7 @@ public class DelvBasicView implements DelvView {
 
   // override these if you need to do a one-time calculation or update when
   // one of these events happens
-  public void labelUpdated() {}
+  public void titleUpdated() {}
   public void coordsUpdated() {}
   public void hoveredCoordsUpdated() {}
   public void selectedCoordsUpdated() {}
@@ -3181,19 +3185,19 @@ public class DelvCompositeView extends DelvBasicView {
     return this;
   }
 
-  public void label(String aLabel) {
-    _label = aLabel;
+  public void title(String aTitle) {
+    _title = aTitle;
     for (DelvBasicView view: _views) {
-      view.label(aLabel);
+      view.title(aTitle);
     }
-    labelUpdated();
+    titleUpdated();
   }
 
-  public void onDataChanged(String invoker, String dataset) {
+  public void onDataChanged(String signal, String invoker, String dataset) {
     for (DelvBasicView view: _views) {
-      view.onDataChanged(invoker, dataset);
+      view.onDataChanged(signal, invoker, dataset);
     }
-    super.onDataChanged(invoker, dataset);
+    super.onDataChanged(signal, invoker, dataset);
   }
 
   // * * * Set the origin * * * //
@@ -3353,7 +3357,7 @@ public class DelvCategoryView extends DelvBasicView {
     filterCatsUpdated();
   }
 
-  public void onDataChanged(String invoker, String dataset) {
+  public void onDataChanged(String signal, String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
@@ -3368,7 +3372,7 @@ public class DelvCategoryView extends DelvBasicView {
       setCats(cats);
       updateFilters();
     }
-    super.onDataChanged(invoker, dataset);
+    super.onDataChanged(signal, invoker, dataset);
   }
 
   public void updateFilters() {
@@ -3412,7 +3416,7 @@ public class DelvCategoryView extends DelvBasicView {
     _delv.connectToSignal("colorChanged", _name, "onColorChanged");
   }
 
- public void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
+  public void onFilterChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     if (invoker.equals(_name)) {
       _delv.log("DelvCategoryView " + _name + ".onFilterChanged(" + dataset + ", " + coordination + ") triggered by self");
     } else {
@@ -3422,8 +3426,8 @@ public class DelvCategoryView extends DelvBasicView {
       }
     }
   }
-  public void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
-    super.onHoverChanged(invoker, dataset, coordination, detail);
+  public void onHoverChanged(String signal, String invoker, String dataset, String coordination, String detail) {
+    super.onHoverChanged(signal, invoker, dataset, coordination, detail);
     if (invoker.equals(_name)) {
       _delv.log(_name+".onHoverChanged(" + dataset + ", " + coordination + ") triggered by self");
     } else {
@@ -3435,7 +3439,7 @@ public class DelvCategoryView extends DelvBasicView {
     }
   }
 
-  public void onSelectChanged(String invoker, String dataset, String coordination, String selectType) {
+  public void onSelectChanged(String signal, String invoker, String dataset, String coordination, String selectType) {
     if (invoker.equals(_name)) {
       _delv.log(_name + ".onSelectChanged(" + dataset + ", " + coordination + ", " + selectType + ") triggered by self");
     } else {
@@ -3448,7 +3452,7 @@ public class DelvCategoryView extends DelvBasicView {
     }
   }
 
-  public void onColorChanged(String invoker, String dataset, String attribute) {
+  public void onColorChanged(String signal, String invoker, String dataset, String attribute) {
     if (!invoker.equals(_name) &&
         dataset.equals(_datasetName) &&
         attribute.equals(_catAttr)) {
@@ -3613,7 +3617,7 @@ class Delv1DView extends DelvCategoryView {
     //redraw();
   }
 
-  void onDataChanged(String invoker, String dataset) {
+  void onDataChanged(String signal, String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
@@ -3627,7 +3631,7 @@ class Delv1DView extends DelvCategoryView {
       coords = _delv.getAllCoords(_datasetName, _dim1Attr);
       setCoords(coords);
     }
-    super.onDataChanged(invoker, dataset);
+    super.onDataChanged(signal, invoker, dataset);
   }
 
   void dim1Updated() {}
@@ -3666,7 +3670,7 @@ class Delv2DView extends Delv1DView {
     //redraw();
   }
 
-  void onDataChanged(String invoker, String dataset) {
+  void onDataChanged(String signal, String invoker, String dataset) {
     if (_delv == null) {
       return;
     }
@@ -3677,7 +3681,7 @@ class Delv2DView extends Delv1DView {
       data = _delv.getAllItems(_datasetName, _dim2Attr);
       setDim2(data);
     }
-    super.onDataChanged(invoker, dataset);
+    super.onDataChanged(signal, invoker, dataset);
   }
 
   void dim2Updated() {}
@@ -4043,10 +4047,10 @@ public class DelvBasicDataSet implements DelvDataSet {
  }
 
 
-  String getName() {
+  String name() {
     return _name;
   }
-  void setName(String name) {
+  void name(String name) {
     _name = name;
   }
 
@@ -5103,7 +5107,7 @@ public class DelvBasicDataSet implements DelvDataSet {
     _attributes = new HashMap<String, DelvBasicAttribute>();
   }
   void addAttr(DelvAttribute attr) {
-    _attributes.put(attr.getName(), (DelvBasicAttribute)attr);
+    _attributes.put(attr.name(), (DelvBasicAttribute)attr);
   }
   Boolean hasAttr(String attr) {
     return _attributes.containsKey(attr);
@@ -5956,10 +5960,10 @@ public class DelvBasicAttribute implements DelvAttribute {
     return (_type.equals(AttributeType.CATEGORICAL) || _type.equals(AttributeType.CATEGORICAL_LIST));
   }
 
-  String getName() {
+  String name() {
     return _name;
   }
-  void setName(String name) {
+  void name(String name) {
     _name = name;
   }
 

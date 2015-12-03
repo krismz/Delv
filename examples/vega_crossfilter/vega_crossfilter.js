@@ -1,7 +1,7 @@
 function init() {
   console.log("entering init");
   dataLoaded = false;
-  delv.noLog();
+  //delv.noLog();
   delv.doSignalDebounce(75);
 
   var chartsrc = "./bar_chart.json";
@@ -71,12 +71,12 @@ function init_view_instance(view, elemId) {
       .renderSVG();
 
   }
-  delv.log("init_view_instance resizeAll");
+  delv.log("init_view_instance , dataLoaded: " + dataLoaded);
   if (dataLoaded) {
-    view.onDataChanged("vega_crossfilter", "times");
-    view.onDataChanged("vega_crossfilter", "distance");
-    view.onDataChanged("vega_crossfilter", "delay");
-    view.onDataChanged("vega_crossfilter", "date");
+    view.onDataChanged("dataChanged", "vega_crossfilter", "times");
+    view.onDataChanged("dataChanged", "vega_crossfilter", "distance");
+    view.onDataChanged("dataChanged", "vega_crossfilter", "delay");
+    view.onDataChanged("dataChanged", "vega_crossfilter", "date");
     resizeAll();
   }
 }

@@ -58,6 +58,7 @@ var vg = vg || {};
     };
     this.dataSet = function(dataSetName) {
       this._datasetName = dataSetName;
+      this.onDataChanged("dataChanged", this._name, this._datasetName);
     }
     this.name = function(name) {
       if (name !== undefined) {
@@ -69,7 +70,8 @@ var vg = vg || {};
     };
     this.resize = function(w, h) {};
     this.connectSignals = function() {};
-    this.onDataChanged = function(invoker, dataset) {};
+    this.configured = function() { return (this._datasetName !== "");};
+    this.onDataChanged = function(signal, invoker, dataset) {};
   }; // end delv.view
 
   // turn obj into a d3 view
@@ -94,6 +96,7 @@ var vg = vg || {};
     };
     newObj.setDataset1Name = function(name) {
       this._dataset1Name = name;
+      this.onDataChanged("dataChanged", this._name, this._dataset1Name);
       return this;
     };
     newObj.getDataset1Attr = function() {
@@ -101,6 +104,7 @@ var vg = vg || {};
     };
     newObj.setDataset1Attr = function(attr) {
       this._dataset1Attr = attr;
+      this.onDataChanged("dataChanged", this._name, this._dataset1Attr);
       return this;
     };
     newObj.getDataset2Name = function() {
@@ -108,6 +112,7 @@ var vg = vg || {};
     };
     newObj.setDataset2Name = function(name) {
       this._dataset2Name = name;
+      this.onDataChanged("dataChanged", this._name, this._dataset2Name);
       return this;
     };
     newObj.getDataset2Attr = function() {
@@ -115,6 +120,7 @@ var vg = vg || {};
     };
     newObj.setDataset2Attr = function(attr) {
       this._dataset2Attr = attr;
+      this.onDataChanged("dataChanged", this._name, this._dataset2Attr);
       return this;
     };
     newObj.connectSignals = function() {
@@ -124,7 +130,7 @@ var vg = vg || {};
       // TODO add other signals here.
 
     };
-    newObj.onColorChanged = function(invoker, dataset, attribute) {
+    newObj.onColorChanged = function(signal, invoker, dataset, attribute) {
       if (invoker !== this._name) {
         if (dataset === this._dataset1Name &&
           attribute === this._dataset1Attr) {
@@ -176,6 +182,7 @@ var vg = vg || {};
     newObj.dataSet = function(name) {
       var v;
       this._datasetName = name;
+      this.onDataChanged("dataChanged", this._name, this._datasetName);
       for (v in this._views) {
         if (this._views.hasOwnProperty(v)) {
           this._views[v].dataSet(name);
@@ -185,14 +192,14 @@ var vg = vg || {};
     };
 
     newObj.superOnDataChanged = newObj.onDataChanged;
-    newObj.onDataChanged = function(invoker, dataset) {
+    newObj.onDataChanged = function(signal, invoker, dataset) {
       var v;
       for (v in this._views) {
         if (this._views.hasOwnProperty(v)) {
-          this._views[v].onDataChanged(invoker, dataset);
+          this._views[v].onDataChanged(signal, invoker, dataset);
         }
       }
-      this.superOnDataChanged(invoker, dataset);
+      this.superOnDataChanged(signal, invoker, dataset);
     };
 
     newObj.superResize = newObj.resize;
@@ -218,6 +225,94 @@ var vg = vg || {};
     return newObj;
   };
 
+  delv.d3XYView = function(name, svgElem) {
+    var view = new delv.d3View(name, svgElem);
+    view._xAttr = "";
+    view._yAttr = "";
+    view._title = "";
+
+    view.xAttr = function(attr) {
+      if (attr !== undefined) {
+        this._xAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._xAttr;
+      }
+    };
+      
+    view.yAttr = function(attr) {
+      if (attr !== undefined) {
+        this._yAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._yAttr;
+      }
+    };
+
+    view.title = function(title) {
+      if (title !== undefined) {
+        this._title = title;
+        return this;
+      } else {
+        return this._title;
+      }
+    };
+
+    //view.superConfigured = view.configured;
+    //view.configured = function() {
+      // return (this.superConfigured() &&
+      //         this._xAttr !== "" &&
+      //         this._yAttr !== "");
+    //};
+
+    view.minX = function() {
+      // TODO this assumes x is an ordered categorical variable
+      //return parseFloat(this._delv.getNavLeftVal(this._datasetName, this._xAttr));
+      return 2004;
+    };
+    view.maxX = function() {
+      //return parseFloat(this._delv.getNavRightVal(this._datasetName, this._xAttr));
+      return 2014;
+    };
+    view.minY = function() {
+      //return parseFloat(this._delv.getNavMinVal(this._datasetName, this._yAttr));
+      return 0;
+    };
+    view.maxY = function() {
+      //return parseFloat(this._delv.getNavMaxVal(this._datasetName, this._yAttr));
+      return 3000;
+    };
+    
+    view.convertToArrayOfObjects = function() {
+      var rawData = {};
+      var data = [];
+      var values = [];
+      var d;
+      rawData.xVal = this._delv.getAllItems(this._datasetName, this._xAttr);
+      rawData.yVal = this._delv.getAllItems(this._datasetName, this._yAttr);
+      rawData.title = this._title;
+      for (d = 0; d < rawData.xVal.length; d++) {
+        values[d] = {"xVal": rawData.xVal[d], "yVal": rawData.yVal[d]};
+      }
+      if (values.length > 0) {
+        data[0] = { "values": values,
+                    "key": rawData.title };
+      }
+      return data;
+    };
+
+    view.onNavChanged = function(signal, invoker, dataset, coordination, detail) {
+      // TODO is there a better way to handle resetting scales besides redoing the data?
+      this.onDataChanged("navChanged", invoker, dataset);
+    };
+
+    delv.connectToSignal("navChanged", view._name, "onNavChanged");
+
+    return view;
+  }; // end delv.d3XYView
+  
   // turn obj into a d3 hierarchy view
   delv.d3HierarchyView = function(name, svgElem) {
     var newObj = new delv.d3View(name, svgElem);
@@ -233,6 +328,7 @@ var vg = vg || {};
     };
     newObj.setNodeDatasetName = function(name) {
       this._nodeDataset = name;
+      this.onDataChanged("dataChanged", this._name, this._nodeDataset);
       return this;
     };
     newObj.getLinkDatasetName = function() {
@@ -240,6 +336,7 @@ var vg = vg || {};
 	  };
 	  newObj.setLinkDatasetName = function(name) {
 		  this._linkDataset = name;
+      this.onDataChanged("dataChanged", this._name, this._linkDataset);
 		  return this;
 	  };
     newObj.getNodeSizeAttr = function() {
@@ -247,6 +344,7 @@ var vg = vg || {};
     };
     newObj.setNodeSizeAttr = function(attr) {
       this._nodeSizeAttr = attr;
+      this.onDataChanged("dataChanged", this._name, this._nodeDataset);
       return this;
     };
     newObj.getNodeNameAttr = function() {
@@ -254,6 +352,7 @@ var vg = vg || {};
     };
     newObj.setNodeNameAttr = function(attr) {
       this._nodeNameAttr = attr;
+      this.onDataChanged("dataChanged", this._name, this._nodeDataset);
       return this;
     };
     newObj.getLinkStartAttr = function() {
@@ -261,6 +360,7 @@ var vg = vg || {};
     };
     newObj.setLinkStartAttr = function(attr) {
       this._linkStartAttr = attr;
+      this.onDataChanged("dataChanged", this._name, this._linkDataset);
       return this;
     };
     newObj.getLinkEndAttr = function() {
@@ -268,9 +368,19 @@ var vg = vg || {};
     };
     newObj.setLinkEndAttr = function(attr) {
       this._linkEndAttr = attr;
+      this.onDataChanged("dataChanged", this._name, this._linkDataset);
       return this;
     };
 
+    newObj.configured = function() {
+      return (this._nodeDataset !== "" &&
+              this._nodeSizeAttr !== "" &&
+              this._nodeNameAttr !== "" &&
+              this._linkDataset !== "" &&
+              this._linkStartAttr !== "" &&
+              this._linkEndAttr !== "");
+    };
+    
     newObj.convertToHierarchy = function() {
       var node_ids = this._delv.getAllIds(this._nodeDataset, this._nodeNameAttr);
       var node_names = this._delv.getAllItems(this._nodeDataset, this._nodeNameAttr);
@@ -837,12 +947,16 @@ var vg = vg || {};
             method = delv.signalHandlers[signal][key];
             if (typeof(coordination) !== "undefined") {
               if (typeof(detail) !== "undefined") {
-                fullcall = "view." + method + "(invoker, dataset, coordination, detail)";
+                fullcall = "view." + method + "(signal, invoker, dataset, coordination, detail)";
               } else {
-                fullcall = "view." + method + "(invoker, dataset, coordination)";
+                fullcall = "view." + method + "(signal, invoker, dataset, coordination)";
               }
             } else {
-              fullcall = "view." + method + "(invoker, dataset)";
+              fullcall = "view." + method + "(signal, invoker, dataset)";
+            }
+            if (typeof(view) === "undefined") {
+              //delv.log("view undefined, skipping evaluation of " + fullcall + " for " + key);
+              continue;
             }
             //delv.log("calling eval(" + fullcall + ")");
             // TODO using eval to get around Java not being able to pass methods around
@@ -1243,6 +1357,7 @@ var vg = vg || {};
       data[dataset].hoverCat(attr, cat);
       delv.emitSignal('hoverChanged', invoker, dataset, "CAT", attr);
     } catch (e) {
+      delv.log("caught exception in hoverCat: " + e);
       return;
     }
   };
@@ -1824,7 +1939,17 @@ var vg = vg || {};
     var _delv = {};
 
     // TODO make name interface consistent for views and datasets.  Probably want a name() function ala views
-    this.name = name;
+    this._name = name;
+    
+    this.name = function(name) {
+      if (name !== undefined) {
+        this._name = name;
+        return this;
+      } else {
+        return this._name;
+      }
+    };
+
 
     // TODO sort API
     // TODO transform API
@@ -2428,7 +2553,7 @@ var vg = vg || {};
     };
       
     this.addAttr = function(attr) {
-      attributes[attr.name] = attr;
+      attributes[attr._name] = attr;
     };
 
     this.hasAttr = function(attr) {
@@ -3205,8 +3330,8 @@ var vg = vg || {};
     };
 
     function populate_data(data, dataset) {
-      delv.removeDataSet(dataset.name);
-      delv.addDataSet(dataset.name, dataset);
+      delv.removeDataSet(dataset.name());
+      delv.addDataSet(dataset.name(), dataset);
       create_dataset(data, dataset);
       populate_dataset(data, dataset);
     }
@@ -3357,14 +3482,14 @@ var vg = vg || {};
       if (dataset === this._dataset) {
         // TODO, ideally would have a way to update without blowing away the previous aggregation
         // but that would take some work
-        delv.removeDataSet(this.name);
-        delv.addDataSet(this.name, this);
+        delv.removeDataSet(this.name());
+        delv.addDataSet(this.name(), this);
         this.aggItems();
       }
     };
-    ds.aggregate(ds.name, ds._dataset);
+    ds.aggregate(ds._name, ds._dataset);
 
-    delv.connectToSignal("dataChanged", ds.name, "aggregate");
+    delv.connectToSignal("dataChanged", ds._name, "aggregate");
     
     return ds;
   }; // end delv.aggregateDataSet
@@ -3429,14 +3554,33 @@ var vg = vg || {};
     
     ds.filter = function(invoker, dataset) {
       if (dataset === this._dataset) {
-        delv.removeDataSet(this.name);
-        delv.addDataSet(this.name, this);
+        delv.removeDataSet(this._name);
+        delv.addDataSet(this._name, this);
         this.applyFilter();
       }
     };
 
-    ds.filter(ds.name, ds._dataset);
-    delv.connectToSignal("dataChanged", ds.name, "filter");
+    ds.filter(ds._name, ds._dataset);
+    delv.addView(ds);
+    delv.connectToSignal("dataChanged", ds._name, "filter");
+    delv.connectToSignal("sortChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("hoverChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("selectChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("filterChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("colorChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("encodingChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("navChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("lodChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("hoverColorChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("selectColorChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("filterColorChanged", ds._name, "rerouteSignal");
+    delv.connectToSignal("likeColorChanged", ds._name, "rerouteSignal");
+
+    ds.rerouteSignal = function(signal, invoker, dataset, coordination, detail) {
+      if (invoker !== this._dataset && dataset === this._dataset) {
+        delv.emitSignal(signal, this._dataset, this._name, coordination, detail);
+      }
+    };
     
     ds.clearItems = function() {
       this.itemIds = [];
@@ -3592,33 +3736,33 @@ var vg = vg || {};
     ds.superHoverItem = ds.hoverItem;
     ds.hoverItem = function(id) {
       ds.superHoverItem(id);
-      delv.hoverItem(this.name, this._dataset, id);
+      delv.hoverItem(this._name, this._dataset, id);
     };
     ds.superSelectPrimaryItems = ds.selectPrimaryItems;
     ds.selectPrimaryItems = function(ids, doSelect) {
       ds.superSelectPrimaryItems(ids, doSelect);
       if (doSelect) {
-        delv.selectItems(this.name, this._dataset, ids, "PRIMARY");
+        delv.selectItems(this._name, this._dataset, ids, "PRIMARY");
       } else {
-        delv.deselectItems(this.name, this._dataset, ids, "PRIMARY");
+        delv.deselectItems(this._name, this._dataset, ids, "PRIMARY");
       }
     };
     ds.superSelectSecondaryItems = ds.selectSecondaryItems;
     ds.selectSecondaryItems = function(ids, doSelect) {
       ds.superSelectSecondaryItems(ids, doSelect);
       if (doSelect) {
-        delv.selectItems(this.name, this._dataset, ids, "SECONDARY");
+        delv.selectItems(this._name, this._dataset, ids, "SECONDARY");
       } else {
-        delv.deselectItems(this.name, this._dataset, ids, "SECONDARY");
+        delv.deselectItems(this._name, this._dataset, ids, "SECONDARY");
       }
     };
     ds.superSelectTertiaryItems = ds.selectTertiaryItems;
     ds.selectTertiaryItems = function(ids, doSelect) {
       ds.superSelectTertiaryItems(ids, doSelect);
       if (doSelect) {
-        delv.selectItems(this.name, this._dataset, ids, "TERTIARY");
+        delv.selectItems(this._name, this._dataset, ids, "TERTIARY");
       } else {
-        delv.deselectItems(this.name, this._dataset, ids, "TERTIARY");
+        delv.deselectItems(this._name, this._dataset, ids, "TERTIARY");
       }
     };
     ds.hasAttr = function(attr) {
@@ -3643,35 +3787,35 @@ var vg = vg || {};
       return delv.getFilterCatColors(this._dataset, attr);
     };
     ds.hoverCat = function(attr, cat) {
-      delv.hoverCat(this.name, this._dataset, attr, cat);
+      delv.hoverCat(this._name, this._dataset, attr, cat);
       this.determineHoveredItems();
     };
     ds.hoverRange = function(attr, minVal, maxVal) {
-      delv.hoverRange(this.name, this._dataset, attr, minVal, maxVal);
+      delv.hoverRange(this._name, this._dataset, attr, minVal, maxVal);
       this.determineHoveredItems();
     };
     ds.selectCats = function(attrs, cats, selectType) {
-      delv.selectCats(this.name, this._dataset, attrs, cats, selectType);
+      delv.selectCats(this._name, this._dataset, attrs, cats, selectType);
       this.determineSelectedItems(selectType);
     };
     ds.selectRanges = function(attrs, mins, maxes, selectType) {
-      delv.selectRanges(this.name, this._dataset, attrs, mins, maxes, selectType);
+      delv.selectRanges(this._name, this._dataset, attrs, mins, maxes, selectType);
       this.determineSelectedItems(selectType);
     };
     ds.filterCats = function(attr, cats) {
-      delv.filterCats(this.name, this._dataset, attr, cats);
+      delv.filterCats(this._name, this._dataset, attr, cats);
       this.determineFilteredItems();
     };
     ds.toggleCatFilter = function(attr, cat) {
-      delv.toggleCatFilter(this.name, this._dataset, attr, cat);
+      delv.toggleCatFilter(this._name, this._dataset, attr, cat);
       this.determineFilteredItems();
     };
     ds.filterRanges = function(attr, mins, maxes) {
-      delv.filterRanges(this.name, this._dataset, attr, mins, maxes);
+      delv.filterRanges(this._name, this._dataset, attr, mins, maxes);
       this.determineFilteredItems();
     };
     ds.colorCat = function(attr, cat, rgbaColor) {
-      delv.colorCat(this.name, this._dataset, attr, cat, rgbaColor);
+      delv.colorCat(this._name, this._dataset, attr, cat, rgbaColor);
     };
     ds.determineHoveredItems = function() {
       var id;
@@ -3733,12 +3877,12 @@ var vg = vg || {};
     ds.superClearHover = ds.clearHover;
     ds.clearHover = function() {
       ds.superClearHover();
-      delv.clearHover(this.name, this._dataset);
+      delv.clearHover(this._name, this._dataset);
     };
     ds.superClearSelect = ds.clearSelect;
     ds.clearSelect = function(selectType) {
       ds.superClearSelect(selectType);
-      delv.clearSelect(this.name, this._dataset, selectType);
+      delv.clearSelect(this._name, this._dataset, selectType);
     };
       
     ds.clearFilter = function() {
@@ -3746,47 +3890,47 @@ var vg = vg || {};
       for (id = 0; id < this.itemIds.length; id++) {
         this.itemIds[id].filtered = true;
       }
-      delv.clearFilter(this.name, this._dataset);
+      delv.clearFilter(this._name, this._dataset);
     };
     ds.superHoverColor = ds.hoverColor;
     ds.hoverColor = function(rgbaColor) {
       ds.superHoverColor(rgbaColor);
-      delv.hoverColor(this.name, this._dataset, rgbaColor);
+      delv.hoverColor(this._name, this._dataset, rgbaColor);
     };
     ds.superSelectColor = ds.selectColor;
     ds.selectColor = function(rgbaColor, selectType) {
       ds.superSelectColor(rgbaColor, selectColor);
-      delv.selectColor(this.name, this._dataset, rgbaColor, selectType);
+      delv.selectColor(this._name, this._dataset, rgbaColor, selectType);
     };
     ds.superFilterColor = ds.filterColor;
     ds.filterColor = function(rgbaColor) {
       ds.superFilterColor(rgbaColor);
-      delv.filterColor(this.name, this._dataset, rgbaColor);
+      delv.filterColor(this._name, this._dataset, rgbaColor);
     };
     ds.superLikeColor = ds.likeColor;
     ds.likeColor = function(rgbaColor) {
       ds.superLikeColor(rgbaColor);
-      delv.likeColor(this.name, this._dataset, rgbaColor);
+      delv.likeColor(this._name, this._dataset, rgbaColor);
     };
     ds.superClearHoverColor = ds.clearHoverColor;
     ds.clearHoverColor = function() {
       ds.superClearHoverColor();
-      delv.clearHoverColor(this.name, this._dataset);
+      delv.clearHoverColor(this._name, this._dataset);
     };
     ds.superClearSelectColor = ds.clearSelectColor;
     ds.clearSelectColor = function(selectType) {
       ds.superClearSelectColor(selectColor);
-      delv.clearSelectColor(this.name, this._dataset, selectType);
+      delv.clearSelectColor(this._name, this._dataset, selectType);
     };
     ds.superClearFilterColor = ds.clearFilterColor;
     ds.clearFilterColor = function() {
       ds.superClearFilterColor();
-      delv.clearFilterColor(this.name, this._dataset);
+      delv.clearFilterColor(this._name, this._dataset);
     };
     ds.superClearLikeColor = ds.clearLikeColor;
     ds.clearLikeColor = function() {
       ds.superClearLikeColor();
-      delv.clarLikeColor(this.name, this._dataset);
+      delv.clarLikeColor(this._name, this._dataset);
     };
     ds.getAllCatColorMaps = function(attr) {
       delv.getAllCatColorMaps(this._dataset, attr);
@@ -3808,9 +3952,13 @@ var vg = vg || {};
                     bottom: 40,
                     left: 35 };
 
-    view.onDataChanged = function(invoker, dataset) {
+    view.configured = function() {
+      return (this._splitAttr !== "" && this._datasetName !== "");
+    };
+    
+    view.onDataChanged = function(signal, invoker, dataset) {
       var v;
-      if (dataset === this._datasetName) {
+      if ((dataset === this._datasetName) && this.configured()) {
         this.splitData();
       }
     };
@@ -3818,6 +3966,7 @@ var vg = vg || {};
     view.splitAttr = function(attr) {
       if (attr !== undefined) {
         this._splitAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
         return this;
       } else {
         return this._splitAttr;
@@ -3841,11 +3990,13 @@ var vg = vg || {};
         crit[0][0] = this._splitAttr;
         crit[0][1] = this._facets[f];
         ds = new delv.filteredDataSet(this._datasetName+"."+this._facets[f], this._datasetName, crit);
-        viewPromises[f] = this.makeView(this._facets[f], ds.name);
+        viewPromises[f] = this.makeView(this._facets[f], ds._name);
       }
-      $.when.apply($, viewPromises)
-        .done(function(responses) { self.afterDataUpdated(); });
-      return this;
+      if (viewPromises.length > 0) {
+        $.when.apply($, viewPromises)
+          .done(function(responses) { self.afterDataUpdated(); });
+        return this;
+      }
     };
 
     view.dataDependentConfig = function(smallView) {
@@ -3870,6 +4021,7 @@ var vg = vg || {};
     view.dataSet = function(name) {
       var v;
       this._datasetName = name;
+      this.onDataChanged("dataChanged", this._name, this._datasetName);
       return this;
     };
 
@@ -3893,7 +4045,7 @@ var vg = vg || {};
       self.addView(viewInstance);
       self.configureView(viewInstance);
       self.dataDependentConfig(viewInstance);
-      viewInstance.onDataChanged(self.name(), dataset);
+      viewInstance.onDataChanged("dataChanged", self.name(), dataset);
       promise.resolve();
     }
 
@@ -3904,8 +4056,50 @@ var vg = vg || {};
 
   delv.d3SmallMultiples = function( name, elemId, viewConstructor, viewSource ) {
     var view = new delv.smallMultiples(name, elemId, viewConstructor, viewSource);
+    view._xAttr = "";
+    view._yAttr = "";
     view.loaded = false;
     delv.loadScript(viewSource, function(success) { view.loaded = success; });
+
+    view.xAttr = function(attr) {
+      var v;
+      if (attr !== undefined) {
+        this._xAttr = attr;
+        for (v in this._views) {
+          this._views[v].xAttr(attr);
+        }
+        return this;
+      } else {
+        return this._xAttr;
+      }
+    };
+
+    view.yAttr = function(attr) {
+      var v;
+      if (attr !== undefined) {
+        this._yAttr = attr;
+        for (v in this._views) {
+          this._views[v].yAttr(attr);
+        }
+        return this;
+      } else {
+        return this._yAttr;
+      }
+    };
+
+    view.superConfigured = view.configured;
+    view.configured = function() {
+      return (this.superConfigured() &&
+              this._xAttr !== "" &&
+              this._yAttr !== "");
+    };
+
+    view.configureView = function(smallView) {
+      var parts = smallView.name().split(".");
+      smallView.xAttr(this._xAttr);
+      smallView.yAttr(this._yAttr);
+      smallView.title(parts[parts.length-1]);
+    };
 
     view.makeView = function(facet, dataset) {
       var parent = d3.select("#" + this._elemId);
@@ -3933,7 +4127,7 @@ var vg = vg || {};
 
     return view;
   }; // end delv.d3SmallMultiples
-  
+
   delv.vegaSmallMultiples = function( name, elemId, viewConstructor, viewSource, chartSource ) {
     var view = new delv.smallMultiples(name, elemId, viewConstructor, viewSource);
     view.loaded = false;
@@ -3993,7 +4187,16 @@ var vg = vg || {};
     var colorMap = color_map;
     var fullRange = data_range;
     this.type = attr_type;
-    this.name = attr_name;
+    this._name = attr_name;
+
+    this.name = function(name) {
+      if (name !== undefined) {
+        this._name = name;
+        return this;
+      } else {
+        return this._name;
+      }
+    };
 
     this.isCategorical = function() {
       return (this.type === delv.AttributeType.CATEGORICAL ||
@@ -4456,7 +4659,7 @@ var vg = vg || {};
     };
 
     this.isInRange = function(val) {
-      return isCategoryFiltered(val);
+      return this.isCategoryFiltered(val);
     };
     
     this.isCategoryFiltered = function(cat) {
@@ -4467,7 +4670,7 @@ var vg = vg || {};
       return filt;
     };
     
-  }; // end delv.dataRange
+  }; // end delv.categoricalRange
 
 
   delv.continuousRange = function() {

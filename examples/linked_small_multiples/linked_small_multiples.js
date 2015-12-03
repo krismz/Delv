@@ -2,43 +2,20 @@ function init() {
   console.log("entering init");
   dataLoaded = false;
 
-  smView = new areaSmallMultiples("areaSM", "vis", "d3Views.area_chart_view", "./area_chart.js");
-
   dataSet = new delv.tsvData("askmefi", "test_data/askmefi_category_year.tsv");
   dataSet.load_data(finishLoadingData);
+
+  smView = new areaSmallMultiples("areaSM", "vis", "d3Views.area_chart_view", "./area_chart.js");
+  smView.dataSet(dataSet.name());
+  smView.xAttr("year")
+    .yAttr("n")
+    .splitAttr("category");
+  delv.addView(smView);
 
 }
 
 function areaSmallMultiples(name, elemId, constructor, source) {
   var view = new delv.d3SmallMultiples(name, elemId, constructor, source);
-  view._xAttr = "";
-  view._yAttr = "";
-  
-  view.xAttr = function(attr) {
-    var v;
-    if (attr !== undefined) {
-      this._xAttr = attr;
-      for (v in this._views) {
-        this._views[v].xAttr(attr);
-      }
-      return this;
-    } else {
-      return this._xAttr;
-    }
-  };
-
-  view.yAttr = function(attr) {
-    var v;
-    if (attr !== undefined) {
-      this._yAttr = attr;
-      for (v in this._views) {
-        this._views[v].yAttr(attr);
-      }
-      return this;
-    } else {
-      return this._yAttr;
-    }
-  };
 
   view.dataDependentConfig = function(smallView) {
     var maxY;
@@ -47,11 +24,13 @@ function areaSmallMultiples(name, elemId, constructor, source) {
     maxY = delv.getMax(this._datasetName, this._yAttr);
     minX = delv.getMin(this._datasetName, this._xAttr);
     maxX = delv.getMax(this._datasetName, this._xAttr);
-    smallView.maxY(maxY);
+    //delv.navRange(this._name, this._datasetName, this._yAttr, "0", maxY);
+    //delv.navVal(this._name, this._datasetName, this._xAttr, "2004", "2014");
+    //smallView.maxY(maxY);
     // TODO undo this hard-coded, data-dependent hack
     // the problem is that xAttr is a categorical variable, so min/max are meaningless
     //smallView.extentX([minX, maxX]);
-    smallView.extentX([2004, 2014]);
+    //smallView.extentX([2004, 2014]);
   };
   
   view.afterDataUpdated = function() {
@@ -59,13 +38,6 @@ function areaSmallMultiples(name, elemId, constructor, source) {
     this.sortBy("count");
   };
   
-  view.configureView = function(smallView) {
-    var parts = smallView.name().split(".");
-    smallView.xAttr(this._xAttr);
-    smallView.yAttr(this._yAttr);
-    smallView.label(parts[parts.length-1]);
-  };
-
   view.setupIsotope = function() {
     $("#" + this._elemId).isotope({
       itemSelector: '.d3Chart',
@@ -78,7 +50,7 @@ function areaSmallMultiples(name, elemId, constructor, source) {
             d = g.datum();
             if (typeof(d) !== "undefined") {
               sum = d3.sum(d.values, function(d) {
-                return +d.yVals;
+                return +d.yVal;
               });
               return sum * -1;
             } else {
@@ -114,14 +86,9 @@ function areaSmallMultiples(name, elemId, constructor, source) {
 function finishLoadingData() {
   console.log("finishLoadingData");
   dataLoaded = true;
-  smView.dataSet(dataSet.name);
-  smView.xAttr("year")
-    .yAttr("n")
-    .splitAttr("category");
-  delv.addView(smView);
-  smView.connectSignals();
-  delv.dataChanged("init", dataSet.name);
-}
+  // todo anything dependent on data being loaded
+  // alternatively, can just connect to the "dataChanged" signal
+ }
 
 d3.select("#button-wrap").selectAll("div").on("click", function() {
   var id;

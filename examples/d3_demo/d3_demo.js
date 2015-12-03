@@ -126,7 +126,7 @@ function init_view_instance(view, elemId) {
   }
   if (dataLoaded) {
     delv.log("init_view_instance onDataChanged");
-    view.onDataChanged("d3Demo.js", "Nodes");
+    view.onDataChanged("dataChanged", "d3Demo.js", "Nodes");
     delv.log("init_view_instance resizeAll");
     resizeAll();
   }

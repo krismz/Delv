@@ -12,60 +12,9 @@ var d3Views = d3Views || {};
 ///////////////////////////////////
 d3Views.area_chart_view = function( name, svgElemId ) {
   // Stuff for Delv compatibility
-  var view = new delv.d3View(name, svgElemId);
-  view._xAttr = "";
-  view._yAttr = "";
-  view._label = "";
-  view._maxY = {};
-  view._extentX = [];
+  var view = new delv.d3XYView(name, svgElemId);
   view._hoverCat = "";
   
-  view.xAttr = function(attr) {
-    if (attr !== undefined) {
-      this._xAttr = attr;
-      return this;
-    } else {
-      return this._xAttr;
-    }
-  };
-
-  view.extentX = function(extentX) {
-    if (extentX !== undefined) {
-      this._extentX = extentX;
-      return this;
-    } else {
-      return this._extentX;
-    }
-  };
-
-  
-  view.yAttr = function(attr) {
-    if (attr !== undefined) {
-      this._yAttr = attr;
-      return this;
-    } else {
-      return this._yAttr;
-    }
-  };
-
-  view.maxY = function(maxY) {
-    if (maxY !== undefined) {
-      this._maxY = maxY;
-      return this;
-    } else {
-      return this._maxY;
-    }
-  };
-
-  view.label = function(label) {
-    if (label !== undefined) {
-      this._label = label;
-      return this;
-    } else {
-      return this._label;
-    }
-  };
-
   view.connectSignals = function() {
     this._delv.connectToSignal("hoverChanged", this._name, "onHoverChanged");
   };
@@ -74,29 +23,25 @@ d3Views.area_chart_view = function( name, svgElemId ) {
     this._delv.hoverCat(this._name, this._datasetName, this._xAttr, ""+cat);
   };
 
-  view.onHoverChanged = function(invoker, dataset, coordination, detail) {
+  view.onHoverChanged = function(signal, invoker, dataset, coordination, detail) {
     var cat;
     if (invoker !== this._name) {
-      // ignore if sent by self
-      cat = this._delv.getHoverCat(this._datasetName, this._xAttr);
-      hoverCat(cat);
+      if (dataset === this._datasetName) {
+        // ignore if sent by self
+        cat = this._delv.getHoverCat(this._datasetName, this._xAttr);
+        hoverCat(cat);
+      }
     }
   };
-
-  view.onDataChanged = function() {
-    var rawData = {};
-    var data = [];
-    var values = [];
-    var d;
-    rawData.xVals = this._delv.getAllItems(this._datasetName, this._xAttr);
-    rawData.yVals = this._delv.getAllItems(this._datasetName, this._yAttr);
-    rawData.label = this._label;
-    for (d = 0; d < rawData.xVals.length; d++) {
-      values[d] = {"xVals": rawData.xVals[d], "yVals": rawData.yVals[d]};
+  
+  view.onDataChanged = function(signal, invoker, dataset) {
+    var data;
+    if ((dataset === this._datasetName) && this.configured()) {
+      data = this.convertToArrayOfObjects();
+      if (data.length > 0) {
+        bindData(data);
+      }
     }
-    data[0] = { "values": values,
-                "key": rawData.label };
-    bindData(data);
   };
 
   var svgElem;
@@ -127,17 +72,16 @@ d3Views.area_chart_view = function( name, svgElemId ) {
     caption = null;
     curXVal = null;
     bisect = d3.bisector(function(d) {
-      return d.xVals;
+      return d.xVal;
     }).left;
     format = d3.time.format("%Y");
-  //xScale = d3.time.scale().range([0, width]);
-  xScale = d3.scale.linear().nice().range([0, width]);
+    xScale = d3.scale.linear().nice().range([0, width]);
     yScale = d3.scale.linear().range([height, 0]);
     xValue = function(d) {
-      return d.xVals;
+      return d.xVal;
     };
     yValue = function(d) {
-      return d.yVals;
+      return d.yVal;
     };
     yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(4).outerTickSize(0).tickSubdivide(1).tickSize(-width);
     area = d3.svg.area().x(function(d) {
@@ -153,8 +97,8 @@ d3Views.area_chart_view = function( name, svgElemId ) {
     setupScales = function(data) {
       var mxY;
       mxY = self.maxY() + (self.maxY() * 1 / 4);
-      yScale.domain([0, mxY]);
-      return xScale.domain(self.extentX());
+      yScale.domain([self.minY(), mxY]);
+      return xScale.domain([self.minX(), self.maxX()]);
     };
 
   function bindData(data) {
@@ -237,53 +181,11 @@ d3Views.area_chart_view = function( name, svgElemId ) {
       }
     }
   }
-
   
   mouseout = function() {
     hoverCat("");
     self.hoverChanged("");
   };
-
-  // don't think we need this
-  // TODO why?
-  // x = function(_) {
-  //   if (!arguments.length) {
-  //     return xValue;
-  //   }
-  //   xValue = _;
-  //   return this;
-  // };
-
-  // y = function(_) {
-  //   if (!arguments.length) {
-  //     return yValue;
-  //   }
-  //   yValue = _;
-  //   return this;
-  // };
-
-// don't need data transformation
-// TODO explain why
-  // transformData = function(rawData) {
-  //   var format, nest;
-  //   format = d3.time.format("%Y");
-  //   rawData.forEach(function(d) {
-  //     d.date = format.parse(d.year);
-  //     return d.n = +d.n;
-  //   });
-  //   nest = d3.nest().key(function(d) {
-  //     return d.category;
-  //   }).sortValues(function(a, b) {
-  //     return d3.ascending(a.date, b.date);
-  //   }).entries(rawData);
-  //   return nest;
-  // };
-
-// don't need this plot function
-// TODO explain why
-  // plotData = function(selector, data, plot) {
-  //   return d3.select(selector).datum(data).call(plot);
-  // };
 
   return view;
 };

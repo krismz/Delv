@@ -292,7 +292,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onColorChanged(String invoker, String dataset, String attribute) {
+  void onColorChanged(String signal, String invoker, String dataset, String attribute) {
     // TODO respond to color for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name()) &&
@@ -301,7 +301,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onFilterChanged(String invoker, String dataset, String coordination, String detail) {
+  void onFilterChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     // TODO respond to filter for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name())) {
@@ -310,7 +310,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onHoverChanged(String invoker, String dataset, String coordination, String detail) {
+  void onHoverChanged(String signal, String invoker, String dataset, String coordination, String detail) {
     // TODO respond to hover for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name())) {
@@ -322,7 +322,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onSelectChanged(String invoker, String dataset, String coordination, String selectType) {
+  void onSelectChanged(String signal, String invoker, String dataset, String coordination, String selectType) {
     // TODO respond to select for below dataset as well
     if (!invoker.equals(_name) &&
         dataset.equals(_above_dataset.name()) &&
@@ -331,7 +331,7 @@ class RegionView extends DelvBasicView {
     }
   }
 
-  void onAlignmentChanged(String invoker, String dataset, String alignment) {
+  void onAlignmentChanged(String signal, String invoker, String dataset, String alignment) {
     if (!invoker.equals(_name)) {
       setAlignment(alignment);
     }
@@ -498,7 +498,7 @@ class RegionView extends DelvBasicView {
 //     return regionMap;
   } // end addDatasetToRegionMap
 
-  void onDataChanged(String invoker, String dataset) {
+  void onDataChanged(String signal, String invoker, String dataset) {
     if (_delv == null) {
       return;
     }

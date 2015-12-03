@@ -18,6 +18,7 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
   };
   newObj.setDatasetName = function(name) {
     this._dataset = name;
+    this.onDataChanged("dataChanged", this._name, this._dataset);
     return this;
   };
   newObj.getXAttr = function() {
@@ -25,6 +26,7 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
   };
   newObj.setXAttr = function(attr) {
     this._xAttr = attr;
+    this.onDataChanged("dataChanged", this._name, this._dataset);
     return this;
   };
   newObj.getYAttr = function() {
@@ -32,6 +34,7 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
   };
   newObj.setYAttr = function(attr) {
     this._yAttr = attr;
+    this.onDataChanged("dataChanged", this._name, this._dataset);
     return this;
   };
   newObj.getTitle = function() {
@@ -39,6 +42,7 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
   };
   newObj.setTitle = function(title, doParse) {
     this._title = title;
+    this.onDataChanged("dataChanged", this._name, this._dataset);
     this.updateSignal("title", {"init":this._title}, doParse);
     return this;
   };
@@ -103,7 +107,7 @@ vgWrapperNS.bar_chart_view = function (name, elem, vgSpec) {
 
   };
 
-  newObj.onDataChanged = function( invoker, dataset ) {
+  newObj.onDataChanged = function( signal, invoker, dataset ) {
     var vals = [];
     var ii;
     if (dataset === this._dataset) {

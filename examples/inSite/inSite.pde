@@ -63,7 +63,7 @@ void testInsite() {
 
   _dropView.dataSet("Regions");
   _dropView.catAttr("Species")
-          .label("Species");
+          .title("Species");
 
   _colorLegendView.dataSet("Regions");
   _colorLegendView.dataAttr("motif_type");
@@ -78,11 +78,11 @@ void testInsite() {
   _barView.setup();
   _alignView.setup();
 
-  _dropView.onDataChanged("inSite.pde", "Regions");
-  _regionView.onDataChanged("inSite.pde", "Regions");
-  _alignView.onDataChanged("inSite.pde", "Regions");
-  _barView.onDataChanged("inSite.pde", "Regions");
-  _colorLegendView.onDataChanged("inSite.pde", "Regions");
+  _dropView.onDataChanged("dataChanged", "inSite.pde", "Regions");
+  _regionView.onDataChanged("dataChanged", "inSite.pde", "Regions");
+  _alignView.onDataChanged("dataChanged", "inSite.pde", "Regions");
+  _barView.onDataChanged("dataChanged", "inSite.pde", "Regions");
+  _colorLegendView.onDataChanged("dataChanged", "inSite.pde", "Regions");
 
   int w = width;
   int h = height;
@@ -143,7 +143,7 @@ public class InSiteView extends DelvCompositeView {
     addView(_alignView);
   }
 
-  public void onDataChanged(String invoker, String dataset) {
+  public void onDataChanged(String signal, String invoker, String dataset) {
     RegionDataset aboveDataset = _regionView.createDataset("Regions");
     aboveDataset.regionTypeAttr("Species")
                 .regionLengthAttr("totalLength")
@@ -165,21 +165,21 @@ public class InSiteView extends DelvCompositeView {
 
     _dropView.dataSet("Regions");
     _dropView.catAttr("Species")
-            .label("Species");
+            .title("Species");
 
     _legendView.dataSet("Regions");
     _legendView.dataAttr("motif_type");
-    _legendView.label("TF");
+    _legendView.title("TF");
 
     _barView.dataSet("Regions");
     _barView.dim1Attr("strength");
     _barView.dim2Attr("motif_type");
 
-    _regionView.onDataChanged(invoker, "Regions");
-    _dropView.onDataChanged(invoker, "Regions");
-    _legendView.onDataChanged(invoker, "Regions");
-    _barView.onDataChanged(invoker, "Regions");
-    _alignView.onDataChanged(invoker, "Regions");
+    _regionView.onDataChanged("dataChanged", invoker, "Regions");
+    _dropView.onDataChanged("dataChanged", invoker, "Regions");
+    _legendView.onDataChanged("dataChanged", invoker, "Regions");
+    _barView.onDataChanged("dataChanged", invoker, "Regions");
+    _alignView.onDataChanged("dataChanged", invoker, "Regions");
 
   }
 
@@ -334,7 +334,7 @@ void testInsiteView() {
   _delv.addDataSet("inSite", _dataIF);
   _delv.addView(insite_view);
   insite_view.setup();
-  insite_view.onDataChanged("inSite.pde", "inSite");
+  insite_view.onDataChanged("dataChanged", "inSite.pde", "inSite");
   insite_view.resize(1400, 800);
 }
 
@@ -371,7 +371,7 @@ void testRegion(int x_origin, int y_origin,
     .defaultBarType("Annotations");
   view.addDataset(belowDataset, true);
 
-  view.onDataChanged("inSite.pde", "Regions");
+  view.onDataChanged("dataChanged", "inSite.pde", "Regions");
   // to capture the size of the monitor
   int _w = 1400;
   int _h = 700;
@@ -410,9 +410,9 @@ void testDropDown(int x_origin, int y_origin,
   _delv.addView(view);
   view.dataSet("Regions");
   view.catAttr("Species")
-      .label("Species");
+      .title("Species");
   view.setup();
-  view.onDataChanged("inSite.pde", "Regions");
+  view.onDataChanged("dataChanged", "inSite.pde", "Regions");
 
   //view.resize(w, h);
   //view.onCategoryVisibilityChanged("someone", "Regions", "Species");
@@ -433,7 +433,7 @@ void testColorPickerLegend(int x_origin, int y_origin) {
   view.dataSet("Regions");
   view.dataAttr("motif_type");
   view.setup();
-  view.onDataChanged("inSite.pde", "Regions");
+  view.onDataChanged("dataChanged", "inSite.pde", "Regions");
   view.resize(200,300);
 }
 void testColorLegendWithDropdown() {
@@ -450,9 +450,9 @@ void testColorLegendWithDropdown(int x_origin, int y_origin) {
   _delv.addView(view);
   view.dataSet("Regions");
   view.dataAttr("motif_type");
-  view.label("motif");
+  view.title("motif");
   view.setup();
-  view.onDataChanged("inSite.pde", "Regions");
+  view.onDataChanged("dataChanged", "inSite.pde", "Regions");
   view.resize(200,300);
 }
 

@@ -189,7 +189,7 @@ function initProcessingSketch(view, canvasId) {
   } else if (canvasId == "DropDown") {
     view.dataSet("Regions")
         .catAttr("Species")
-        .label("Species");
+        .title("Species");
 
   } else if (canvasId == "ColorPickerLegend") {
     view.dataSet("Regions")
@@ -198,7 +198,7 @@ function initProcessingSketch(view, canvasId) {
   } else if (canvasId == "ColorLegendWithDropdown") {
     view.dataSet("Regions")
         .dataAttr("motif_type")
-        .label("TF");
+        .title("TF");
 
   } else if (canvasId == "Alignment") {
 
@@ -209,7 +209,7 @@ function initProcessingSketch(view, canvasId) {
   } else {}
 
   if (dataLoaded) {
-    view.onDataChanged("inSite.js", "Regions");
+    view.onDataChanged("dataChanged", "inSite.js", "Regions");
   }
   else {
 	  delv.log("Data hasn't been loaded yet!!!");
