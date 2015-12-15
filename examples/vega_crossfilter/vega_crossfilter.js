@@ -1,7 +1,7 @@
 function init() {
   console.log("entering init");
   dataLoaded = false;
-  //delv.noLog();
+  delv.noLog();
   delv.doSignalDebounce(75);
 
   var chartsrc = "./bar_chart.json";

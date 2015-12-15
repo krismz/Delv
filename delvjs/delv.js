@@ -59,6 +59,7 @@ var vg = vg || {};
     this.dataSet = function(dataSetName) {
       this._datasetName = dataSetName;
       this.onDataChanged("dataChanged", this._name, this._datasetName);
+      return this;
     }
     this.name = function(name) {
       if (name !== undefined) {
@@ -80,6 +81,60 @@ var vg = vg || {};
     newObj.svgElem = svgElem;
     return newObj;
   }; // end delv.d3View
+
+  delv.d3CatView = function(name, svgElem) {
+    var view = new delv.d3View(name, svgElem);
+
+    view._catAttr = "";
+    view._title = "";
+
+    view.catAttr = function(attr) {
+      if (attr !== undefined) {
+        this._catAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._catAttr;
+      }
+    };
+
+    view.title = function(title) {
+      if (title !== undefined) {
+        this._title = title;
+        return this;
+      } else {
+        return this._title;
+      }
+    };
+
+    view.superConfigured = view.configured;
+    view.configured = function() {
+      return (this.superConfigured() &&
+              this._catAttr !== "");
+    };
+
+    view.convertToArrayOfObjects = function() {
+      var rawData = {};
+      var data = [];
+      var values = [];
+      var d;
+      rawData.cat = this._delv.getAllCats(this._datasetName, this._catAttr);
+      rawData.color = this._delv.getCatColors(this._datasetName, this._catAttr);
+      rawData.title = this._title;
+      for (d = 0; d < rawData.cat.length; d++) {
+        values[d] = {"cat": rawData.cat[d],
+                     "color": rawData.color[d].length > 0 ? delv.hex(rawData.color[d]) : "#FFFFFF"};
+      }
+      if (values.length > 0) {
+        data[0] = { "values": values,
+                    "key": rawData.title };
+      }
+      return data;
+
+    };
+
+    return view;
+  }; // end delv.d3CatView
 
   // A view that can join attributes across 2 datasets
   // if a signal comes in for one attribute, it gets resent
@@ -133,7 +188,7 @@ var vg = vg || {};
     newObj.onColorChanged = function(signal, invoker, dataset, attribute) {
       if (invoker !== this._name) {
         if (dataset === this._dataset1Name &&
-          attribute === this._dataset1Attr) {
+            attribute === this._dataset1Attr) {
           this.transferColors(this._dataset1Name, this._dataset1Attr, this._dataset2Name, this._dataset2Attr);
         } else if (dataset === this._dataset2Name &&
                    attribute === this._dataset2Attr) {
@@ -149,8 +204,7 @@ var vg = vg || {};
         this._delv.colorCat(this._name, toDS, toAttr, cats[ii], colors[ii]);
       }
     };
-        
-          
+
     return newObj;
   }; // end delv.joinView
 
@@ -165,13 +219,16 @@ var vg = vg || {};
       this._views[view.name()] = view;
       return this;
     };
+
+    newObj.removeViews = function() {
+      this._views = {};
+    };
     
     newObj.superBindDelv = newObj.bindDelv;
     newObj.bindDelv = function(dlv) {
       var v;
       for (v in this._views) {
         if (this._views.hasOwnProperty(v)) {
-          console.log("adding view to delv: " + v);
           dlv.addView(this._views[v]);
         }
       }
@@ -229,6 +286,7 @@ var vg = vg || {};
     var view = new delv.d3View(name, svgElem);
     view._xAttr = "";
     view._yAttr = "";
+    view._colorAttr = "";
     view._title = "";
 
     view.xAttr = function(attr) {
@@ -240,7 +298,7 @@ var vg = vg || {};
         return this._xAttr;
       }
     };
-      
+
     view.yAttr = function(attr) {
       if (attr !== undefined) {
         this._yAttr = attr;
@@ -248,6 +306,16 @@ var vg = vg || {};
         return this;
       } else {
         return this._yAttr;
+      }
+    };
+
+    view.colorAttr = function(attr) {
+      if (attr !== undefined) {
+        this._colorAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._colorAttr;
       }
     };
 
@@ -260,12 +328,12 @@ var vg = vg || {};
       }
     };
 
-    //view.superConfigured = view.configured;
-    //view.configured = function() {
-      // return (this.superConfigured() &&
-      //         this._xAttr !== "" &&
-      //         this._yAttr !== "");
-    //};
+    view.superConfigured = view.configured;
+    view.configured = function() {
+      return (this.superConfigured() &&
+              this._xAttr !== "" &&
+              this._yAttr !== "");
+    };
 
     view.minX = function() {
       // TODO this assumes x is an ordered categorical variable
@@ -290,11 +358,16 @@ var vg = vg || {};
       var data = [];
       var values = [];
       var d;
+      rawData.id = this._delv.getAllIds(this._datasetName);
       rawData.xVal = this._delv.getAllItems(this._datasetName, this._xAttr);
       rawData.yVal = this._delv.getAllItems(this._datasetName, this._yAttr);
+      rawData.color = this._delv.getItemColors(this._datasetName, this._colorAttr);
       rawData.title = this._title;
       for (d = 0; d < rawData.xVal.length; d++) {
-        values[d] = {"xVal": rawData.xVal[d], "yVal": rawData.yVal[d]};
+        values[d] = {"name": rawData.id[d],
+                     "xVal": rawData.xVal[d],
+                     "yVal": rawData.yVal[d],
+                     "color": rawData.color[d].length > 0 ? delv.hex(rawData.color[d]) : "#FFFFFF"};
       }
       if (values.length > 0) {
         data[0] = { "values": values,
@@ -309,6 +382,7 @@ var vg = vg || {};
     };
 
     delv.connectToSignal("navChanged", view._name, "onNavChanged");
+    delv.connectToSignal("colorChanged", view._name, "onDataChanged");
 
     return view;
   }; // end delv.d3XYView
@@ -600,7 +674,56 @@ var vg = vg || {};
       loadCompleteCallback(success);
     }
   };
-  
+
+  delv.makeChart = function(name, elementId, script, viewConstructor, viewArgs, loadCompleteCallback) {
+    var viewName = name;
+    var elemId = elementId;
+    var chartLoaded = false;
+    var source = script;
+
+    function initChart(script, viewConstructor, viewArgs, loadCompleteCallback) {
+      chartLoaded = false;
+      if (script) {
+        if (sources.hasOwnProperty(script) && sources[script]) {
+          //delv.log("Script already loaded, not loading again!");
+          finishChartInit("","success",{});
+        } else {
+          $.getScript(script, finishChartInit);
+        }
+      } else {
+        finishChartInit("","success",{});
+      }
+    }
+    initChart(script, viewConstructor, viewArgs, loadCompleteCallback);
+
+    function finishChartInit(a_script, textStatus, jqxhr) {
+      var view;
+      var callConstructor = "view = new " + viewConstructor + "(viewName, elemId";
+      var a;
+      for (a = 0; a < viewArgs.length; a++) {
+        callConstructor = callConstructor + ", " + viewArgs[a];
+      }
+      callConstructor = callConstructor + ")";
+      //delv.log("script from " + source + " loaded!  elemId: " + elemId + ", textStatus: " + textStatus + ", jqxhr: " + jqxhr);
+      try {
+        //delv.log("constructing view with: " + callConstructor);
+	      eval(callConstructor);
+	    } catch (e) {
+	      delv.log("initializing chart " + viewName + " for " + elemId + " failed while trying to call\n" + callConstructor + "\n.  Try again later");
+	      chartLoaded = false;
+	    }
+	    if (typeof(view) !== "undefined") {
+	      chartLoaded = true;
+	    }
+      sources[source] = chartLoaded;
+	    if (chartLoaded) {
+	      delv.addView(view);
+	      view.connectSignals();
+	      loadCompleteCallback(view, elemId);
+	    }
+    }
+  }; // end delv.makeChart
+
   delv.d3Chart = function (name, elementId, script, viewConstructor, loadCompleteCallback) {
     var viewName = name;
     var elemId = elementId;
@@ -609,11 +732,15 @@ var vg = vg || {};
 
     function initChart(script, viewConstructor, loadCompleteCallback) {
       chartLoaded = false;
-      if (sources.hasOwnProperty(script) && sources[script]) {
-        //delv.log("Script already loaded, not loading again!");
-        finishChartInit("","success",{});
+      if (script) {
+        if (sources.hasOwnProperty(script) && sources[script]) {
+          //delv.log("Script already loaded, not loading again!");
+          finishChartInit("","success",{});
+        } else {
+          $.getScript(script, finishChartInit);
+        }
       } else {
-        $.getScript(script, finishChartInit);
+        finishChartInit("","success",{});
       }
     }
     initChart(script, viewConstructor, loadCompleteCallback);
@@ -639,7 +766,6 @@ var vg = vg || {};
 	      loadCompleteCallback(view, elemId);
 	    }
     }
-
   };
 
   delv.vegaChart = function (name, elementId, viewsrc, script, constructor, loadCompleteCallback) {
@@ -648,11 +774,15 @@ var vg = vg || {};
     var chartLoaded = false;
     function initChart(elemId, viewsrc, script, constructor, loadCompleteCallback) {
       chartLoaded = false;
-      if (sources.hasOwnProperty(script) && sources[script]) {
-        // TODO is it worth finding a way to only load the spec one time as well?
-        loadSpec("","success",{});
+      if (script) {
+        if (sources.hasOwnProperty(script) && sources[script]) {
+          // TODO is it worth finding a way to only load the spec one time as well?
+          loadSpec("","success",{});
+        } else {
+          $.getScript(viewsrc, loadSpec);
+        }
       } else {
-        $.getScript(viewsrc, loadSpec);
+        loadSpec("","success",{});
       }
     }
     initChart(elemId, viewsrc, script, constructor, loadCompleteCallback);
@@ -664,7 +794,7 @@ var vg = vg || {};
         finishChartInit(json, constructor);
       });
     }
-      
+
     function finishChartInit(json, constructor) {
       // TODO call chart update here or in loadCompleteCallback or elsewhere?
       chartLoaded = true;
@@ -687,7 +817,7 @@ var vg = vg || {};
       }
     }
   };
-  
+
   delv.processingSketch = function ( name, canvas, sketchList, viewConstructor, loadCompleteCallback ) {
     var viewName = name;
     var canvasId;
@@ -802,7 +932,7 @@ var vg = vg || {};
       return id;
     }
   };
-  
+
   // from http://davidwalsh.name/javascript-debounce-function
   delv.debounce = function (func, wait, immediate) {
 	  var timeout;
@@ -862,7 +992,7 @@ var vg = vg || {};
     p5s[id] = p;
     return delv;
   };
-  
+
   // a hacky function to deal with asychronicity between data load and view load
   // delv.giveDataIFToViews = function (dataIFName) {
   //   var view;
@@ -871,7 +1001,7 @@ var vg = vg || {};
   //       views[view].dataIF(dataIFName);
   //     }
   //   }
-  // };	
+  // };
 
   // TODO redo this Qt connection with new signals and delv
   // delv.connectToQt = function() {
@@ -906,7 +1036,31 @@ var vg = vg || {};
   delv.doLog = function() {
     delv.log = function(msg) { console.log(msg); };
   };
-  
+
+  delv.warning = function(msg) {
+    console.log(msg);
+  };
+
+  delv.noWarning = function() {
+    delv.warning = function(msg) {};
+  };
+
+  delv.doWarning = function() {
+    delv.warning = function(msg) { console.log(msg); };
+  };
+
+  delv.error = function(msg) {
+    console.log(msg);
+  };
+
+  delv.noError = function() {
+    delv.error = function(msg) {};
+  };
+
+  delv.doError = function() {
+    delv.error = function(msg) { console.log(msg); };
+  };
+
   delv.connectToSignal = function (signal, name, method) {
     //delv.log("ConnectToSignal(" + signal + ", " + name + ", " + method + ")");
     if (delv.signalHandlers.hasOwnProperty(signal)) {
@@ -981,7 +1135,7 @@ var vg = vg || {};
   };
 
   delv.prevSignal = {signal: "", dataset: ""};
-  
+
   delv.doSignalDebounce = function(duration) {
     if (duration === undefined) {
       duration = 75;
@@ -1527,7 +1681,7 @@ var vg = vg || {};
       return false;
     }
   };
-    
+
   delv.getHoverIds = function(dataset) {
     try {
       return data[dataset].getHoverIds();
@@ -1595,8 +1749,10 @@ var vg = vg || {};
   };
   delv.getSelectRanges = function(dataset, attr, selectType) {
     try {
+      // TODO validate selectType here and elsewhere as appropriate
       return data[dataset].getSelectRanges(attr, selectType);
     } catch (e) {
+      delv.warning("Received exception in delv.getSelectRanges(" + dataset + ", " + attr + ", " + selectType + ") : " + e);
       return [];
     }
   };
@@ -1675,9 +1831,6 @@ var vg = vg || {};
   };
 
   // TODO getLOD
-   
-   
-
 
   delv.getAllCatColorMaps = function(dataset, attr) {
     // return unique set of values from categorical data
@@ -2416,7 +2569,7 @@ var vg = vg || {};
       var idx = this.getIdx(id);
       var item;
       if (idx > -1) {
-        return getItemColorByIdx(attr, idx);
+        return this.getItemColorByIdx(attr, idx);
       }
       // item not found
       return _defaultColor;
@@ -2438,7 +2591,7 @@ var vg = vg || {};
         // TODO mismatch between navigation and like here!!! 
         return _likeColor;
       } else {
-        return this.getItemAttrColor(attr, id);
+        return this.getItemAttrColor(attr, item.name);
       }
     };
 
@@ -2551,7 +2704,7 @@ var vg = vg || {};
     this.clearAttributes = function() {
       attributes={};
     };
-      
+
     this.addAttr = function(attr) {
       attributes[attr._name] = attr;
     };
@@ -2598,10 +2751,10 @@ var vg = vg || {};
       }
     };
 
-    this.getAllCatColors = function(attr) {
+    this.getCatColors = function(attr) {
       var at = attributes[attr];
       if (at !== undefined) {
-        return at.getAllCatColors();
+        return at.getCatColors();
       } else {
         return [];
       }
@@ -2907,7 +3060,7 @@ var vg = vg || {};
         }
       }
     };
-        
+
     this.determineFilteredItems = function() {
       var i;
       var j;
@@ -2951,7 +3104,7 @@ var vg = vg || {};
         id.filtered = filter;
       }
     };
-            
+
     this.getHoverCat = function(attr) {
       var at = attributes[attr];
       var range;
@@ -3124,7 +3277,7 @@ var vg = vg || {};
       }
       return selectCrits;
     };
-              
+
     this.getFilterCats = function(attr) {
       var at = attributes[attr];
       if (at !== undefined && at.isCategorical()) {
@@ -3312,7 +3465,7 @@ var vg = vg || {};
 
   }; // end delv.dataSet
 
-  delv.tsvData = function(name, source) {
+  delv.svData = function(name, source) {
     var ds = new delv.dataSet(name);
     var _source = source;
 
@@ -3321,20 +3474,15 @@ var vg = vg || {};
     };
 
     ds.load_from_file = function(filename, when_finished) {
-      var self = this;
-      d3.tsv(filename, function(error, data) {
-        if (error) throw error;
-        populate_data(data, self);
-        when_finished();
-      });
+      when_finished();
     };
 
-    function populate_data(data, dataset) {
+    ds.populate_data = function(data, dataset) {
       delv.removeDataSet(dataset.name());
       delv.addDataSet(dataset.name(), dataset);
       create_dataset(data, dataset);
       populate_dataset(data, dataset);
-    }
+    };
 
     function populate_dataset(data, dataset) {
       var id;
@@ -3359,7 +3507,7 @@ var vg = vg || {};
     
     function create_dataset(data, dataset) {
       var def_color = ["210", "210", "210"];
-      var maxrows = (50 < data.length) ? 50 : data.length;
+      var maxrows = (150 < data.length) ? 150 : data.length;
       var row;
       var d;
       var attrs = [];
@@ -3408,6 +3556,36 @@ var vg = vg || {};
     
     return ds;
     
+  }; // end delv.svData
+
+  delv.tsvData = function(name, source) {
+    var ds = new delv.svData(name, source);
+
+    ds.load_from_file = function(filename, when_finished) {
+      var self = this;
+      d3.tsv(filename, function(error, data) {
+        if (error) throw error;
+        self.populate_data(data, self);
+        when_finished();
+      });
+    };
+
+    return ds;
+  }; // end delv.tsvData
+
+  delv.csvData = function(name, source) {
+    var ds = new delv.svData(name, source);
+
+    ds.load_from_file = function(filename, when_finished) {
+      var self = this;
+      d3.csv(filename, function(error, data) {
+        if (error) throw error;
+        self.populate_data(data, self);
+        when_finished();
+      });
+    };
+
+    return ds;
   }; // end delv.tsvData
 
   delv.aggregateDataSet = function( name, dataset, groupBy, aggAttr, summaryTypes, fieldNames ) {
@@ -3718,9 +3896,15 @@ var vg = vg || {};
     ds.getItemColor = function(attr, id) {
       return delv.getItemColor(this._dataset, attr, id);
     };
-    ds.getItemColorByIdx = function(attr, id) {
-      return delv.getItemColorByIdx(this._dataset, attr, id);
+    ds.getItemColors = function(attr, id) {
+      var i;
+      var cols = [];
+      for (i = 0; i < this.itemIds.length; i++) {
+        cols[i] = delv.getItemColor(this._dataset, attr, this.itemIds[i].name);
+      }
+      return cols;
     };
+
     ds.getItemAttrColor = function(attr, id) {
       return delv.getItemAttrColor(this._dataset, attr, id);
     };
@@ -3884,7 +4068,7 @@ var vg = vg || {};
       ds.superClearSelect(selectType);
       delv.clearSelect(this._name, this._dataset, selectType);
     };
-      
+
     ds.clearFilter = function() {
       var id;
       for (id = 0; id < this.itemIds.length; id++) {
@@ -3940,32 +4124,64 @@ var vg = vg || {};
     
   }; // end delv.filteredDataSet
   
-  delv.smallMultiples = function ( name, elemId, viewConstructor, viewSource ) {
+  delv.smallMultiples = function ( name, elemId, viewConstructor, viewSource, viewArgs ) {
     var view = new delv.compositeView(name);
-    view._splitAttr = "";
+    view._splitAttr = [];
+    view._xAttr = [];
+    view._yAttr = [];
+    view._colorAttr = "";
     view._facets = [];
+    view._crosses = [];
     view._constructor = viewConstructor;
     view._source = viewSource;
+    view._args = viewArgs;
     view._elemId = elemId;
+    view._elems = {};
     view.margin = { top: 15,
                     right: 10,
                     bottom: 40,
                     left: 35 };
+    view._elemType = "div"; // svg, canvas, div
+
+    view.elemType = function(elemT) {
+      if (elemT !== undefined) {
+        this._elemType = elemT;
+        return this;
+      } else {
+        return this._elemType;
+      }
+    };
+
+    view.renderSVG = function() {
+      return this.elemType("svg");
+    };
+
+    view.renderCanvas = function() {
+      return this.elemType("canvas");
+    };
+
+    view.renderDiv = function() {
+      return this.elemType("div");
+    };
 
     view.configured = function() {
-      return (this._splitAttr !== "" && this._datasetName !== "");
+      return (this._datasetName !== "" &&
+              (this._splitAttr.length > 0 ||
+               this._xAttr.length > 0 ||
+               this._yAttr.length > 0));
     };
     
     view.onDataChanged = function(signal, invoker, dataset) {
       var v;
       if ((dataset === this._datasetName) && this.configured()) {
-        this.splitData();
+        this.clearViews();
+        this.distributeData();
       }
     };
 
     view.splitAttr = function(attr) {
       if (attr !== undefined) {
-        this._splitAttr = attr;
+        this._splitAttr = delv.asArray(attr);
         this.onDataChanged("dataChanged", this._name, this._datasetName);
         return this;
       } else {
@@ -3973,24 +4189,152 @@ var vg = vg || {};
       }
     };
 
-        
-    view.splitData = function() {
+    view.xAttr = function(attr) {
+      if (attr !== undefined) {
+        this._xAttr = delv.asArray(attr);
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._xAttr;
+      }
+    };
+
+    view.yAttr = function(attr) {
+      if (attr !== undefined) {
+        this._yAttr = delv.asArray(attr);
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._yAttr;
+      }
+    };
+
+    view.colorAttr = function(attr) {
+      if (attr !== undefined) {
+        this._colorAttr = attr;
+        this.onDataChanged("dataChanged", this._name, this._datasetName);
+        return this;
+      } else {
+        return this._colorAttr;
+      }
+    };
+
+    view.clearViews = function() {
+      var elem;
+      this.removeViews();
+      for (elem in this._elems) {
+        if (this._elems.hasOwnProperty(elem)) {
+          $("#"+this._elems[elem]).parent().remove();
+        }
+      }
+      this._elems = {};
+    };
+
+    view.distributeData = function() {
       var f;
-      var ds;
-      var v;
+      var facet;
+      var cross;
+      var c;
+      var sets = {};
+      var dsi;
+      var ds = {};
+      var fname = "";
+      var view_name = "";
       var viewPromises = [];
       var self = this;
       var crit = [];
+      var attr;
+      var xa;
+      var ya;
+      var top="";
+      var left="";
+      var xidx;
+      var yidx;
       // TODO how to handle if the attr to split on is changed?
       // delete old views?  delete old datasets?
-      this._facets = delv.getAllCats(this._datasetName, this._splitAttr);
+      if (this._splitAttr.length == 1) {
+        this._facets = delv.cross(delv.getAllCats(this._datasetName, this._splitAttr[0]),[]);
+      } else if (this._splitAttr.length == 2) {
+        this._facets = delv.cross(delv.getAllCats(this._datasetName, this._splitAttr[0]),
+                                  delv.getAllCats(this._datasetName, this._splitAttr[1]));
+      } else {
+        // need a dummy facet because we aren't splitting the data
+        this._facets = [this._datasetName];
+      }
+      this._crosses = delv.cross(this._xAttr, this._yAttr);
+
       for (f = 0; f < this._facets.length; f++) {
         crit = [];
         crit[0] = [];
-        crit[0][0] = this._splitAttr;
-        crit[0][1] = this._facets[f];
-        ds = new delv.filteredDataSet(this._datasetName+"."+this._facets[f], this._datasetName, crit);
-        viewPromises[f] = this.makeView(this._facets[f], ds._name);
+        facet = delv.asArray(this._facets[f]);
+        if (facet[0] === this._datasetName) {
+          // means no faceting, use orig dataset
+          //ds = delv.getDataSet(this._datasetName);
+          ds._name = this._datasetName;
+          fnamef = "";
+        } else {
+          if (!sets.hasOwnProperty(facet[0])) {
+            crit[0][0] = this._splitAttr[0];
+            crit[0][1] = facet[0];
+            sets[facet[0]] = new delv.filteredDataSet(this._datasetName+"."+facet[0], this._datasetName, crit);
+          }
+          dsi = sets[facet[0]];
+          if (facet.length > 1) {
+            if (!sets.hasOwnProperty(dsi._name+"_"+facet[1])) {
+              crit[0][0] = this._splitAttr[1];
+              crit[0][1] = facet[1];
+              ds = new delv.filteredDataSet(dsi._name+"_"+facet[1], dsi._name, crit);
+            }
+            ds = sets[dsi._name+"_"+facet[1]];
+            fname = facet[0]+"_"+facet[1];
+          } else {
+            ds = dsi;
+            fname = facet[0];
+          }
+        }
+        for (c = 0; c < this._crosses.length; c++) {
+          // we assume here that we have at least one x or y attr.
+          // If this isn't true, would need to do the same trick as the dummy facet above
+          cross = delv.asArray(this._crosses[c]);
+          if (cross.length > 1) {
+            xa = cross[0];
+            ya = cross[1];
+            view_name = fname;
+            // TODO handle layout more elegantly
+            // TODO handle layout when mixing facets and crosses
+            xidx = delv.indexInArray(this._xAttr, xa);
+            left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
+            yidx = delv.indexInArray(this._yAttr, ya);
+            top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
+            if (this._xAttr.length > 1) {
+              view_name = view_name + "_" + xa;
+            } else {
+              left = "";
+            }
+            if (this._yAttr.length > 1) {
+              view_name = view_name + "_" + ya;
+            } else {
+              top = "";
+            }
+          } else {
+            if ((this._xAttr.length > 1) || (this._yAttr.length == 0)) {
+              xa = cross[0];
+              view_name = fname + "_" + xa;
+              xidx = delv.indexInArray(this._xAttr, xa);
+              left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
+              top = "0%";
+              yidx = 0;
+            } else if ((this._yAttr.length > 1) || (this._xAttr.length == 0)) {
+              ya = cross[0];
+              view_name = fname + "_" + ya;
+              left = "0%";
+              xidx = 0;
+              yidx = delv.indexInArray(this._yAttr, ya);
+              top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
+            }
+          }
+          viewPromises[viewPromises.length] = this.makeView(view_name, ds._name, xa, ya, xidx, yidx, top, left);
+        }
       }
       if (viewPromises.length > 0) {
         $.when.apply($, viewPromises)
@@ -4004,7 +4348,7 @@ var vg = vg || {};
     };
 
 
-    view.configureView = function(smallView) {
+    view.configureView = function(smallView, xidx, yidx) {
       // override this method to configure attributes, etc
     };
 
@@ -4013,13 +4357,39 @@ var vg = vg || {};
       // after ALL of the views have updated their data
     };
     
-    view.makeView = function() {
+    view.makeView = function(facet_name, dataset, x, y, xidx, yidx, top, left) {
       // override this method for d3, processing, vega, other views
-      // be sure to return a jQuery promis
+      // be sure to return a jQuery promise
+      var parent = d3.select("#" + this._elemId);
+      var cleaned = delv.conformId(facet_name);
+      var name = this.name() + "." + facet_name;
+      var cleaned_name = this.name() + "_" + cleaned;
+      var chart = {};
+      var div;
+      var elem;
+      var self = this;
+      var d = $.Deferred();
+      // TODO figure out how to handle layout of the small multiples
+      div = parent.append("div")
+        .attr("class", "delvChart")
+        .attr("float", "left")
+        .attr("padding-right", "5px")
+        .attr("padding-bottom", "5px")
+        .attr("padding-top", "0")
+        .attr("padding-left", "0");
+      if (top !== "" && left !== "") {
+        div.attr("style","position: absolute; top: " + top + "; left: " + left);
+      }
+      elem = div.append(this._elemType).attr("id", cleaned_name);
+      this._elems[name] = cleaned_name;
+      //svg = div.select("svg").attr("id", name);
+      chart = new delv.makeChart(name, cleaned_name, this._source, this._constructor, this._args,
+                                 function(view, elemId) { self.makeViewCallback(view, elemId, dataset, x, y, xidx, yidx, self, d);});
+      return d.promise();
+
     };
 
     view.dataSet = function(name) {
-      var v;
       this._datasetName = name;
       this.onDataChanged("dataChanged", this._name, this._datasetName);
       return this;
@@ -4040,10 +4410,20 @@ var vg = vg || {};
       }
     };
 
-    view.makeViewCallback = function(viewInstance, elemId, dataset, self, promise) {
+    view.makeViewCallback = function(viewInstance, elemId, dataset, x, y, xidx, yidx, self, promise) {
       viewInstance.dataSet(dataset);
+      // TODO figure out how to generically link xattr, yattr, colorattr to an arbitrarily named function in the view
+      if (viewInstance.hasOwnProperty("xAttr")) {
+        viewInstance.xAttr(x);
+      }
+      if (viewInstance.hasOwnProperty("yAttr")) {
+        viewInstance.yAttr(y);
+      }
+      if (viewInstance.hasOwnProperty("colorAttr")) {
+        viewInstance.colorAttr(self.colorAttr());
+      }
       self.addView(viewInstance);
-      self.configureView(viewInstance);
+      self.configureView(viewInstance, xidx, yidx);
       self.dataDependentConfig(viewInstance);
       viewInstance.onDataChanged("dataChanged", self.name(), dataset);
       promise.resolve();
@@ -4056,72 +4436,42 @@ var vg = vg || {};
 
   delv.d3SmallMultiples = function( name, elemId, viewConstructor, viewSource ) {
     var view = new delv.smallMultiples(name, elemId, viewConstructor, viewSource);
-    view._xAttr = "";
-    view._yAttr = "";
     view.loaded = false;
-    delv.loadScript(viewSource, function(success) { view.loaded = success; });
+    if (viewSource) { delv.loadScript(viewSource, function(success) { view.loaded = success; }); }
 
-    view.xAttr = function(attr) {
-      var v;
-      if (attr !== undefined) {
-        this._xAttr = attr;
-        for (v in this._views) {
-          this._views[v].xAttr(attr);
-        }
-        return this;
-      } else {
-        return this._xAttr;
-      }
-    };
-
-    view.yAttr = function(attr) {
-      var v;
-      if (attr !== undefined) {
-        this._yAttr = attr;
-        for (v in this._views) {
-          this._views[v].yAttr(attr);
-        }
-        return this;
-      } else {
-        return this._yAttr;
-      }
-    };
-
-    view.superConfigured = view.configured;
-    view.configured = function() {
-      return (this.superConfigured() &&
-              this._xAttr !== "" &&
-              this._yAttr !== "");
-    };
-
-    view.configureView = function(smallView) {
+    view.configureView = function(smallView, xidx, yidx) {
       var parts = smallView.name().split(".");
-      smallView.xAttr(this._xAttr);
-      smallView.yAttr(this._yAttr);
       smallView.title(parts[parts.length-1]);
     };
 
-    view.makeView = function(facet, dataset) {
+    view.makeView = function(facet_name, dataset, x, y, xidx, yidx, top, left) {
       var parent = d3.select("#" + this._elemId);
-      var cleaned = delv.conformId(facet);
-      var name = this.name() + "." + facet;
+      var cleaned = delv.conformId(facet_name);
+      var name = this.name() + "." + facet_name;
       var cleaned_name = this.name() + "_" + cleaned;
       var chart = {};
       var div;
       var svg;
       var self = this;
       var d = $.Deferred();
+      // TODO figure out how to handle layout of the small multiples
       div = parent.append("div")
         .attr("class", "d3Chart")
+        .attr("width", (this._xAttr.length > 0 ? ""+(100.0 / this._xAttr.length)+"%" : "100%"))
+        .attr("height", (this._yAttr.length > 0 ? ""+(100.0 / this._yAttr.length)+"%" : "100%"))
         .attr("float", "left")
         .attr("padding-right", "5px")
         .attr("padding-bottom", "5px")
         .attr("padding-top", "0")
         .attr("padding-left", "0");
+      if (top !== "" && left !== "") {
+        div.attr("style","position: absolute; top: " + top + "; left: " + left);
+      }
       svg = div.append("svg").attr("id", cleaned_name);
+      this._elems[name] = cleaned_name;
       //svg = div.select("svg").attr("id", name);
       chart = new delv.d3Chart(name, cleaned_name, this._source, this._constructor,
-                               function(view, elemId) { self.makeViewCallback(view, elemId, dataset, self, d);});
+                               function(view, elemId) { self.makeViewCallback(view, elemId, dataset, x, y, xidx, yidx, self, d);});
       return d.promise();
     }
 
@@ -4133,35 +4483,38 @@ var vg = vg || {};
     view.loaded = false;
     delv.loadScript(viewSource, function(success) { view.loaded = success; });
 
-    view.makeView = function(facet, dataset) {
+    view.makeView = function(facet_name, dataset, x, y, xidx, yidx, top, left) {
       var parent = d3.select("#" + this._elemId);
-      var cleaned = delv.conformId(facet);
-      var name = this.name() + "." + facet;
+      var cleaned = delv.conformId(facet_name);
+      var name = this.name() + "." + facet_name;
       var cleaned_name = this.name() + "_" + cleaned;
       var chart = {};
       var div;
       var svg;
       var self = this;
       var d = $.Deferred();
+      // TODO figure out how to handle layout of the small multiples
       div = parent.append("div")
-        .attr("class", "d3Chart")
+        .attr("class", "vegaChart")
         .attr("float", "left")
         .attr("padding-right", "5px")
         .attr("padding-bottom", "5px")
         .attr("padding-top", "0")
         .attr("padding-left", "0");
+      if (top !== "" && left !== "") {
+        div.attr("style","position: absolute; top: " + top + "; left: " + left);
+      }
       svg = div.append("svg").attr("id", cleaned_name);
+      this._elems[name] = cleaned_name;
       //svg = div.select("svg").attr("id", name);
       chart = new delv.vegaChart(name, cleaned_name, this._source, chartSource, this._constructor,
-                               function(view, elemId) { self.makeViewCallback(view, elemId, dataset, self, d);});
+                                 function(view, elemId) { self.makeViewCallback(view, elemId, dataset, x, y, xidx, yidx, self, d);});
       return d.promise();
     }
 
     return view;
   }; // end delv.vegaSmallMultiples
 
-  
-      
   delv.SummaryType = {
     COUNT: {name: "COUNT"},
     SUM: {name: "SUM"},
@@ -4421,14 +4774,14 @@ var vg = vg || {};
     };
 
     this.getItemAttrColor = function(id) {
-      return colorMap.getColor(getItem(id));
+      return colorMap.getColor(this.getItem(id));
     };
 
     this.getAllCats = function() {
       if (this.type === delv.AttributeType.CATEGORICAL) {
         return fullRange.getCategories();
       } else {
-      return [];
+        return [];
       }
     };
     
@@ -4538,6 +4891,28 @@ var vg = vg || {};
   delv.asArray = function(obj) {
     return delv.isArray(obj) ? obj : [ obj ];
   };
+  delv.indexInArray = function(arr, val) {
+    var idx = -1;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] === val) {
+        return i;
+      }
+    }
+    return -1;
+  };
+  delv.arrayEquals = function(a, b) {
+    var i;
+
+    if (a.length != b.length) {
+      return false;
+    }
+    for (i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   delv.coordToId = function(coord) {
     var id = "";
@@ -4562,6 +4937,30 @@ var vg = vg || {};
     }
   };
 
+  delv.cross = function(vec1, vec2) {
+    var i, j;
+    var crossv = [];
+    vec1 = delv.asArray(vec1);
+    vec2 = delv.asArray(vec2);
+    if (vec1.length == 0) {
+      for (j = 0; j < vec2.length; j++) {
+        crossv[crossv.length] = [vec2[j]];
+      }
+      return crossv;
+    }
+    if (vec2.length == 0) {
+      for (i = 0; i < vec1.length; i++) {
+        crossv[crossv.length] = [vec1[i]];
+      }
+      return crossv;
+    }
+    for (i = 0; i < vec1.length; i++) {
+      for (j = 0; j < vec2.length; j++) {
+        crossv[crossv.length] = [vec1[i], vec2[j]];
+      }
+    }
+    return crossv;
+  }; // end delv.cross
   
   delv.itemId = function(id) {
     // want these all to be public
@@ -4896,48 +5295,48 @@ var vg = vg || {};
       this.defaultColor = c;
     };
 
-  // void drawToFile(String filename) {
-  //   if (_bounds.size() === 0) {
-  //     return;
-  //   }
-  //   int numsamp = 1000;
-  //   int numbounds = _bounds.size();
-  //   int numsampperbound = numsamp / numbounds;
-  //   numsamp = numsampperbound * numbounds;
-  //   ArrayList<Float> samps = new ArrayList<Float>();
+    // void drawToFile(String filename) {
+    //   if (_bounds.size() === 0) {
+    //     return;
+    //   }
+    //   int numsamp = 1000;
+    //   int numbounds = _bounds.size();
+    //   int numsampperbound = numsamp / numbounds;
+    //   numsamp = numsampperbound * numbounds;
+    //   ArrayList<Float> samps = new ArrayList<Float>();
 
-  //   float lb;
-  //   float ub;
-  //   HalfOpenRange b = _bounds.get(0);
-  //   if (!b._hasLower) {
-  //     lb = b._upper / 10;
-  //   } else {
-  //     lb = b._lower;
-  //   }
+    //   float lb;
+    //   float ub;
+    //   HalfOpenRange b = _bounds.get(0);
+    //   if (!b._hasLower) {
+    //     lb = b._upper / 10;
+    //   } else {
+    //     lb = b._lower;
+    //   }
 
-  //   b = _bounds.get(numbounds - 1);
-  //   if (!b._hasUpper) {
-  //     ub = b._lower * 10;
-  //   } else {
-  //     ub = b._upper;
-  //   }
+    //   b = _bounds.get(numbounds - 1);
+    //   if (!b._hasUpper) {
+    //     ub = b._lower * 10;
+    //   } else {
+    //     ub = b._upper;
+    //   }
 
-  //   for (int i = 0; i < numsamp; i++) {
-  //     samps.add(lb + i * (ub-lb) / numsamp);
-  //   }
+    //   for (int i = 0; i < numsamp; i++) {
+    //     samps.add(lb + i * (ub-lb) / numsamp);
+    //   }
 
-  //   background(255,255,255);
-  //   //size(numsamp, 50);
-  //   noStroke();
-  //   int i = 0;
-  //   for (Float val : samps) {
-  //     color c = getColor(""+val);
-  //     fill(red(c),green(c),blue(c));
-  //     rect(i * 50, 0, 50, 50);
-  //     i++;
-  //   }
-  //   save(filename);
-  // }
+    //   background(255,255,255);
+    //   //size(numsamp, 50);
+    //   noStroke();
+    //   int i = 0;
+    //   for (Float val : samps) {
+    //     color c = getColor(""+val);
+    //     fill(red(c),green(c),blue(c));
+    //     rect(i * 50, 0, 50, 50);
+    //     i++;
+    //   }
+    //   save(filename);
+    // }
 
   }; //end delv.continuousColorMap
 
@@ -5125,41 +5524,41 @@ var vg = vg || {};
     };
   };
 
-  delv.hex = function(rgb) {
+  delv.hex = function(rgba) {
     var result = "#";
     var val = 0;
     var valstr = "";
-    if (rgb[0] === '#') {
-        return rgb;
+    if (rgba[0] === '#') {
+      return rgba;
     }
     // for hex, alpha comes first (aRGB)
-    if (rgb.length > 3) {
-      val = parseInt(rgb[3]);
+    if (rgba.length > 3) {
+      val = parseInt(rgba[3]);
       valstr = val.toString(16);
       result += valstr;
       if (val < 10) {
         result += valstr;
       }
     }
-    val = parseInt(rgb[0]);
+    val = parseInt(rgba[0]);
     valstr = val.toString(16);
     result += valstr;
     if (val < 10) {
       result += valstr;
     }
-    val = parseInt(rgb[1]);
+    val = parseInt(rgba[1]);
     valstr = val.toString(16);
     result += valstr;
     if (val < 10) {
       result += valstr;
     }
-    val = parseInt(rgb[2]);
+    val = parseInt(rgba[2]);
     valstr = val.toString(16);
     result += valstr;
     if (val < 10) {
       result += valstr;
     }
-    //result += parseInt(rgb[0]).toString(16) + parseInt(rgb[1]).toString(16) + parseInt(rgb[2]).toString(16);
+    //result += parseInt(rgba[0]).toString(16) + parseInt(rgba[1]).toString(16) + parseInt(rgba[2]).toString(16);
     return result;
   };
 
@@ -5173,10 +5572,10 @@ var vg = vg || {};
 
     result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (result) {
-        return [ parseInt(result[1], 16),
-                 parseInt(result[2], 16),
-                 parseInt(result[3], 16),
-                 parseInt(result[4], 16) ];
+      return [ parseInt(result[1], 16),
+               parseInt(result[2], 16),
+               parseInt(result[3], 16),
+               parseInt(result[4], 16) ];
     }
     
     result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -5273,44 +5672,44 @@ var vg = vg || {};
     return disc_map;
   };
 
-// void testMaps() {
-//   DelvContinuousColorMap cmap1 = new DelvContinuousColorMap();
-//   cmap1.setDefaultColor(color(130,130,130));
-//   HalfOpenRange crange = new HalfOpenRange();
-//   crange.setUpper(.3);
-//   cmap1.setColor(crange, new green_scale());
-//   crange = new HalfOpenRange();
-//   crange.setLower(.5);
-//   crange.setUpper(.8);
-//   cmap1.setColor(crange, new green_to_red());
-//   crange = new HalfOpenRange();
-//   crange.setLower(.9);
-//   crange.setUpper(1.5);
-//   cmap1.setColor(crange, new red_to_blue());
-//   crange = new HalfOpenRange();
-//   crange.setLower(1.6);
-//   crange.setUpper(1.9);
-//   cmap1.setColor(crange, new brightgreen());
-//   cmap1.drawToFile("/tmp/custom_cont_map.png");
+  // void testMaps() {
+  //   DelvContinuousColorMap cmap1 = new DelvContinuousColorMap();
+  //   cmap1.setDefaultColor(color(130,130,130));
+  //   HalfOpenRange crange = new HalfOpenRange();
+  //   crange.setUpper(.3);
+  //   cmap1.setColor(crange, new green_scale());
+  //   crange = new HalfOpenRange();
+  //   crange.setLower(.5);
+  //   crange.setUpper(.8);
+  //   cmap1.setColor(crange, new green_to_red());
+  //   crange = new HalfOpenRange();
+  //   crange.setLower(.9);
+  //   crange.setUpper(1.5);
+  //   cmap1.setColor(crange, new red_to_blue());
+  //   crange = new HalfOpenRange();
+  //   crange.setLower(1.6);
+  //   crange.setUpper(1.9);
+  //   cmap1.setColor(crange, new brightgreen());
+  //   cmap1.drawToFile("/tmp/custom_cont_map.png");
 
-//   DelvContinuousColorMap cmap4 = new DelvContinuousColorMap();
-//   DelvColorFun checkpts = new ColorMapWithCheckpoints();
-//   cmap4.setDefaultColor(color(130,130,130));
-//   crange = new HalfOpenRange();
-//   crange.setLower(-10);
-//   crange.setUpper(20);
-//   cmap4.setColor(crange, checkpts);
-//   cmap4.drawToFile("/tmp/map_with_checkpoints.png");
+  //   DelvContinuousColorMap cmap4 = new DelvContinuousColorMap();
+  //   DelvColorFun checkpts = new ColorMapWithCheckpoints();
+  //   cmap4.setDefaultColor(color(130,130,130));
+  //   crange = new HalfOpenRange();
+  //   crange.setLower(-10);
+  //   crange.setUpper(20);
+  //   cmap4.setColor(crange, checkpts);
+  //   cmap4.drawToFile("/tmp/map_with_checkpoints.png");
 
-//   // create categorical map
-//   String[] cat1 = {"a","b","c","d","e","f","g","h","i"};
-//   DelvDiscreteColorMap cmap2 = create_discrete_map_from_hex(cat1, categorical_map_1());
-//   cmap2.drawToFile("/tmp/cat1.png");
+  //   // create categorical map
+  //   String[] cat1 = {"a","b","c","d","e","f","g","h","i"};
+  //   DelvDiscreteColorMap cmap2 = create_discrete_map_from_hex(cat1, categorical_map_1());
+  //   cmap2.drawToFile("/tmp/cat1.png");
 
-//   String[] cat2 = {"a","b","c","d","e","f","g","h","i","j","k","l"};
-//   DelvDiscreteColorMap cmap3 = create_discrete_map_from_hex(cat2, categorical_map_2());
-//   cmap3.drawToFile("/tmp/cat2.png");
-// }
+  //   String[] cat2 = {"a","b","c","d","e","f","g","h","i","j","k","l"};
+  //   DelvDiscreteColorMap cmap3 = create_discrete_map_from_hex(cat2, categorical_map_2());
+  //   cmap3.drawToFile("/tmp/cat2.png");
+  // }
 
 
 } ( window.delv = window.delv || {}, Processing, jQuery, vg ) ); // end of delv declaration

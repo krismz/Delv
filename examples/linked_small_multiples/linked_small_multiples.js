@@ -17,6 +17,13 @@ function init() {
 function areaSmallMultiples(name, elemId, constructor, source) {
   var view = new delv.d3SmallMultiples(name, elemId, constructor, source);
 
+  view.configured = function() {
+     return (this._datasetName !== "" &&
+             (this._splitAttr.length > 0 &&
+              (this._xAttr.length > 0 &&
+               this._yAttr.length > 0)));
+  };
+
   view.dataDependentConfig = function(smallView) {
     var maxY;
     var minX;
