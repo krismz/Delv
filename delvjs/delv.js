@@ -1086,7 +1086,7 @@ var vg = vg || {};
     var view;
     var method;
     var fullcall;
-    //delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + coordination + ", " + detail + ")");
+    delv.log("handleSignal(" + signal + ", " + invoker + ", " + dataset + ", " + coordination + ", " + detail + ")");
     //delv.log("typeof invoker: " + typeof(invoker));
     //delv.log("typeof dataset: " + typeof(dataset));
     //delv.log("typeof coordination: " + typeof(coordination));
@@ -1723,6 +1723,7 @@ var vg = vg || {};
     try {
       return data[dataset].isSelected(id, selectType);
     } catch (e) {
+      delv.warning("Received exception in delv.isSelected(" + dataset + ", " + id + ", " + selectType + "): " + e);
       return false;
     }
   };
@@ -1730,6 +1731,7 @@ var vg = vg || {};
     try {
       return data[dataset].getSelectIds(selectType);
     } catch (e) {
+      delv.warning("Received exception in delv.getSelectIds(" + dataset + selectType + "): " + e);
       return [];
     }
   };
@@ -2166,6 +2168,7 @@ var vg = vg || {};
       if (i > -1) {
         return this.itemIds[i].hovered;
       }
+      return false;
     };
     this.getHoverIds = function() {
       var ids = [];
@@ -2844,6 +2847,7 @@ var vg = vg || {};
       var range = new delv.continuousRange();
       var i;
       var at;
+      var val;
       for (i = 0; i < attrs.length; i++) {
         at = attributes[attrs[i]];
         if (at !== undefined) {
@@ -2851,8 +2855,14 @@ var vg = vg || {};
           if (range === undefined) {
             range = new delv.continuousRange();
           }
-          range.setMin(parseFloat(mins[i]));
-          range.setMax(parseFloat(maxes[i]));
+          val = parseFloat(mins[i]);
+          if (!isNaN(val)) {
+            range.setMin(val);
+          }
+          val = parseFloat(maxes[i]);
+          if (!isNaN(val)) {
+            range.setMax(val);
+          }
           selectMap[attrs[i]] = range;
         }
       }
@@ -3984,6 +3994,7 @@ var vg = vg || {};
     };
     ds.selectRanges = function(attrs, mins, maxes, selectType) {
       delv.selectRanges(this._name, this._dataset, attrs, mins, maxes, selectType);
+      delv.log(this._name + " determining selected items");
       this.determineSelectedItems(selectType);
     };
     ds.filterCats = function(attr, cats) {
@@ -4238,7 +4249,7 @@ var vg = vg || {};
       var sets = {};
       var dsi;
       var ds = {};
-      var fname = "";
+      var cname = "";
       var view_name = "";
       var viewPromises = [];
       var self = this;
@@ -4248,92 +4259,192 @@ var vg = vg || {};
       var ya;
       var top="";
       var left="";
+      var ftop=0;
+      var fleft=0;
       var xidx;
       var yidx;
+      var nrows = 1;
+      var ncols = 1;
+      var crossw = 1;
+      var crossh = 1;
       // TODO how to handle if the attr to split on is changed?
       // delete old views?  delete old datasets?
-      if (this._splitAttr.length == 1) {
+      if (this._splitAttr.length == 0) {
+        // need a dummy facet because we aren't splitting the data
+        this._facets = [this._datasetName];
+      } else if (this._splitAttr.length == 1) {
         this._facets = delv.cross(delv.getAllCats(this._datasetName, this._splitAttr[0]),[]);
       } else if (this._splitAttr.length == 2) {
         this._facets = delv.cross(delv.getAllCats(this._datasetName, this._splitAttr[0]),
                                   delv.getAllCats(this._datasetName, this._splitAttr[1]));
-      } else {
-        // need a dummy facet because we aren't splitting the data
-        this._facets = [this._datasetName];
+      }
+      if (this._facets.length == 0) {
+        // data not ready yet, bail
+        return;
       }
       this._crosses = delv.cross(this._xAttr, this._yAttr);
 
-      for (f = 0; f < this._facets.length; f++) {
-        crit = [];
-        crit[0] = [];
-        facet = delv.asArray(this._facets[f]);
-        if (facet[0] === this._datasetName) {
-          // means no faceting, use orig dataset
-          //ds = delv.getDataSet(this._datasetName);
-          ds._name = this._datasetName;
-          fnamef = "";
-        } else {
-          if (!sets.hasOwnProperty(facet[0])) {
-            crit[0][0] = this._splitAttr[0];
-            crit[0][1] = facet[0];
-            sets[facet[0]] = new delv.filteredDataSet(this._datasetName+"."+facet[0], this._datasetName, crit);
-          }
-          dsi = sets[facet[0]];
-          if (facet.length > 1) {
-            if (!sets.hasOwnProperty(dsi._name+"_"+facet[1])) {
-              crit[0][0] = this._splitAttr[1];
-              crit[0][1] = facet[1];
-              ds = new delv.filteredDataSet(dsi._name+"_"+facet[1], dsi._name, crit);
-            }
-            ds = sets[dsi._name+"_"+facet[1]];
-            fname = facet[0]+"_"+facet[1];
+      delv.log("num facets: " + this._facets.length);
+      delv.log("num crosses: " + this._crosses.length);
+      // number of cross rows = number of y attributes
+      // number of cross cols = number of x attributes
+      // number of facet rows - want facet layout to be as square as possible
+      nrows = Math.floor(Math.sqrt(this._facets.length));
+      ncols = Math.ceil(this._facets.length / nrows);
+      
+      // for (f = 0; f < this._facets.length; f++) {
+      //   crit = [];
+      //   crit[0] = [];
+      //   facet = delv.asArray(this._facets[f]);
+      //   if (facet[0] === this._datasetName) {
+      //     // means no faceting, use orig dataset
+      //     //ds = delv.getDataSet(this._datasetName);
+      //     ds._name = this._datasetName;
+      //     fname = "";
+      //   } else {
+      //     if (!sets.hasOwnProperty(facet[0])) {
+      //       crit[0][0] = this._splitAttr[0];
+      //       crit[0][1] = facet[0];
+      //       sets[facet[0]] = new delv.filteredDataSet(this._datasetName+"."+facet[0], this._datasetName, crit);
+      //     }
+      //     dsi = sets[facet[0]];
+      //     if (facet.length > 1) {
+      //       if (!sets.hasOwnProperty(dsi._name+"_"+facet[1])) {
+      //         crit[0][0] = this._splitAttr[1];
+      //         crit[0][1] = facet[1];
+      //         ds = new delv.filteredDataSet(dsi._name+"_"+facet[1], dsi._name, crit);
+      //       }
+      //       ds = sets[dsi._name+"_"+facet[1]];
+      //       fname = facet[0]+"_"+facet[1];
+      //     } else {
+      //       ds = dsi;
+      //       fname = facet[0];
+      //     }
+      //   }
+      //   for (c = 0; c < this._crosses.length; c++) {
+      //     // we assume here that we have at least one x or y attr.
+      //     // If this isn't true, would need to do the same trick as the dummy facet above
+      //     cross = delv.asArray(this._crosses[c]);
+      //     if (cross.length > 1) {
+      //       xa = cross[0];
+      //       ya = cross[1];
+      //       view_name = fname;
+      //       // TODO handle layout more elegantly
+      //       // TODO handle layout when mixing facets and crosses
+      //       xidx = delv.indexInArray(this._xAttr, xa);
+      //       left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
+      //       yidx = delv.indexInArray(this._yAttr, ya);
+      //       top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
+      //       if (this._xAttr.length > 1) {
+      //         view_name = view_name + "_" + xa;
+      //       } else {
+      //         left = "";
+      //       }
+      //       if (this._yAttr.length > 1) {
+      //         view_name = view_name + "_" + ya;
+      //       } else {
+      //         top = "";
+      //       }
+      //     } else {
+      //       if ((this._xAttr.length > 1) || (this._yAttr.length == 0)) {
+      //         xa = cross[0];
+      //         view_name = fname + "_" + xa;
+      //         xidx = delv.indexInArray(this._xAttr, xa);
+      //         left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
+      //         top = "0%";
+      //         yidx = 0;
+      //       } else if ((this._yAttr.length > 1) || (this._xAttr.length == 0)) {
+      //         ya = cross[0];
+      //         view_name = fname + "_" + ya;
+      //         left = "0%";
+      //         xidx = 0;
+      //         yidx = delv.indexInArray(this._yAttr, ya);
+      //         top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
+      //       }
+      //     }
+      //     viewPromises[viewPromises.length] = this.makeView(view_name, ds._name, xa, ya, xidx, yidx, top, left);
+      //   }
+      // }
+
+      crossw = this._xAttr.length > 0 ?  1 / this._xAttr.length : 1;
+      crossh = this._yAttr.length > 0 ? 1 / this._yAttr.length : 1;
+      
+      for (c = 0; c < this._crosses.length; c++) {
+        // we assume here that we have at least one x or y attr.
+        // If this isn't true, would need to do the same trick as the dummy facet below
+        cross = delv.asArray(this._crosses[c]);
+        if (cross.length > 1) {
+          xa = cross[0];
+          ya = cross[1];
+          cname = "";
+          // TODO handle layout more elegantly
+          // TODO handle layout when mixing facets and crosses
+          xidx = delv.indexInArray(this._xAttr, xa);
+          left = xidx > -1 ? xidx * crossw : 0;
+          yidx = delv.indexInArray(this._yAttr, ya);
+          top = yidx > -1 ? yidx * crossh : 0;
+          if (this._xAttr.length > 1) {
+            cname = xa + "_";
           } else {
-            ds = dsi;
-            fname = facet[0];
+            left = 0;
+          }
+          if (this._yAttr.length > 1) {
+            cname = cname + ya + "_";
+          } else {
+            top = 0;
+          }
+        } else {
+          if ((this._xAttr.length > 1) || (this._yAttr.length == 0)) {
+            xa = cross[0];
+            cname = xa + "_";
+            xidx = delv.indexInArray(this._xAttr, xa);
+            left = xidx > -1 ? xidx* crossw : 0;
+            top = 0;
+            yidx = 0;
+          } else if ((this._yAttr.length > 1) || (this._xAttr.length == 0)) {
+            ya = cross[0];
+            cname = ya + "_";
+            left = 0;
+            xidx = 0;
+            yidx = delv.indexInArray(this._yAttr, ya);
+            top = yidx > -1 ? yidx * crossh : 0;
           }
         }
-        for (c = 0; c < this._crosses.length; c++) {
-          // we assume here that we have at least one x or y attr.
-          // If this isn't true, would need to do the same trick as the dummy facet above
-          cross = delv.asArray(this._crosses[c]);
-          if (cross.length > 1) {
-            xa = cross[0];
-            ya = cross[1];
-            view_name = fname;
-            // TODO handle layout more elegantly
-            // TODO handle layout when mixing facets and crosses
-            xidx = delv.indexInArray(this._xAttr, xa);
-            left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
-            yidx = delv.indexInArray(this._yAttr, ya);
-            top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
-            if (this._xAttr.length > 1) {
-              view_name = view_name + "_" + xa;
-            } else {
-              left = "";
-            }
-            if (this._yAttr.length > 1) {
-              view_name = view_name + "_" + ya;
-            } else {
-              top = "";
-            }
+        
+        for (f = 0; f < this._facets.length; f++) {
+          crit = [];
+          crit[0] = [];
+          facet = delv.asArray(this._facets[f]);
+          if (facet[0] === this._datasetName) {
+            // means no faceting, use orig dataset
+            //ds = delv.getDataSet(this._datasetName);
+            ds._name = this._datasetName;
+            view_name = cname.substring(0,cname.length-1);
           } else {
-            if ((this._xAttr.length > 1) || (this._yAttr.length == 0)) {
-              xa = cross[0];
-              view_name = fname + "_" + xa;
-              xidx = delv.indexInArray(this._xAttr, xa);
-              left = xidx > -1 ? "" + (xidx * 100 / this._xAttr.length) + "%" : "0%";
-              top = "0%";
-              yidx = 0;
-            } else if ((this._yAttr.length > 1) || (this._xAttr.length == 0)) {
-              ya = cross[0];
-              view_name = fname + "_" + ya;
-              left = "0%";
-              xidx = 0;
-              yidx = delv.indexInArray(this._yAttr, ya);
-              top = yidx > -1 ? "" + (yidx * 100 / this._yAttr.length) + "%" : "0%";
+            if (!sets.hasOwnProperty(facet[0])) {
+              crit[0][0] = this._splitAttr[0];
+              crit[0][1] = facet[0];
+              sets[facet[0]] = new delv.filteredDataSet(this._datasetName+"."+facet[0], this._datasetName, crit);
+            }
+            dsi = sets[facet[0]];
+            if (facet.length > 1) {
+              if (!sets.hasOwnProperty(dsi._name+"_"+facet[1])) {
+                crit[0][0] = this._splitAttr[1];
+                crit[0][1] = facet[1];
+                ds = new delv.filteredDataSet(dsi._name+"_"+facet[1], dsi._name, crit);
+              }
+              ds = sets[dsi._name+"_"+facet[1]];
+              view_name = cname + facet[0]+"_"+facet[1];
+            } else {
+              ds = dsi;
+              view_name = cname + facet[0];
             }
           }
-          viewPromises[viewPromises.length] = this.makeView(view_name, ds._name, xa, ya, xidx, yidx, top, left);
+          fleft = left + (Math.floor(f / nrows)) * crossw / ncols ;
+          ftop = top + (f % nrows) * crossh / nrows;
+           
+          //delv.log("making view: " + view_name + ", top: " + ftop + ", left: " + fleft);
+          viewPromises[viewPromises.length] = this.makeView(view_name, ds._name, xa, ya, xidx, yidx, ""+(ftop*100)+"%", ""+(fleft*100)+"%");
         }
       }
       if (viewPromises.length > 0) {
@@ -4902,12 +5013,15 @@ var vg = vg || {};
   };
   delv.arrayEquals = function(a, b) {
     var i;
-
+    if (typeof(a) === "undefined" ||
+        typeof(b) === "undefined") {
+      return false;
+    }
     if (a.length != b.length) {
       return false;
     }
     for (i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) {
+      if (a[i] != b[i]) {
         return false;
       }
     }
@@ -5091,10 +5205,10 @@ var vg = vg || {};
     };
 
     this.getMin = function() {
-      return this.min;
+      return this.hasMin() ? this.min : "";
     };
     this.getMax = function() {
-      return this.max;
+      return this.hasMax() ? this.max : "";
     };
 
     this.setMin = function(val) {

@@ -6,8 +6,13 @@ d3Views.scatterplot_view = function(name, svgElemId) {
   view._hoverY = [];
   view._selectX = [];
   view._selectY = [];
+  view._minX = 0;
+  view._maxX = 0;
+  view._minY = 0;
+  view._maxY = 0;
   view._showXAxis = true;
   view._showYAxis = true;
+  view._selectById = true;
 
   view.showXAxis = function() {
     view._showXAxis = true;
@@ -21,6 +26,14 @@ d3Views.scatterplot_view = function(name, svgElemId) {
   view.hideYAxis = function() {
     view._showYAxis = false;
   };
+
+  view.selectById = function() {
+    view._selectById = true;
+  }
+
+  view.selectByRange = function() {
+    view._selectById = false;
+  }
   
   view.connectSignals = function() {
     this._delv.connectToSignal("hoverChanged", this._name, "onHoverChanged");
@@ -46,22 +59,43 @@ d3Views.scatterplot_view = function(name, svgElemId) {
   };
   
   view.selectChanged = function( xRange, yRange ) {
+    var attrs = [];
+    var mins = [];
+    var maxes = [];
+    if (xRange.length > 0) {
+      attrs[0] = this._xAttr;
+      mins[0] = xRange[0];
+      maxes[0] = xRange[1];
+    }
+    if (yRange.length > 0) {
+      attrs[attrs.length] = this._yAttr;
+      mins[mins.length] = yRange[0];
+      maxes[maxes.length] = yRange[1];
+    }
     this._delv.selectRanges(this._name, this._datasetName,
-                            [this._xAttr, this._yAttr],
-                            [""+xRange[0], ""+yRange[0]],
-                            [""+xRange[1], ""+yRange[1]],
+                            attrs, mins, maxes,
                             "PRIMARY");
   };
 
   view.onSelectChanged = function(signal, invoker, dataset, coordination, detail) {
     var ids;
+    var xrange;
+    var yrange;
     if (invoker !== this._name) {
       if (dataset === this._datasetName &&
          detail === "PRIMARY") {
         // ignore if sent by self
-        ids = this._delv.getSelectIds(this._datasetName, "PRIMARY");
         clearBrush();
-        selectItems(ids);
+        if (this._selectById) {
+          ids = this._delv.getSelectIds(this._datasetName, "PRIMARY");
+          delv.log(this._name + " getting select ids: " + ids + " from dataset: " + this._datasetName + " sent by " + invoker);
+          selectItems(ids);
+        } else {
+          xrange = this._delv.getSelectRanges(this._datasetName, this._xAttr, "PRIMARY");
+          yrange = this._delv.getSelectRanges(this._datasetName, this._yAttr, "PRIMARY");
+          delv.log(this._name + " getting select ranges: " + xrange + ", " + yrange + " sent by " + invoker);
+          selectRanges(xrange.length > 0 ? xrange[0] : xrange, yrange.length > 0 ? yrange[0] : yrange);
+        }
       }
     }
   };
@@ -76,17 +110,42 @@ d3Views.scatterplot_view = function(name, svgElemId) {
     }
   };
 
-  view.minX = function() {
-    return this._delv.getMin(this._datasetName, this._xAttr);
+  view.minX = function(x) {
+    // TODO move up to parent class
+    if (x !== undefined) {
+      this._minX = x;
+      return this;
+    } else {
+      return this._minX;
+    }
+    //return this._delv.getMin(this._datasetName, this._xAttr);
   };
-  view.maxX = function() {
-    return this._delv.getMax(this._datasetName, this._xAttr);
+  view.maxX = function(x) {
+    if (x !== undefined) {
+      this._maxX = x;
+      return this;
+    } else {
+      return this._maxX;
+    }
+    //return this._delv.getMax(this._datasetName, this._xAttr);
   };
-  view.minY = function() {
-    return this._delv.getMin(this._datasetName, this._yAttr);
+  view.minY = function(y) {
+    if (y !== undefined) {
+      this._minY = y;
+      return this;
+    } else {
+      return this._minY;
+    }
+    //return this._delv.getMin(this._datasetName, this._yAttr);
   };
-  view.maxY = function() {
-    return this._delv.getMax(this._datasetName, this._yAttr);
+  view.maxY = function(y) {
+    if (y !== undefined) {
+      this._maxY = y;
+      return this;
+    } else {
+      return this._maxY;
+    }
+    //return this._delv.getMax(this._datasetName, this._yAttr);
   };
 
   var svgElem;
@@ -100,7 +159,7 @@ d3Views.scatterplot_view = function(name, svgElemId) {
   createSvgElem();
 
 
-  var size = 140,
+  var size = 100,
       axispad = 0,
       padding = 25,
       n = 4;
@@ -221,23 +280,28 @@ d3Views.scatterplot_view = function(name, svgElemId) {
     var e = brush.extent();
     var xr = [e[0][0], e[1][0]];
     var yr = [e[0][1], e[1][1]];
-    selectRanges(xr, yr);
-    if (xr[0] == xr[1] && yr[0] == yr[1]) {
-      self.selectChanged([],[]);
-    } else {
-      self.selectChanged(xr, yr);
+    if (xr[0] == xr[1]) {
+      xr = [];
     }
+    if (yr[0] == yr[1]) {
+      yr = [];
+    }
+    //self.selectChanged([],[]);
+    delv.log(self._name + " selecting ranges: " + xr + ", " + yr);
+    selectRanges(xr, yr);
+    self.selectChanged(xr, yr);
   };
 
   // If the brush is empty, select all circles.
   brushend = function() {
-    if (brush.empty()) {
-      selectRanges([],[]);
-      self.selectChanged([],[]);
-    }
+    //if (brush.empty()) {
+    //  selectRanges([],[]);
+    //  self.selectChanged([],[]);
+    //}
   };
 
   brush = d3.svg.brush()
+    //.clamp([true, true])
     .on("brushstart", brushstart)
     .on("brush", inbrush)
     .on("brushend", brushend);
@@ -262,6 +326,8 @@ d3Views.scatterplot_view = function(name, svgElemId) {
         !delv.arrayEquals(yrange, self._selectY)) {
       self._selectX = xrange;
       self._selectY = yrange;
+      //if (self._selectX.length > 0 && !delv.arrayEquals(self._selectX, ["",""]) ) {
+      //  if (self._selectY.length > 0 && !delv.arrayEquals(self._selectY, ["",""])) {
       if (self._selectX.length > 0) {
         if (self._selectY.length > 0) {
           svgElem.selectAll(".cell circle").attr("fill", function(d) {
@@ -276,6 +342,7 @@ d3Views.scatterplot_view = function(name, svgElemId) {
           });
         }
       } else {
+        //if (self._selectY.length > 0 && !delv.arrayEquals(self._selectY, ["",""])) {
         if (self._selectY.length > 0) {
           svgElem.selectAll(".cell circle").attr("fill", function(d) {
             return self._selectY[0] <= yValue(d) && yValue(d) <= self._selectY[1]
